@@ -7,6 +7,7 @@ return [
         'name' => 'DK Annual Manager',
         'url' => 'https://leave.example.com',
         'timezone' => 'Asia/Seoul',
+        'debug' => false,
         'session_name' => 'dk_annual_manager',
         'session_cookie_secure' => true,
         'session_cookie_samesite' => 'Lax',
