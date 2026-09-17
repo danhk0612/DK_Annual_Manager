@@ -93,3 +93,12 @@ th { color: #697386; font-size: 12px; }
     .page-head { display: block; }
     .form-grid { grid-template-columns: 1fr; }
 }
+
+.form-grid.compact { grid-template-columns: minmax(220px, 1fr) 160px auto; align-items: end; }
+.span-2 { grid-column: 1 / -1; }
+.summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+.summary-card { display: grid; gap: 8px; padding: 20px; border: 1px solid #e5e9f2; border-radius: 16px; background: #fff; }
+.summary-card span { color: #697386; font-size: 13px; }
+.summary-card strong { font-size: 22px; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+@media (max-width: 640px) { .summary-grid, .form-grid.compact { grid-template-columns: 1fr; } }

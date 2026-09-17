@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use DKAnnual\Auth\Auth;
 use DKAnnual\Config;
+use DKAnnual\Controller\AdminAnnualLeaveController;
 use DKAnnual\Controller\AdminUserController;
 use DKAnnual\Controller\HomeController;
 use DKAnnual\Controller\ProfileController;
@@ -12,9 +13,12 @@ use DKAnnual\Database;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Http\Router;
+use DKAnnual\Leave\AnnualLeaveCalculator;
+use DKAnnual\Leave\AnnualLeaveService;
 use DKAnnual\Middleware\RequireAdminMiddleware;
 use DKAnnual\Middleware\RequireAuthMiddleware;
 use DKAnnual\Middleware\VerifyCsrfMiddleware;
+use DKAnnual\Repository\AnnualLeaveLedgerRepository;
 use DKAnnual\Repository\UserRepository;
 use DKAnnual\Security\Csrf;
 use DKAnnual\Session\Session;
@@ -31,11 +35,13 @@ $session->start($config);
 
 $pdo = Database::connect($config);
 $users = new UserRepository($pdo);
+$ledger = new AnnualLeaveLedgerRepository($pdo);
 $auth = new Auth($session, $users);
 $csrf = new Csrf($session);
 $view = new View(dirname(__DIR__) . '/templates');
 $router = new Router();
 
+$annualLeave = new AnnualLeaveService(new AnnualLeaveCalculator(), $ledger);
 $home = new HomeController($view, $auth, $csrf);
 $telegramAuth = new TelegramAuthController(
     $config,
@@ -46,6 +52,7 @@ $telegramAuth = new TelegramAuthController(
     $view,
 );
 $adminUsers = new AdminUserController($users, $view, $csrf);
+$adminAnnualLeave = new AdminAnnualLeaveController($users, $ledger, $annualLeave, $auth, $view, $csrf);
 $profile = new ProfileController($auth, $users, $view, $csrf);
 
 $verifyCsrf = new VerifyCsrfMiddleware($csrf);
@@ -67,6 +74,9 @@ $router->post('/profile/hire-date', [$profile, 'saveHireDate'], [$requireAuth, $
 $router->get('/admin', static fn (Request $request): Response => Response::html($view->render('admin', ['title' => '관리자'])), [$requireAdmin]);
 $router->get('/admin/users', [$adminUsers, 'index'], [$requireAdmin]);
 $router->post('/admin/users/save', [$adminUsers, 'save'], [$requireAdmin, $verifyCsrf]);
+$router->get('/admin/annual-leave', [$adminAnnualLeave, 'index'], [$requireAdmin]);
+$router->post('/admin/annual-leave/sync', [$adminAnnualLeave, 'sync'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/annual-leave/adjust', [$adminAnnualLeave, 'adjust'], [$requireAdmin, $verifyCsrf]);
 
 $router->post('/logout', static function (Request $request) use ($auth): Response {
     $auth->logout();
