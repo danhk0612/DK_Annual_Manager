@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace DKAnnual\Controller;
 
 use DateTimeImmutable;
+use DKAnnual\Auth\Auth;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
+use DKAnnual\Repository\AuditLogRepository;
 use DKAnnual\Repository\UserRepository;
 use DKAnnual\Security\Csrf;
 use DKAnnual\View\View;
@@ -16,6 +18,8 @@ final class AdminUserController
 {
     public function __construct(
         private readonly UserRepository $users,
+        private readonly Auth $auth,
+        private readonly AuditLogRepository $audit,
         private readonly View $view,
         private readonly Csrf $csrf,
     ) {
@@ -62,9 +66,12 @@ final class AdminUserController
             return Response::redirect('/admin/users?error=' . rawurlencode('권한 또는 상태 값이 올바르지 않습니다.'));
         }
 
+        $actor = $this->auth->user();
+        $actorId = $actor !== null ? (int) $actor['id'] : null;
+
         try {
             if ($id === null) {
-                $this->users->createManaged(
+                $newId = $this->users->createManaged(
                     $name,
                     $hireDate,
                     $employmentEndDate,
@@ -72,6 +79,13 @@ final class AdminUserController
                     $role,
                     $status,
                 );
+                $this->audit->record($actorId, 'user.created', 'user', $newId, [
+                    'name' => $name,
+                    'hire_date' => $hireDate,
+                    'employment_end_date' => $employmentEndDate,
+                    'role' => $role,
+                    'status' => $status,
+                ], $this->ip($request));
                 return Response::redirect('/admin/users?message=' . rawurlencode('직원을 추가했습니다.'));
             }
 
@@ -88,6 +102,13 @@ final class AdminUserController
                 $role,
                 $status,
             );
+            $this->audit->record($actorId, 'user.updated', 'user', $id, [
+                'name' => $name,
+                'hire_date' => $hireDate,
+                'employment_end_date' => $employmentEndDate,
+                'role' => $role,
+                'status' => $status,
+            ], $this->ip($request));
             return Response::redirect('/admin/users?message=' . rawurlencode('직원 정보를 저장했습니다.'));
         } catch (PDOException $exception) {
             if ($exception->getCode() === '23000') {
@@ -126,5 +147,11 @@ final class AdminUserController
 
         $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
         return $date !== false && $date->format('Y-m-d') === $value ? $value : false;
+    }
+
+    private function ip(Request $request): ?string
+    {
+        $ip = trim((string) $request->server('REMOTE_ADDR', ''));
+        return $ip !== '' ? $ip : null;
     }
 }
