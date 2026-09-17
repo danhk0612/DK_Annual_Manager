@@ -9,6 +9,7 @@ use DKAnnual\Auth\Auth;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Leave\LeaveDateCalculator;
+use DKAnnual\Repository\AuditLogRepository;
 use DKAnnual\Repository\HolidayRepository;
 use DKAnnual\Repository\LeaveRequestRepository;
 use DKAnnual\Repository\LeaveTypeRepository;
@@ -25,6 +26,7 @@ final class LeaveController
         private readonly LeaveRequestRepository $requests,
         private readonly LeaveDateCalculator $dates,
         private readonly LeaveNotificationService $notifications,
+        private readonly AuditLogRepository $audit,
         private readonly View $view,
         private readonly Csrf $csrf,
     ) {
@@ -90,6 +92,13 @@ final class LeaveController
             $dailyAmount,
         );
 
+        $this->audit->record((int) $user['id'], 'leave.request_created', 'leave_request', $requestId, [
+            'leave_type' => (string) $leaveType['code'],
+            'start_date' => $start->format('Y-m-d'),
+            'end_date' => $end->format('Y-m-d'),
+            'amount' => $requestedAmount,
+        ], $this->ip($request));
+
         $this->notifications->notifyAdminsOfRequest([
             'id' => $requestId,
             'user_name' => (string) $user['name'],
@@ -117,6 +126,8 @@ final class LeaveController
             return $this->redirectError('취소할 수 있는 신청을 찾지 못했습니다.');
         }
 
+        $this->audit->record((int) $user['id'], 'leave.request_cancelled', 'leave_request', $requestId, [], $this->ip($request));
+
         return Response::redirect('/leave?message=' . rawurlencode('휴가 신청을 취소했습니다.'));
     }
 
@@ -137,5 +148,11 @@ final class LeaveController
     private function redirectError(string $message): Response
     {
         return Response::redirect('/leave?error=' . rawurlencode($message));
+    }
+
+    private function ip(Request $request): ?string
+    {
+        $ip = trim((string) $request->server('REMOTE_ADDR', ''));
+        return $ip !== '' ? $ip : null;
     }
 }
