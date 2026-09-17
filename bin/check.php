@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use DKAnnual\Config;
 use DKAnnual\Database;
-use Throwable;
 
 if (PHP_SAPI !== 'cli') {
     fwrite(STDERR, "CLI에서만 실행할 수 있습니다.\n");
@@ -90,7 +89,7 @@ try {
     trim((string) $config->get('holiday_api.service_key', '')) !== ''
         ? $pass('공휴일 API 서비스키 설정')
         : $warn('공휴일 API 서비스키가 비어 있습니다.');
-} catch (Throwable $exception) {
+} catch (\Throwable $exception) {
     $fail('환경 확인 중 오류: ' . $exception->getMessage());
 }
 
