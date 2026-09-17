@@ -11,7 +11,11 @@
 - [x] `config.example.php` 작성
 - [x] 초기 MariaDB schema 작성
 - [x] PHP/Composer 최소 골격 작성
-- [ ] 로컬 PHP 구문/Composer/DB schema 검증
+- [x] PHP 구문 검사
+- [ ] Composer validate / install 검증
+- [ ] MariaDB schema 실제 적용 검증
+
+현재 작업 환경에는 Composer 및 MariaDB 서버가 없어 마지막 두 항목은 실제 실행 환경에서 검증한다.
 
 완료 조건: 새 환경에서 설정파일 작성 → Composer install → schema 적용 → 기본 페이지 DB 연결 확인.
 
