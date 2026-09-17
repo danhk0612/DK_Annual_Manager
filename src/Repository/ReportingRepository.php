@@ -43,6 +43,33 @@ final class ReportingRepository extends AbstractRepository
         ];
     }
 
+    /** @return array<string, float> */
+    public function userAnnualSummary(int $userId, int $year): array
+    {
+        $statement = $this->pdo->prepare(
+            "SELECT
+                COALESCE(SUM(CASE WHEN transaction_type = 'grant' THEN amount ELSE 0 END), 0) AS granted,
+                COALESCE(SUM(CASE WHEN transaction_type = 'carryover' THEN amount ELSE 0 END), 0) AS carryover,
+                COALESCE(SUM(CASE WHEN transaction_type = 'adjustment' THEN amount ELSE 0 END), 0) AS adjustment,
+                COALESCE(SUM(CASE WHEN transaction_type = 'reversal' THEN amount ELSE 0 END), 0) AS reversal,
+                COALESCE(-SUM(CASE WHEN transaction_type = 'usage' THEN amount ELSE 0 END), 0) AS used,
+                COALESCE(SUM(amount), 0) AS balance
+             FROM annual_leave_ledger
+             WHERE user_id = :user_id AND leave_year = :leave_year"
+        );
+        $statement->execute(['user_id' => $userId, 'leave_year' => $year]);
+        $row = $statement->fetch() ?: [];
+
+        return [
+            'granted' => (float) ($row['granted'] ?? 0),
+            'carryover' => (float) ($row['carryover'] ?? 0),
+            'adjustment' => (float) ($row['adjustment'] ?? 0),
+            'reversal' => (float) ($row['reversal'] ?? 0),
+            'used' => (float) ($row['used'] ?? 0),
+            'balance' => (float) ($row['balance'] ?? 0),
+        ];
+    }
+
     /** @return list<array<string, mixed>> */
     public function annualUserSummary(int $year): array
     {
