@@ -7,6 +7,7 @@
     "ext-curl": "*",
     "ext-json": "*",
     "ext-pdo": "*",
+    "ext-simplexml": "*",
     "guzzlehttp/guzzle": "^7.9",
     "firebase/php-jwt": "^6.11"
   },
