@@ -36,7 +36,15 @@ final class Response
     {
         http_response_code($this->status);
 
-        foreach ($this->headers as $name => $value) {
+        $securityHeaders = [
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Frame-Options' => 'DENY',
+            'Referrer-Policy' => 'same-origin',
+            'Permissions-Policy' => 'camera=(), microphone=(), geolocation=()',
+            'Content-Security-Policy' => "default-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
+        ];
+
+        foreach (array_merge($securityHeaders, $this->headers) as $name => $value) {
             header($name . ': ' . $value);
         }
 
