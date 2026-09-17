@@ -10,6 +10,7 @@ use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Leave\AnnualLeaveService;
 use DKAnnual\Repository\AnnualLeaveLedgerRepository;
+use DKAnnual\Repository\AuditLogRepository;
 use DKAnnual\Repository\UserRepository;
 use DKAnnual\Security\Csrf;
 use DKAnnual\View\View;
@@ -21,6 +22,7 @@ final class AdminAnnualLeaveController
         private readonly AnnualLeaveLedgerRepository $ledger,
         private readonly AnnualLeaveService $annualLeave,
         private readonly Auth $auth,
+        private readonly AuditLogRepository $audit,
         private readonly View $view,
         private readonly Csrf $csrf,
     ) {
@@ -71,6 +73,15 @@ final class AdminAnnualLeaveController
             $actor !== null ? (int) $actor['id'] : null,
         );
 
+        $this->audit->record(
+            $actor !== null ? (int) $actor['id'] : null,
+            'annual_leave.synced',
+            'user',
+            $userId,
+            ['added_entries' => $count],
+            $this->ip($request),
+        );
+
         return Response::redirect(
             '/admin/annual-leave?user_id=' . $userId
             . '&year=' . (int) date('Y')
@@ -118,6 +129,12 @@ final class AdminAnnualLeaveController
             $note !== '' ? $note : null,
             (int) $actor['id'],
         );
+
+        $this->audit->record((int) $actor['id'], 'annual_leave.adjusted', 'user', $userId, [
+            'leave_year' => $year,
+            'transaction_type' => $type,
+            'amount' => $amount,
+        ], $this->ip($request));
 
         return Response::redirect(
             '/admin/annual-leave?user_id=' . $userId
@@ -169,5 +186,11 @@ final class AdminAnnualLeaveController
         $query['error'] = $message;
 
         return Response::redirect('/admin/annual-leave?' . http_build_query($query));
+    }
+
+    private function ip(Request $request): ?string
+    {
+        $ip = trim((string) $request->server('REMOTE_ADDR', ''));
+        return $ip !== '' ? $ip : null;
     }
 }
