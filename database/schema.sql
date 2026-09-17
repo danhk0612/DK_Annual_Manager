@@ -79,6 +79,7 @@ CREATE TABLE annual_leave_ledger (
     leave_year SMALLINT UNSIGNED NOT NULL,
     transaction_type ENUM('grant', 'carryover', 'adjustment', 'usage', 'reversal') NOT NULL,
     amount DECIMAL(6,2) NOT NULL,
+    ledger_key VARCHAR(160) NULL,
     reference_request_id BIGINT UNSIGNED NULL,
     note VARCHAR(255) NULL,
     created_by BIGINT UNSIGNED NULL,
@@ -86,6 +87,7 @@ CREATE TABLE annual_leave_ledger (
     CONSTRAINT fk_annual_leave_ledger_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_annual_leave_ledger_request FOREIGN KEY (reference_request_id) REFERENCES leave_requests(id),
     CONSTRAINT fk_annual_leave_ledger_creator FOREIGN KEY (created_by) REFERENCES users(id),
+    UNIQUE KEY uq_annual_leave_ledger_key (ledger_key),
     KEY idx_annual_leave_ledger_user_year (user_id, leave_year),
     KEY idx_annual_leave_ledger_request (reference_request_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
