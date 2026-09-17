@@ -58,10 +58,13 @@ try {
         'users', 'leave_types', 'leave_requests', 'leave_request_days',
         'annual_leave_ledger', 'holidays', 'app_settings', 'audit_logs',
     ];
+    $tableStatement = $pdo->prepare(
+        'SELECT COUNT(*) FROM information_schema.tables '
+        . 'WHERE table_schema = DATABASE() AND table_name = :table_name'
+    );
     foreach ($requiredTables as $table) {
-        $statement = $pdo->prepare('SHOW TABLES LIKE :table_name');
-        $statement->execute(['table_name' => $table]);
-        $statement->fetchColumn() !== false
+        $tableStatement->execute(['table_name' => $table]);
+        (int) $tableStatement->fetchColumn() === 1
             ? $pass('DB table: ' . $table)
             : $fail('DB table이 없습니다: ' . $table);
     }
