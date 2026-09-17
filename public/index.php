@@ -17,6 +17,7 @@ use DKAnnual\Controller\LeaveController;
 use DKAnnual\Controller\ProfileController;
 use DKAnnual\Controller\TelegramAuthController;
 use DKAnnual\Database;
+use DKAnnual\Error\ErrorHandler;
 use DKAnnual\Holiday\KasiHolidayClient;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
@@ -44,7 +45,10 @@ use DKAnnual\View\View;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
+ErrorHandler::register();
+
 $config = new Config(dirname(__DIR__) . '/config/config.php');
+ErrorHandler::setDebug((bool) $config->get('app.debug', false));
 date_default_timezone_set((string) $config->get('app.timezone', 'Asia/Seoul'));
 
 $session = new Session();
