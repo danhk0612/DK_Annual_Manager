@@ -18,4 +18,8 @@
         <strong>연차 관리</strong>
         <span>법정 발생분을 동기화하고 이월·수동 조정 원장을 관리합니다.</span>
     </a>
+    <a class="menu-card" href="/admin/holidays">
+        <strong>공휴일 관리</strong>
+        <span>한국 공휴일을 갱신하고 회사 휴무일과 수동 휴일을 관리합니다.</span>
+    </a>
 </section>
