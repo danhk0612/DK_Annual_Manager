@@ -5,6 +5,7 @@ declare(strict_types=1);
 use DKAnnual\Auth\Auth;
 use DKAnnual\Config;
 use DKAnnual\Controller\AdminAnnualLeaveController;
+use DKAnnual\Controller\AdminHolidayController;
 use DKAnnual\Controller\AdminLeaveRequestController;
 use DKAnnual\Controller\AdminUserController;
 use DKAnnual\Controller\CalendarController;
@@ -13,6 +14,7 @@ use DKAnnual\Controller\LeaveController;
 use DKAnnual\Controller\ProfileController;
 use DKAnnual\Controller\TelegramAuthController;
 use DKAnnual\Database;
+use DKAnnual\Holiday\KasiHolidayClient;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Http\Router;
@@ -75,6 +77,12 @@ $adminRequests = new AdminLeaveRequestController(
     $view,
     $csrf,
 );
+$adminHolidays = new AdminHolidayController(
+    $holidays,
+    new KasiHolidayClient($config),
+    $view,
+    $csrf,
+);
 $profile = new ProfileController($auth, $users, $view, $csrf);
 $leave = new LeaveController(
     $auth,
@@ -117,6 +125,10 @@ $router->post('/admin/users/save', [$adminUsers, 'save'], [$requireAdmin, $verif
 $router->get('/admin/annual-leave', [$adminAnnualLeave, 'index'], [$requireAdmin]);
 $router->post('/admin/annual-leave/sync', [$adminAnnualLeave, 'sync'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/annual-leave/adjust', [$adminAnnualLeave, 'adjust'], [$requireAdmin, $verifyCsrf]);
+$router->get('/admin/holidays', [$adminHolidays, 'index'], [$requireAdmin]);
+$router->post('/admin/holidays/sync', [$adminHolidays, 'sync'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/holidays/save', [$adminHolidays, 'save'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/holidays/delete', [$adminHolidays, 'delete'], [$requireAdmin, $verifyCsrf]);
 
 $router->post('/logout', static function (Request $request) use ($auth): Response {
     $auth->logout();
