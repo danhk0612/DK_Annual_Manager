@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 use DKAnnual\Auth\Auth;
 use DKAnnual\Config;
+use DKAnnual\Controller\AdminUserController;
 use DKAnnual\Controller\HomeController;
+use DKAnnual\Controller\ProfileController;
 use DKAnnual\Controller\TelegramAuthController;
 use DKAnnual\Database;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Http\Router;
 use DKAnnual\Middleware\RequireAdminMiddleware;
+use DKAnnual\Middleware\RequireAuthMiddleware;
 use DKAnnual\Middleware\VerifyCsrfMiddleware;
 use DKAnnual\Repository\UserRepository;
 use DKAnnual\Security\Csrf;
@@ -42,7 +45,11 @@ $telegramAuth = new TelegramAuthController(
     $auth,
     $view,
 );
+$adminUsers = new AdminUserController($users, $view, $csrf);
+$profile = new ProfileController($auth, $users, $view, $csrf);
+
 $verifyCsrf = new VerifyCsrfMiddleware($csrf);
+$requireAuth = new RequireAuthMiddleware($auth);
 $requireAdmin = new RequireAdminMiddleware($auth);
 
 $router->get('/', [$home, 'index']);
@@ -53,7 +60,14 @@ $router->get('/health', static function (Request $request) use ($pdo): Response 
     $pdo->query('SELECT 1')->fetchColumn();
     return Response::json(['status' => 'ok']);
 });
+
+$router->get('/profile', [$profile, 'index'], [$requireAuth]);
+$router->post('/profile/hire-date', [$profile, 'saveHireDate'], [$requireAuth, $verifyCsrf]);
+
 $router->get('/admin', static fn (Request $request): Response => Response::html($view->render('admin', ['title' => '관리자'])), [$requireAdmin]);
+$router->get('/admin/users', [$adminUsers, 'index'], [$requireAdmin]);
+$router->post('/admin/users/save', [$adminUsers, 'save'], [$requireAdmin, $verifyCsrf]);
+
 $router->post('/logout', static function (Request $request) use ($auth): Response {
     $auth->logout();
     return Response::redirect('/');
