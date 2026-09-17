@@ -1,0 +1,21 @@
+{
+  "name": "danhk0612/dk-annual-manager",
+  "description": "PHP + MariaDB annual leave and vacation management system",
+  "type": "project",
+  "require": {
+    "php": ">=8.2",
+    "ext-curl": "*",
+    "ext-json": "*",
+    "ext-pdo": "*",
+    "guzzlehttp/guzzle": "^7.9",
+    "firebase/php-jwt": "^6.11"
+  },
+  "autoload": {
+    "psr-4": {
+      "DKAnnual\\": "src/"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  }
+}
