@@ -8,6 +8,7 @@ use DKAnnual\Auth\Auth;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Leave\LeaveReviewService;
+use DKAnnual\Repository\AuditLogRepository;
 use DKAnnual\Repository\LeaveRequestRepository;
 use DKAnnual\Security\Csrf;
 use DKAnnual\Telegram\LeaveNotificationService;
@@ -20,6 +21,7 @@ final class AdminLeaveRequestController
         private readonly LeaveReviewService $reviewer,
         private readonly LeaveNotificationService $notifications,
         private readonly Auth $auth,
+        private readonly AuditLogRepository $audit,
         private readonly View $view,
         private readonly Csrf $csrf,
     ) {
@@ -62,6 +64,15 @@ final class AdminLeaveRequestController
             return Response::redirect('/admin/requests?error=' . rawurlencode('이미 처리되었거나 존재하지 않는 신청입니다.'));
         }
 
+        $this->audit->record(
+            (int) $actor['id'],
+            $action === 'approve' ? 'leave.request_approved' : 'leave.request_rejected',
+            'leave_request',
+            $requestId,
+            ['status' => $action === 'approve' ? 'approved' : 'rejected'],
+            $this->ip($request),
+        );
+
         $this->notifications->notifyUserOfDecision($result['request']);
 
         return Response::redirect('/admin/requests?message=' . rawurlencode(
@@ -73,5 +84,11 @@ final class AdminLeaveRequestController
     {
         $value = (string) ($value ?? '');
         return ctype_digit($value) && (int) $value > 0 ? (int) $value : null;
+    }
+
+    private function ip(Request $request): ?string
+    {
+        $ip = trim((string) $request->server('REMOTE_ADDR', ''));
+        return $ip !== '' ? $ip : null;
     }
 }
