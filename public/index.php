@@ -65,7 +65,7 @@ $router = new Router();
 
 $notifications = new LeaveNotificationService($config, new TelegramBotClient($config), $users);
 $annualLeave = new AnnualLeaveService(new AnnualLeaveCalculator(), $ledger);
-$home = new HomeController($view, $auth, $csrf);
+$home = new HomeController($view, $auth, $reports, $csrf);
 $telegramAuth = new TelegramAuthController(
     $config,
     $session,
