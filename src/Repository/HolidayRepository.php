@@ -35,7 +35,6 @@ final class HolidayRepository extends AbstractRepository
         $statement = $this->pdo->prepare(
             'SELECT holiday_date, name, source FROM holidays '
             . 'WHERE holiday_date BETWEEN :start_date AND :end_date '
-            . 'AND is_public_holiday = 1 '
             . 'ORDER BY holiday_date ASC, name ASC'
         );
         $statement->execute([
