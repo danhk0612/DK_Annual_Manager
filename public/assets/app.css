@@ -102,3 +102,31 @@ th { color: #697386; font-size: 12px; }
 .summary-card strong { font-size: 22px; }
 button:disabled { opacity: .45; cursor: not-allowed; }
 @media (max-width: 640px) { .summary-grid, .form-grid.compact { grid-template-columns: 1fr; } }
+.hero-actions, .calendar-nav { display: flex; gap: 10px; flex-wrap: wrap; }
+.calendar-nav { margin-bottom: 14px; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.weekday-head { background: #fff; border: 1px solid #e5e9f2; border-bottom: 0; border-radius: 14px 14px 0 0; }
+.weekday-head > div { padding: 10px; text-align: center; color: #697386; font-size: 12px; font-weight: 750; }
+.calendar-day {
+    min-height: 132px;
+    padding: 10px;
+    background: #fff;
+    border-right: 1px solid #e5e9f2;
+    border-bottom: 1px solid #e5e9f2;
+}
+.calendar-day:nth-child(7n+1) { border-left: 1px solid #e5e9f2; }
+.calendar-day.empty { background: #f8f9fc; }
+.calendar-day.weekend { background: #fafbfc; }
+.day-number { display: flex; gap: 7px; align-items: baseline; min-height: 28px; }
+.holiday-name { color: #b33a3a; font-size: 11px; line-height: 1.2; }
+.calendar-event { display: grid; gap: 2px; margin: 5px 0; padding: 6px 7px; border-radius: 8px; background: #eef1f6; font-size: 11px; }
+.calendar-event.pending { background: #fff6dc; }
+.calendar-event.approved { background: #e8f7ee; }
+.calendar-event span { color: #697386; }
+.badge.approved { background: #e8f7ee; color: #176239; }
+.badge.rejected, .badge.cancelled { background: #f0f1f3; color: #697386; }
+@media (max-width: 760px) {
+    .calendar-grid { min-width: 760px; }
+    .calendar-grid-wrap { overflow-x: auto; }
+    .calendar-day { min-height: 110px; }
+}
