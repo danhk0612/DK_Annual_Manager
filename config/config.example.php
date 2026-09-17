@@ -17,7 +17,7 @@ return [
         'port' => 3306,
         'database' => 'dk_annual_manager',
         'username' => 'dk_annual_manager',
-        'password' => 'change-me',
+        'password' => '',
         'charset' => 'utf8mb4',
     ],
 
@@ -31,17 +31,12 @@ return [
         'jwks_url' => 'https://oauth.telegram.org/.well-known/jwks.json',
         'issuer' => 'https://oauth.telegram.org',
         'scopes' => ['openid', 'profile', 'telegram:bot_access'],
+        'bot_api_base_url' => 'https://api.telegram.org',
         'bootstrap_admin_telegram_ids' => [],
         'admin_chat_ids' => [],
     ],
 
     'holiday_api' => [
         'service_key' => '',
-        'base_url' => 'https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService',
-    ],
-
-    'leave' => [
-        'year_basis' => 'anniversary',
-        'max_statutory_days' => 25,
     ],
 ];

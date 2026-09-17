@@ -13,6 +13,7 @@ use DKAnnual\Repository\HolidayRepository;
 use DKAnnual\Repository\LeaveRequestRepository;
 use DKAnnual\Repository\LeaveTypeRepository;
 use DKAnnual\Security\Csrf;
+use DKAnnual\Telegram\LeaveNotificationService;
 use DKAnnual\View\View;
 
 final class LeaveController
@@ -23,6 +24,7 @@ final class LeaveController
         private readonly HolidayRepository $holidays,
         private readonly LeaveRequestRepository $requests,
         private readonly LeaveDateCalculator $dates,
+        private readonly LeaveNotificationService $notifications,
         private readonly View $view,
         private readonly Csrf $csrf,
     ) {
@@ -77,7 +79,7 @@ final class LeaveController
         $dailyAmount = (float) $leaveType['default_amount'];
         $requestedAmount = count($leaveDates) * $dailyAmount;
 
-        $this->requests->create(
+        $requestId = $this->requests->create(
             (int) $user['id'],
             (int) $leaveType['id'],
             $start->format('Y-m-d'),
@@ -87,6 +89,16 @@ final class LeaveController
             $leaveDates,
             $dailyAmount,
         );
+
+        $this->notifications->notifyAdminsOfRequest([
+            'id' => $requestId,
+            'user_name' => (string) $user['name'],
+            'leave_type_name' => (string) $leaveType['name'],
+            'start_date' => $start->format('Y-m-d'),
+            'end_date' => $end->format('Y-m-d'),
+            'requested_amount' => $requestedAmount,
+            'reason' => $reason,
+        ]);
 
         return Response::redirect('/leave?message=' . rawurlencode(
             sprintf('%s %.1f일을 신청했습니다.', (string) $leaveType['name'], $requestedAmount)

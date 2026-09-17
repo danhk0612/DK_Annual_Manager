@@ -105,6 +105,22 @@ final class LeaveRequestRepository extends AbstractRepository
         return $statement->fetchAll();
     }
 
+    /** @return list<array<string, mixed>> */
+    public function pendingForAdmin(): array
+    {
+        $statement = $this->pdo->query(
+            'SELECT r.*, u.name AS user_name, u.telegram_user_id, '
+            . 't.code AS leave_code, t.name AS leave_type_name, t.deducts_annual_leave '
+            . 'FROM leave_requests r '
+            . 'INNER JOIN users u ON u.id = r.user_id '
+            . 'INNER JOIN leave_types t ON t.id = r.leave_type_id '
+            . "WHERE r.status = 'pending' "
+            . 'ORDER BY r.created_at ASC, r.id ASC'
+        );
+
+        return $statement->fetchAll();
+    }
+
     public function cancelPending(int $requestId, int $userId): bool
     {
         $statement = $this->pdo->prepare(
