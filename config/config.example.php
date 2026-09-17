@@ -17,7 +17,7 @@ return [
         'port' => 3306,
         'database' => 'dk_annual_manager',
         'username' => 'dk_annual_manager',
-        'password' => '',
+        'password' => 'change-me',
         'charset' => 'utf8mb4',
     ],
 
@@ -38,5 +38,11 @@ return [
 
     'holiday_api' => [
         'service_key' => '',
+        'base_url' => 'https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService',
+    ],
+
+    'leave' => [
+        'year_basis' => 'anniversary',
+        'max_statutory_days' => 25,
     ],
 ];
