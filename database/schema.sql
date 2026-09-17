@@ -8,7 +8,7 @@ CREATE TABLE users (
     name VARCHAR(100) NOT NULL,
     telegram_user_id BIGINT UNSIGNED NULL,
     telegram_username VARCHAR(100) NULL,
-    hire_date DATE NOT NULL,
+    hire_date DATE NULL,
     employment_end_date DATE NULL,
     role ENUM('admin', 'user') NOT NULL DEFAULT 'user',
     status ENUM('pending', 'active', 'inactive') NOT NULL DEFAULT 'pending',
