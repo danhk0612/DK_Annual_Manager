@@ -16,6 +16,8 @@ $title = isset($title) && is_string($title) ? $title : 'DK Annual Manager';
     <a class="brand" href="/">DK Annual Manager</a>
     <nav class="topnav">
         <a href="/">홈</a>
+        <a href="/calendar">달력</a>
+        <a href="/leave">휴가 신청</a>
         <a href="/profile">내 정보</a>
         <a href="/admin">관리</a>
     </nav>
