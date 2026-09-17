@@ -67,7 +67,7 @@ final class AdminHolidayController
         if (!$this->isValidDate($date)) {
             return $this->redirect($year, null, '날짜 형식이 올바르지 않습니다.');
         }
-        if ($name === '' || mb_strlen($name) > 120) {
+        if ($name === '' || preg_match('/^.{1,120}$/us', $name) !== 1) {
             return $this->redirect($year, null, '휴일 명칭을 1~120자로 입력해 주세요.');
         }
         if (!in_array($source, ['manual', 'company'], true)) {
