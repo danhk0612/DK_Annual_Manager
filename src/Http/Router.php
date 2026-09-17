@@ -34,7 +34,17 @@ final class Router
     {
         $route = $this->routes[$request->method()][$request->path()] ?? null;
         if ($route === null) {
-            return Response::html('<h1>404</h1><p>페이지를 찾을 수 없습니다.</p>', 404);
+            return Response::html(
+                '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
+                . '<meta name="viewport" content="width=device-width,initial-scale=1">'
+                . '<title>페이지 없음 · DK Annual Manager</title><link rel="stylesheet" href="/assets/app.css">'
+                . '</head><body><main class="container"><section class="panel narrow">'
+                . '<p class="eyebrow">404</p><h1>페이지를 찾을 수 없습니다.</h1>'
+                . '<p>주소를 확인하거나 처음 화면으로 돌아가 주세요.</p>'
+                . '<a class="button primary" href="/">처음 화면</a>'
+                . '</section></main></body></html>',
+                404,
+            );
         }
 
         $next = $route['handler'];
