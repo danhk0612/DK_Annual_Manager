@@ -2,30 +2,49 @@
 
 declare(strict_types=1);
 
+use DKAnnual\Auth\Auth;
 use DKAnnual\Config;
+use DKAnnual\Controller\HomeController;
 use DKAnnual\Database;
+use DKAnnual\Http\Request;
+use DKAnnual\Http\Response;
+use DKAnnual\Http\Router;
+use DKAnnual\Middleware\RequireAdminMiddleware;
+use DKAnnual\Middleware\VerifyCsrfMiddleware;
+use DKAnnual\Repository\UserRepository;
+use DKAnnual\Security\Csrf;
+use DKAnnual\Session\Session;
+use DKAnnual\View\View;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 $config = new Config(dirname(__DIR__) . '/config/config.php');
 date_default_timezone_set((string) $config->get('app.timezone', 'Asia/Seoul'));
 
-$pdo = Database::connect($config);
-$pdo->query('SELECT 1')->fetchColumn();
+$session = new Session();
+$session->start($config);
 
-header('Content-Type: text/html; charset=utf-8');
-?>
-<!doctype html>
-<html lang="ko">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= htmlspecialchars((string) $config->get('app.name', 'DK Annual Manager'), ENT_QUOTES, 'UTF-8') ?></title>
-</head>
-<body>
-    <main>
-        <h1>DK Annual Manager</h1>
-        <p>애플리케이션 및 데이터베이스 연결이 정상입니다.</p>
-    </main>
-</body>
-</html>
+$pdo = Database::connect($config);
+$users = new UserRepository($pdo);
+$auth = new Auth($session, $users);
+$csrf = new Csrf($session);
+$view = new View(dirname(__DIR__) . '/templates');
+$router = new Router();
+
+$home = new HomeController($view, $auth, $csrf);
+$verifyCsrf = new VerifyCsrfMiddleware($csrf);
+$requireAdmin = new RequireAdminMiddleware($auth);
+
+$router->get('/', [$home, 'index']);
+$router->get('/login', static fn (Request $request): Response => Response::html($view->render('login', ['title' => '로그인'])));
+$router->get('/health', static function (Request $request) use ($pdo): Response {
+    $pdo->query('SELECT 1')->fetchColumn();
+    return Response::json(['status' => 'ok']);
+});
+$router->get('/admin', static fn (Request $request): Response => Response::html($view->render('admin', ['title' => '관리자'])), [$requireAdmin]);
+$router->post('/logout', static function (Request $request) use ($auth): Response {
+    $auth->logout();
+    return Response::redirect('/');
+}, [$verifyCsrf]);
+
+$router->dispatch(Request::fromGlobals())->send();
