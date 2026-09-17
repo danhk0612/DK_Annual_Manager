@@ -28,6 +28,20 @@ final class UserRepository extends AbstractRepository
         return is_array($user) ? $user : null;
     }
 
+    /** @return list<array<string, mixed>> */
+    public function all(): array
+    {
+        $statement = $this->pdo->query(
+            "SELECT * FROM users
+             ORDER BY
+                CASE status WHEN 'pending' THEN 0 WHEN 'active' THEN 1 ELSE 2 END,
+                name ASC,
+                id ASC"
+        );
+
+        return $statement->fetchAll();
+    }
+
     public function createFromTelegram(
         int $telegramUserId,
         string $name,
@@ -48,6 +62,66 @@ final class UserRepository extends AbstractRepository
         ]);
 
         return (int) $this->pdo->lastInsertId();
+    }
+
+    public function createManaged(
+        string $name,
+        ?string $hireDate,
+        ?string $employmentEndDate,
+        ?int $telegramUserId,
+        string $role,
+        string $status,
+    ): int {
+        $statement = $this->pdo->prepare(
+            'INSERT INTO users '
+            . '(name, telegram_user_id, hire_date, employment_end_date, role, status) '
+            . 'VALUES (:name, :telegram_user_id, :hire_date, :employment_end_date, :role, :status)'
+        );
+        $statement->execute([
+            'name' => $name,
+            'telegram_user_id' => $telegramUserId,
+            'hire_date' => $hireDate,
+            'employment_end_date' => $employmentEndDate,
+            'role' => $role,
+            'status' => $status,
+        ]);
+
+        return (int) $this->pdo->lastInsertId();
+    }
+
+    public function updateManaged(
+        int $id,
+        string $name,
+        ?string $hireDate,
+        ?string $employmentEndDate,
+        ?int $telegramUserId,
+        string $role,
+        string $status,
+    ): void {
+        $statement = $this->pdo->prepare(
+            'UPDATE users SET '
+            . 'name = :name, telegram_user_id = :telegram_user_id, hire_date = :hire_date, '
+            . 'employment_end_date = :employment_end_date, role = :role, status = :status '
+            . 'WHERE id = :id'
+        );
+        $statement->execute([
+            'id' => $id,
+            'name' => $name,
+            'telegram_user_id' => $telegramUserId,
+            'hire_date' => $hireDate,
+            'employment_end_date' => $employmentEndDate,
+            'role' => $role,
+            'status' => $status,
+        ]);
+    }
+
+    public function updateOwnHireDate(int $id, string $hireDate): void
+    {
+        $statement = $this->pdo->prepare('UPDATE users SET hire_date = :hire_date WHERE id = :id');
+        $statement->execute([
+            'id' => $id,
+            'hire_date' => $hireDate,
+        ]);
     }
 
     public function syncTelegramProfile(int $id, string $name, ?string $username): void

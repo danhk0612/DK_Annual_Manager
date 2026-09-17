@@ -1,0 +1,130 @@
+<?php
+
+declare(strict_types=1);
+
+namespace DKAnnual\Controller;
+
+use DateTimeImmutable;
+use DKAnnual\Http\Request;
+use DKAnnual\Http\Response;
+use DKAnnual\Repository\UserRepository;
+use DKAnnual\Security\Csrf;
+use DKAnnual\View\View;
+use PDOException;
+
+final class AdminUserController
+{
+    public function __construct(
+        private readonly UserRepository $users,
+        private readonly View $view,
+        private readonly Csrf $csrf,
+    ) {
+    }
+
+    public function index(Request $request): Response
+    {
+        $editUser = null;
+        $editId = $request->input('edit');
+        if (is_string($editId) && ctype_digit($editId)) {
+            $editUser = $this->users->findById((int) $editId);
+        }
+
+        return Response::html($this->view->render('admin-users', [
+            'title' => '직원 관리',
+            'users' => $this->users->all(),
+            'editUser' => $editUser,
+            'csrfToken' => $this->csrf->token(),
+            'message' => $request->input('message'),
+            'error' => $request->input('error'),
+        ]));
+    }
+
+    public function save(Request $request): Response
+    {
+        $id = $this->optionalId($request->input('id'));
+        $name = trim((string) $request->input('name', ''));
+        $hireDate = $this->optionalDate($request->input('hire_date'));
+        $employmentEndDate = $this->optionalDate($request->input('employment_end_date'));
+        $telegramUserId = $this->optionalTelegramId($request->input('telegram_user_id'));
+        $role = (string) $request->input('role', 'user');
+        $status = (string) $request->input('status', 'pending');
+
+        if ($name === '') {
+            return Response::redirect('/admin/users?error=' . rawurlencode('이름을 입력해 주세요.'));
+        }
+        if ($hireDate === false || $employmentEndDate === false) {
+            return Response::redirect('/admin/users?error=' . rawurlencode('날짜 형식을 확인해 주세요.'));
+        }
+        if ($telegramUserId === false) {
+            return Response::redirect('/admin/users?error=' . rawurlencode('Telegram User ID는 숫자로 입력해 주세요.'));
+        }
+        if (!in_array($role, ['admin', 'user'], true) || !in_array($status, ['pending', 'active', 'inactive'], true)) {
+            return Response::redirect('/admin/users?error=' . rawurlencode('권한 또는 상태 값이 올바르지 않습니다.'));
+        }
+
+        try {
+            if ($id === null) {
+                $this->users->createManaged(
+                    $name,
+                    $hireDate,
+                    $employmentEndDate,
+                    $telegramUserId,
+                    $role,
+                    $status,
+                );
+                return Response::redirect('/admin/users?message=' . rawurlencode('직원을 추가했습니다.'));
+            }
+
+            if ($this->users->findById($id) === null) {
+                return Response::redirect('/admin/users?error=' . rawurlencode('직원을 찾을 수 없습니다.'));
+            }
+
+            $this->users->updateManaged(
+                $id,
+                $name,
+                $hireDate,
+                $employmentEndDate,
+                $telegramUserId,
+                $role,
+                $status,
+            );
+            return Response::redirect('/admin/users?message=' . rawurlencode('직원 정보를 저장했습니다.'));
+        } catch (PDOException $exception) {
+            if ($exception->getCode() === '23000') {
+                return Response::redirect('/admin/users?error=' . rawurlencode('이미 연결된 Telegram User ID입니다.'));
+            }
+
+            throw $exception;
+        }
+    }
+
+    private function optionalId(mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return is_string($value) && ctype_digit($value) ? (int) $value : null;
+    }
+
+    private function optionalTelegramId(mixed $value): int|false|null
+    {
+        $value = trim((string) ($value ?? ''));
+        if ($value === '') {
+            return null;
+        }
+
+        return ctype_digit($value) ? (int) $value : false;
+    }
+
+    private function optionalDate(mixed $value): string|false|null
+    {
+        $value = trim((string) ($value ?? ''));
+        if ($value === '') {
+            return null;
+        }
+
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        return $date !== false && $date->format('Y-m-d') === $value ? $value : false;
+    }
+}
