@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace DKAnnual\Controller;
 
 use DateTimeImmutable;
+use DKAnnual\Auth\Auth;
 use DKAnnual\Holiday\KasiHolidayClient;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
+use DKAnnual\Repository\AuditLogRepository;
 use DKAnnual\Repository\HolidayRepository;
 use DKAnnual\Security\Csrf;
 use DKAnnual\View\View;
@@ -18,6 +20,8 @@ final class AdminHolidayController
     public function __construct(
         private readonly HolidayRepository $holidays,
         private readonly KasiHolidayClient $client,
+        private readonly Auth $auth,
+        private readonly AuditLogRepository $audit,
         private readonly View $view,
         private readonly Csrf $csrf,
     ) {
@@ -50,6 +54,9 @@ final class AdminHolidayController
             }
 
             $count = $this->holidays->replacePublicApiYear($year, $items);
+            $this->audit->record($this->actorId(), 'holiday.synced', 'holiday_year', $year, [
+                'count' => $count,
+            ], $this->ip($request));
             return $this->redirect($year, sprintf('%d년 공휴일 %d건을 갱신했습니다.', $year, $count));
         } catch (Throwable $exception) {
             return $this->redirect($year, null, $exception->getMessage());
@@ -76,6 +83,12 @@ final class AdminHolidayController
 
         try {
             $this->holidays->saveManaged($date, $name, $source, $isPublicHoliday);
+            $this->audit->record($this->actorId(), 'holiday.created', 'holiday', null, [
+                'holiday_date' => $date,
+                'name' => $name,
+                'source' => $source,
+                'exclude_from_leave_days' => $isPublicHoliday,
+            ], $this->ip($request));
             return $this->redirect($year, '휴일을 저장했습니다.');
         } catch (Throwable $exception) {
             return $this->redirect($year, null, $exception->getMessage());
@@ -94,6 +107,7 @@ final class AdminHolidayController
             return $this->redirect($year, null, '수동 또는 회사 휴일만 삭제할 수 있습니다.');
         }
 
+        $this->audit->record($this->actorId(), 'holiday.deleted', 'holiday', (int) $id, [], $this->ip($request));
         return $this->redirect($year, '휴일을 삭제했습니다.');
     }
 
@@ -128,5 +142,17 @@ final class AdminHolidayController
         }
 
         return Response::redirect('/admin/holidays?' . http_build_query($query));
+    }
+
+    private function actorId(): ?int
+    {
+        $actor = $this->auth->user();
+        return $actor !== null ? (int) $actor['id'] : null;
+    }
+
+    private function ip(Request $request): ?string
+    {
+        $ip = trim((string) $request->server('REMOTE_ADDR', ''));
+        return $ip !== '' ? $ip : null;
     }
 }
