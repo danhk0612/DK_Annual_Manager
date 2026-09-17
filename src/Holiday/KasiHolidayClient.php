@@ -116,7 +116,7 @@ final class KasiHolidayClient
 
             $result[] = [
                 'holiday_date' => $date,
-                'name' => mb_substr($name, 0, 120),
+                'name' => $name,
                 'external_key' => sprintf('KASI:%s:%s:%s', $locdate, $seq, $dateKind),
             ];
         }
