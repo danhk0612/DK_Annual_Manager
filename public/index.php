@@ -5,6 +5,7 @@ declare(strict_types=1);
 use DKAnnual\Auth\Auth;
 use DKAnnual\Config;
 use DKAnnual\Controller\AdminAnnualLeaveController;
+use DKAnnual\Controller\AdminLeaveRequestController;
 use DKAnnual\Controller\AdminUserController;
 use DKAnnual\Controller\CalendarController;
 use DKAnnual\Controller\HomeController;
@@ -18,6 +19,7 @@ use DKAnnual\Http\Router;
 use DKAnnual\Leave\AnnualLeaveCalculator;
 use DKAnnual\Leave\AnnualLeaveService;
 use DKAnnual\Leave\LeaveDateCalculator;
+use DKAnnual\Leave\LeaveReviewService;
 use DKAnnual\Middleware\RequireAdminMiddleware;
 use DKAnnual\Middleware\RequireAuthMiddleware;
 use DKAnnual\Middleware\VerifyCsrfMiddleware;
@@ -28,6 +30,8 @@ use DKAnnual\Repository\LeaveTypeRepository;
 use DKAnnual\Repository\UserRepository;
 use DKAnnual\Security\Csrf;
 use DKAnnual\Session\Session;
+use DKAnnual\Telegram\LeaveNotificationService;
+use DKAnnual\Telegram\TelegramBotClient;
 use DKAnnual\Telegram\TelegramOidcClient;
 use DKAnnual\View\View;
 
@@ -50,6 +54,7 @@ $csrf = new Csrf($session);
 $view = new View(dirname(__DIR__) . '/templates');
 $router = new Router();
 
+$notifications = new LeaveNotificationService($config, new TelegramBotClient($config), $users);
 $annualLeave = new AnnualLeaveService(new AnnualLeaveCalculator(), $ledger);
 $home = new HomeController($view, $auth, $csrf);
 $telegramAuth = new TelegramAuthController(
@@ -62,6 +67,14 @@ $telegramAuth = new TelegramAuthController(
 );
 $adminUsers = new AdminUserController($users, $view, $csrf);
 $adminAnnualLeave = new AdminAnnualLeaveController($users, $ledger, $annualLeave, $auth, $view, $csrf);
+$adminRequests = new AdminLeaveRequestController(
+    $leaveRequests,
+    new LeaveReviewService($pdo),
+    $notifications,
+    $auth,
+    $view,
+    $csrf,
+);
 $profile = new ProfileController($auth, $users, $view, $csrf);
 $leave = new LeaveController(
     $auth,
@@ -69,6 +82,7 @@ $leave = new LeaveController(
     $holidays,
     $leaveRequests,
     new LeaveDateCalculator(),
+    $notifications,
     $view,
     $csrf,
 );
@@ -96,6 +110,8 @@ $router->get('/profile', [$profile, 'index'], [$requireAuth]);
 $router->post('/profile/hire-date', [$profile, 'saveHireDate'], [$requireAuth, $verifyCsrf]);
 
 $router->get('/admin', static fn (Request $request): Response => Response::html($view->render('admin', ['title' => '관리자'])), [$requireAdmin]);
+$router->get('/admin/requests', [$adminRequests, 'index'], [$requireAdmin]);
+$router->post('/admin/requests/review', [$adminRequests, 'review'], [$requireAdmin, $verifyCsrf]);
 $router->get('/admin/users', [$adminUsers, 'index'], [$requireAdmin]);
 $router->post('/admin/users/save', [$adminUsers, 'save'], [$requireAdmin, $verifyCsrf]);
 $router->get('/admin/annual-leave', [$adminAnnualLeave, 'index'], [$requireAdmin]);

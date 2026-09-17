@@ -31,6 +31,7 @@ return [
         'jwks_url' => 'https://oauth.telegram.org/.well-known/jwks.json',
         'issuer' => 'https://oauth.telegram.org',
         'scopes' => ['openid', 'profile', 'telegram:bot_access'],
+        'bot_api_base_url' => 'https://api.telegram.org',
         'bootstrap_admin_telegram_ids' => [],
         'admin_chat_ids' => [],
     ],

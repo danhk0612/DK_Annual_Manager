@@ -42,6 +42,20 @@ final class UserRepository extends AbstractRepository
         return $statement->fetchAll();
     }
 
+    /** @return list<int> */
+    public function activeAdminTelegramIds(): array
+    {
+        $statement = $this->pdo->query(
+            "SELECT telegram_user_id FROM users "
+            . "WHERE role = 'admin' AND status = 'active' AND telegram_user_id IS NOT NULL"
+        );
+
+        return array_map(
+            static fn (array $row): int => (int) $row['telegram_user_id'],
+            $statement->fetchAll(),
+        );
+    }
+
     public function createFromTelegram(
         int $telegramUserId,
         string $name,
