@@ -5,6 +5,7 @@ declare(strict_types=1);
 use DKAnnual\Auth\Auth;
 use DKAnnual\Config;
 use DKAnnual\Controller\HomeController;
+use DKAnnual\Controller\TelegramAuthController;
 use DKAnnual\Database;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
@@ -14,6 +15,7 @@ use DKAnnual\Middleware\VerifyCsrfMiddleware;
 use DKAnnual\Repository\UserRepository;
 use DKAnnual\Security\Csrf;
 use DKAnnual\Session\Session;
+use DKAnnual\Telegram\TelegramOidcClient;
 use DKAnnual\View\View;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
@@ -32,11 +34,21 @@ $view = new View(dirname(__DIR__) . '/templates');
 $router = new Router();
 
 $home = new HomeController($view, $auth, $csrf);
+$telegramAuth = new TelegramAuthController(
+    $config,
+    $session,
+    new TelegramOidcClient($config),
+    $users,
+    $auth,
+    $view,
+);
 $verifyCsrf = new VerifyCsrfMiddleware($csrf);
 $requireAdmin = new RequireAdminMiddleware($auth);
 
 $router->get('/', [$home, 'index']);
-$router->get('/login', static fn (Request $request): Response => Response::html($view->render('login', ['title' => '로그인'])));
+$router->get('/login', [$telegramAuth, 'loginPage']);
+$router->get('/auth/telegram/start', [$telegramAuth, 'start']);
+$router->get('/auth/telegram/callback', [$telegramAuth, 'callback']);
 $router->get('/health', static function (Request $request) use ($pdo): Response {
     $pdo->query('SELECT 1')->fetchColumn();
     return Response::json(['status' => 'ok']);

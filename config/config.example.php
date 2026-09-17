@@ -26,6 +26,12 @@ return [
         'client_secret' => '',
         'bot_token' => '',
         'redirect_uri' => 'https://leave.example.com/auth/telegram/callback',
+        'authorization_url' => 'https://oauth.telegram.org/auth',
+        'token_url' => 'https://oauth.telegram.org/token',
+        'jwks_url' => 'https://oauth.telegram.org/.well-known/jwks.json',
+        'issuer' => 'https://oauth.telegram.org',
+        'scopes' => ['openid', 'profile', 'telegram:bot_access'],
+        'bootstrap_admin_telegram_ids' => [],
         'admin_chat_ids' => [],
     ],
 

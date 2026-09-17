@@ -17,11 +17,9 @@
 
 현재 작업 환경에는 Composer 및 MariaDB 서버가 없어 마지막 두 항목은 실제 실행 환경에서 검증한다.
 
-완료 조건: 새 환경에서 설정파일 작성 → Composer install → schema 적용 → 기본 페이지 DB 연결 확인.
-
 ## T02. 애플리케이션 공통 기반
 
-상태: 구현 완료 / 검증 중
+상태: 구현 완료
 
 - [x] 라우팅
 - [x] 세션 초기화
@@ -30,18 +28,21 @@
 - [x] 로그인 필요/관리자 필요 middleware
 - [x] 공통 DB repository 기반
 - [x] `/health` DB 연결 확인 endpoint
-- [ ] 전체 PHP 구문 검사
 
 ## T03. Telegram 로그인
 
-상태: 대기
+상태: 구현 완료 / 실제 자격 증명 검증 대기
 
-- OIDC Authorization Code + PKCE
-- callback
-- JWKS 기반 ID Token 검증
-- 사용자 매핑
-- pending/active/inactive 처리
-- 로그아웃
+- [x] OIDC Authorization Code + PKCE
+- [x] callback
+- [x] JWKS 기반 ID Token 검증
+- [x] `iss`, `aud`, `exp`, `nonce` 검증
+- [x] 사용자 매핑
+- [x] 신규 사용자 pending 등록
+- [x] bootstrap 관리자 활성화
+- [x] pending/active/inactive 처리
+- [x] 로그아웃
+- [ ] 실제 BotFather Client ID/Secret으로 로그인 검증
 
 ## T04. 직원/권한 관리
 

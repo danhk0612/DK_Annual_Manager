@@ -41,13 +41,21 @@
 
 ## 인증
 
-웹 로그인은 Telegram Login의 OpenID Connect 방식을 기본으로 한다.
+웹 로그인은 Telegram Login의 OpenID Connect 방식을 사용한다.
 
 - BotFather에서 Allowed URL 등록
 - Authorization Code Flow + PKCE
-- 서버에서 ID Token 서명 및 `iss`, `aud`, `exp` 검증
+- 서버에서 ID Token 서명 및 `iss`, `aud`, `exp`, `nonce` 검증
 - Telegram 사용자 ID와 내부 `users` 레코드 연결
-- 미등록 사용자는 자동 활성화하지 않고 `pending` 상태로 둔다.
+- 미등록 사용자는 `pending`으로 생성하고 관리자가 활성화한다.
+- 입사일은 최초 Telegram 연결 시 필수가 아니며 이후 관리자 또는 사용자가 입력한다.
+
+최초 관리자 bootstrap:
+
+1. Telegram으로 한 번 로그인해 pending 계정을 생성한다.
+2. 대기 화면에 표시되는 Telegram User ID를 확인한다.
+3. `config/config.php`의 `telegram.bootstrap_admin_telegram_ids`에 ID를 추가한다.
+4. 다시 로그인하면 해당 계정이 `admin + active`로 활성화된다.
 
 참고: https://core.telegram.org/bots/telegram-login
 
