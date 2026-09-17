@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use DKAnnual\Auth\Auth;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
+use DKAnnual\Repository\AuditLogRepository;
 use DKAnnual\Repository\UserRepository;
 use DKAnnual\Security\Csrf;
 use DKAnnual\View\View;
@@ -17,6 +18,7 @@ final class ProfileController
     public function __construct(
         private readonly Auth $auth,
         private readonly UserRepository $users,
+        private readonly AuditLogRepository $audit,
         private readonly View $view,
         private readonly Csrf $csrf,
     ) {
@@ -48,7 +50,16 @@ final class ProfileController
         }
 
         $this->users->updateOwnHireDate((int) $user['id'], $value);
+        $this->audit->record((int) $user['id'], 'profile.hire_date_updated', 'user', (int) $user['id'], [
+            'hire_date' => $value,
+        ], $this->ip($request));
 
         return Response::redirect('/profile?message=' . rawurlencode('입사일을 저장했습니다.'));
+    }
+
+    private function ip(Request $request): ?string
+    {
+        $ip = trim((string) $request->server('REMOTE_ADDR', ''));
+        return $ip !== '' ? $ip : null;
     }
 }
