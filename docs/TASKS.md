@@ -21,14 +21,16 @@
 
 ## T02. 애플리케이션 공통 기반
 
-상태: 대기
+상태: 구현 완료 / 검증 중
 
-- 라우팅
-- 세션 초기화
-- 공통 레이아웃
-- CSRF 보호
-- 로그인 필요/관리자 필요 middleware
-- 공통 DB repository 기반
+- [x] 라우팅
+- [x] 세션 초기화
+- [x] 공통 레이아웃
+- [x] CSRF 보호
+- [x] 로그인 필요/관리자 필요 middleware
+- [x] 공통 DB repository 기반
+- [x] `/health` DB 연결 확인 endpoint
+- [ ] 전체 PHP 구문 검사
 
 ## T03. Telegram 로그인
 

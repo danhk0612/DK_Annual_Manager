@@ -8,6 +8,8 @@ return [
         'url' => 'https://leave.example.com',
         'timezone' => 'Asia/Seoul',
         'session_name' => 'dk_annual_manager',
+        'session_cookie_secure' => true,
+        'session_cookie_samesite' => 'Lax',
     ],
 
     'database' => [
