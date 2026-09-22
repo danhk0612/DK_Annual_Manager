@@ -4,7 +4,17 @@
 
 `0.1.0-rc1`
 
-현재 코드는 기능 구현 완료 상태지만 실제 운영 자격 증명과 MariaDB가 연결된 환경에서 통합 검증 전이므로 정식 릴리스 태그는 만들지 않는다.
+현재 코드는 기능 구현과 자동 DB 통합 검증까지 완료한 릴리스 후보 상태다. 실제 운영 자격 증명을 사용하는 Telegram/공휴일 연동과 브라우저 실사용 검증을 통과한 뒤 정식 릴리스 태그를 만든다.
+
+## 자동 CI 검증
+
+- [x] PHP 8.2 / 8.4 Composer install 및 PHPUnit
+- [x] Composer dependency audit
+- [x] MariaDB 10.6 최신 schema 초기화
+- [x] migration 추적 및 최신 schema 대상 반복 실행
+- [x] 휴가 승인 시 연차 usage 원장 생성
+- [x] 승인 취소 시 reversal 원장 복원
+- [x] PHP 전체 구문 검사
 
 ## 설치 검증
 
@@ -30,7 +40,8 @@
 - [ ] PHP 8.2+ 환경에서 `composer install` 성공
 - [ ] `php bin/check.php` FAIL 0
 - [ ] 신규 MariaDB에 `database/schema.sql` 적용 성공
-- [ ] 기존 DB는 `database/migrations/20260922_003_leave_usability.sql` 적용 성공
+- [ ] 기존 DB에서 `php bin/migrate.php` 적용 성공
+- [ ] `php bin/check.php --production` FAIL 0
 - [ ] `/health` 정상
 - [ ] Apache 또는 Nginx DocumentRoot가 `public/`으로 제한됨
 
@@ -83,6 +94,10 @@
 ## Telegram
 
 - [ ] 휴가 신청 시 활성 관리자 개인 Telegram에 신청 정보/사유/잔여 경고 전달
+- [ ] 관리자 개인 알림의 **신청 확인 · 승인** 버튼이 해당 신청 카드로 이동
+- [ ] 미로그인 상태에서 관리자 알림 버튼 진입 → Telegram 로그인 → 원래 승인 항목 복귀
+- [ ] 사용자 승인/반려/취소 알림의 **휴가 상세 보기** 버튼이 해당 신청 상세로 이동
+- [ ] 미로그인 상태에서 사용자 알림 버튼 진입 → Telegram 로그인 → 원래 상세 항목 복귀
 - [ ] 휴가 신청 단계에서 회사 공용 그룹에는 메시지가 전송되지 않음
 - [ ] 승인 시 신청자 개인 Telegram에 결과 전달
 - [ ] 승인 시 회사 공용 그룹에 직원/종류/기간/일수만 공유
