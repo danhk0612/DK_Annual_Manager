@@ -417,6 +417,10 @@ input::placeholder { color: #a0a8b7; }
     gap: 18px;
 }
 
+.profile-account-grid {
+    margin-top: 20px;
+}
+
 .content-grid.two-column {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
