@@ -26,15 +26,20 @@ final class LeaveNotificationService
         }
 
         $reason = trim((string) ($request['reason'] ?? ''));
+        $halfDayPeriod = (string) ($request['half_day_period'] ?? '');
+        $halfDayLabel = $halfDayPeriod === 'am' ? '오전 반차' : ($halfDayPeriod === 'pm' ? '오후 반차' : '');
+        $balanceWarning = trim((string) ($request['balance_warning'] ?? ''));
         $text = sprintf(
-            "[휴가 신청]\n신청번호: #%d\n직원: %s\n종류: %s\n기간: %s ~ %s\n차감/기록 일수: %.1f일%s",
+            "[휴가 신청]\n신청번호: #%d\n직원: %s\n종류: %s%s\n기간: %s ~ %s\n차감/기록 일수: %.1f일%s%s",
             (int) $request['id'],
             (string) $request['user_name'],
             (string) $request['leave_type_name'],
+            $halfDayLabel !== '' ? ' (' . $halfDayLabel . ')' : '',
             (string) $request['start_date'],
             (string) $request['end_date'],
             (float) $request['requested_amount'],
             $reason !== '' ? "\n사유: " . $reason : '',
+            $balanceWarning !== '' ? "\n주의: " . $balanceWarning : '',
         );
 
         return $this->sendToMany($targets, $text);
@@ -50,11 +55,14 @@ final class LeaveNotificationService
 
         $approved = ($request['status'] ?? null) === 'approved';
         $reviewNote = trim((string) ($request['review_note'] ?? ''));
+        $halfDayPeriod = (string) ($request['half_day_period'] ?? '');
+        $halfDayLabel = $halfDayPeriod === 'am' ? '오전 반차' : ($halfDayPeriod === 'pm' ? '오후 반차' : '');
         $text = sprintf(
-            "[휴가 %s]\n신청번호: #%d\n종류: %s\n기간: %s ~ %s\n일수: %.1f일%s",
+            "[휴가 %s]\n신청번호: #%d\n종류: %s%s\n기간: %s ~ %s\n일수: %.1f일%s",
             $approved ? '승인' : '반려',
             (int) $request['id'],
             (string) $request['leave_type_name'],
+            $halfDayLabel !== '' ? ' (' . $halfDayLabel . ')' : '',
             (string) $request['start_date'],
             (string) $request['end_date'],
             (float) $request['requested_amount'],

@@ -80,6 +80,8 @@ final class UserRepository extends AbstractRepository
 
     public function createManaged(
         string $name,
+        ?string $department,
+        ?string $position,
         ?string $hireDate,
         ?string $employmentEndDate,
         ?int $telegramUserId,
@@ -88,12 +90,14 @@ final class UserRepository extends AbstractRepository
     ): int {
         $statement = $this->pdo->prepare(
             'INSERT INTO users '
-            . '(name, telegram_user_id, hire_date, employment_end_date, role, status) '
-            . 'VALUES (:name, :telegram_user_id, :hire_date, :employment_end_date, :role, :status)'
+            . '(name, telegram_user_id, department, position, hire_date, employment_end_date, role, status) '
+            . 'VALUES (:name, :telegram_user_id, :department, :position, :hire_date, :employment_end_date, :role, :status)'
         );
         $statement->execute([
             'name' => $name,
             'telegram_user_id' => $telegramUserId,
+            'department' => $department,
+            'position' => $position,
             'hire_date' => $hireDate,
             'employment_end_date' => $employmentEndDate,
             'role' => $role,
@@ -106,6 +110,8 @@ final class UserRepository extends AbstractRepository
     public function updateManaged(
         int $id,
         string $name,
+        ?string $department,
+        ?string $position,
         ?string $hireDate,
         ?string $employmentEndDate,
         ?int $telegramUserId,
@@ -114,14 +120,16 @@ final class UserRepository extends AbstractRepository
     ): void {
         $statement = $this->pdo->prepare(
             'UPDATE users SET '
-            . 'name = :name, telegram_user_id = :telegram_user_id, hire_date = :hire_date, '
-            . 'employment_end_date = :employment_end_date, role = :role, status = :status '
+            . 'name = :name, telegram_user_id = :telegram_user_id, department = :department, position = :position, '
+            . 'hire_date = :hire_date, employment_end_date = :employment_end_date, role = :role, status = :status '
             . 'WHERE id = :id'
         );
         $statement->execute([
             'id' => $id,
             'name' => $name,
             'telegram_user_id' => $telegramUserId,
+            'department' => $department,
+            'position' => $position,
             'hire_date' => $hireDate,
             'employment_end_date' => $employmentEndDate,
             'role' => $role,
@@ -129,12 +137,20 @@ final class UserRepository extends AbstractRepository
         ]);
     }
 
-    public function updateOwnHireDate(int $id, string $hireDate): void
-    {
-        $statement = $this->pdo->prepare('UPDATE users SET hire_date = :hire_date WHERE id = :id');
+    public function updateOwnProfile(
+        int $id,
+        string $hireDate,
+        ?string $department,
+        ?string $position,
+    ): void {
+        $statement = $this->pdo->prepare(
+            'UPDATE users SET hire_date = :hire_date, department = :department, position = :position WHERE id = :id'
+        );
         $statement->execute([
             'id' => $id,
             'hire_date' => $hireDate,
+            'department' => $department,
+            'position' => $position,
         ]);
     }
 

@@ -8,6 +8,8 @@ CREATE TABLE users (
     name VARCHAR(100) NOT NULL,
     telegram_user_id BIGINT UNSIGNED NULL,
     telegram_username VARCHAR(100) NULL,
+    department VARCHAR(100) NULL,
+    position VARCHAR(100) NULL,
     hire_date DATE NULL,
     employment_end_date DATE NULL,
     role ENUM('admin', 'user') NOT NULL DEFAULT 'user',
@@ -35,9 +37,9 @@ CREATE TABLE leave_types (
 INSERT INTO leave_types (code, name, default_amount, deducts_annual_leave, sort_order) VALUES
     ('V', '연차', 1.00, 1, 10),
     ('H', '반차', 0.50, 1, 20),
-    ('P', '개인', 1.00, 0, 30),
+    ('G', '공가', 1.00, 0, 30),
     ('S', '병가', 1.00, 0, 40),
-    ('A', '대체휴가(기타)', 1.00, 0, 50);
+    ('A', '대체휴가', 1.00, 0, 50);
 
 CREATE TABLE leave_requests (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -46,6 +48,7 @@ CREATE TABLE leave_requests (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     requested_amount DECIMAL(6,2) NOT NULL DEFAULT 0,
+    half_day_period ENUM('am', 'pm') NULL,
     reason TEXT NULL,
     status ENUM('pending', 'approved', 'rejected', 'cancelled') NOT NULL DEFAULT 'pending',
     reviewed_by BIGINT UNSIGNED NULL,

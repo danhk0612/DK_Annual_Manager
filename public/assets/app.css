@@ -132,3 +132,16 @@ button:disabled { opacity: .45; cursor: not-allowed; }
     .calendar-grid { min-width: 760px; }
     .calendar-day { min-height: 110px; }
 }
+
+.page-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.notice.warning { background: #fff8dd; color: #765500; }
+.compact-notice { margin: 10px 0 0; }
+.form-hint { margin: 0; color: #697386; font-size: 13px; }
+.calendar-scroll { overflow-x: auto; }
+.calendar-list { margin-top: 24px; }
+.leave-summary strong { font-size: 18px; }
+@media (max-width: 640px) {
+    .page-actions { justify-content: flex-start; }
+    .topbar { flex-wrap: wrap; padding-top: 12px; padding-bottom: 12px; }
+    .topnav { width: 100%; overflow-x: auto; padding-bottom: 4px; }
+}

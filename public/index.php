@@ -12,7 +12,6 @@ use DKAnnual\Controller\AdminLeaveRequestController;
 use DKAnnual\Controller\AdminReportController;
 use DKAnnual\Controller\AdminUserController;
 use DKAnnual\Controller\CalendarController;
-use DKAnnual\Controller\HomeController;
 use DKAnnual\Controller\LeaveController;
 use DKAnnual\Controller\ProfileController;
 use DKAnnual\Controller\TelegramAuthController;
@@ -69,7 +68,6 @@ $router = new Router();
 
 $notifications = new LeaveNotificationService($config, new TelegramBotClient($config), $users);
 $annualLeave = new AnnualLeaveService(new AnnualLeaveCalculator(), $ledger);
-$home = new HomeController($view, $auth, $reports, $csrf);
 $telegramAuth = new TelegramAuthController(
     $config,
     $session,
@@ -81,7 +79,7 @@ $telegramAuth = new TelegramAuthController(
 $adminDashboard = new AdminDashboardController($reports, $audit, $view);
 $adminReports = new AdminReportController($reports, $view);
 $adminAudit = new AdminAuditController($audit, $view);
-$adminUsers = new AdminUserController($users, $auth, $audit, $view, $csrf);
+$adminUsers = new AdminUserController($users, $annualLeave, $auth, $audit, $view, $csrf);
 $adminAnnualLeave = new AdminAnnualLeaveController($users, $ledger, $annualLeave, $auth, $audit, $view, $csrf);
 $adminRequests = new AdminLeaveRequestController(
     $leaveRequests,
@@ -100,25 +98,27 @@ $adminHolidays = new AdminHolidayController(
     $view,
     $csrf,
 );
-$profile = new ProfileController($auth, $users, $audit, $view, $csrf);
+$profile = new ProfileController($auth, $users, $annualLeave, $audit, $view, $csrf);
 $leave = new LeaveController(
     $auth,
     $leaveTypes,
     $holidays,
     $leaveRequests,
+    $annualLeave,
+    $ledger,
     new LeaveDateCalculator(),
     $notifications,
     $audit,
     $view,
     $csrf,
 );
-$calendar = new CalendarController($leaveRequests, $holidays, $view);
+$calendar = new CalendarController($auth, $leaveRequests, $holidays, $annualLeave, $view);
 
 $verifyCsrf = new VerifyCsrfMiddleware($csrf);
 $requireAuth = new RequireAuthMiddleware($auth);
 $requireAdmin = new RequireAdminMiddleware($auth);
 
-$router->get('/', [$home, 'index']);
+$router->get('/', [$calendar, 'index'], [$requireAuth]);
 $router->get('/login', [$telegramAuth, 'loginPage']);
 $router->get('/auth/telegram/start', [$telegramAuth, 'start']);
 $router->get('/auth/telegram/callback', [$telegramAuth, 'callback']);
@@ -129,11 +129,13 @@ $router->get('/health', static function (Request $request) use ($pdo): Response 
 
 $router->get('/calendar', [$calendar, 'index'], [$requireAuth]);
 $router->get('/leave', [$leave, 'index'], [$requireAuth]);
+$router->get('/leave/history', [$leave, 'history'], [$requireAuth]);
 $router->post('/leave/create', [$leave, 'create'], [$requireAuth, $verifyCsrf]);
 $router->post('/leave/cancel', [$leave, 'cancel'], [$requireAuth, $verifyCsrf]);
 
 $router->get('/profile', [$profile, 'index'], [$requireAuth]);
-$router->post('/profile/hire-date', [$profile, 'saveHireDate'], [$requireAuth, $verifyCsrf]);
+$router->post('/profile/save', [$profile, 'saveProfile'], [$requireAuth, $verifyCsrf]);
+$router->post('/profile/hire-date', [$profile, 'saveProfile'], [$requireAuth, $verifyCsrf]);
 
 $router->get('/admin', [$adminDashboard, 'index'], [$requireAdmin]);
 $router->get('/admin/reports', [$adminReports, 'index'], [$requireAdmin]);
@@ -145,6 +147,7 @@ $router->post('/admin/users/save', [$adminUsers, 'save'], [$requireAdmin, $verif
 $router->get('/admin/annual-leave', [$adminAnnualLeave, 'index'], [$requireAdmin]);
 $router->post('/admin/annual-leave/sync', [$adminAnnualLeave, 'sync'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/annual-leave/adjust', [$adminAnnualLeave, 'adjust'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/annual-leave/set-total', [$adminAnnualLeave, 'setTotal'], [$requireAdmin, $verifyCsrf]);
 $router->get('/admin/holidays', [$adminHolidays, 'index'], [$requireAdmin]);
 $router->post('/admin/holidays/sync', [$adminHolidays, 'sync'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/holidays/save', [$adminHolidays, 'save'], [$requireAdmin, $verifyCsrf]);

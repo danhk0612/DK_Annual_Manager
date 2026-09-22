@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use DKAnnual\Auth\Auth;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
+use DKAnnual\Leave\AnnualLeaveService;
 use DKAnnual\Repository\AuditLogRepository;
 use DKAnnual\Repository\UserRepository;
 use DKAnnual\Security\Csrf;
@@ -18,6 +19,7 @@ final class AdminUserController
 {
     public function __construct(
         private readonly UserRepository $users,
+        private readonly AnnualLeaveService $annualLeave,
         private readonly Auth $auth,
         private readonly AuditLogRepository $audit,
         private readonly View $view,
@@ -47,6 +49,8 @@ final class AdminUserController
     {
         $id = $this->optionalId($request->input('id'));
         $name = trim((string) $request->input('name', ''));
+        $department = $this->optionalText($request->input('department'), 100);
+        $position = $this->optionalText($request->input('position'), 100);
         $hireDate = $this->optionalDate($request->input('hire_date'));
         $employmentEndDate = $this->optionalDate($request->input('employment_end_date'));
         $telegramUserId = $this->optionalTelegramId($request->input('telegram_user_id'));
@@ -73,14 +77,22 @@ final class AdminUserController
             if ($id === null) {
                 $newId = $this->users->createManaged(
                     $name,
+                    $department,
+                    $position,
                     $hireDate,
                     $employmentEndDate,
                     $telegramUserId,
                     $role,
                     $status,
                 );
+                $createdUser = $this->users->findById($newId);
+                if ($createdUser !== null && !empty($createdUser['hire_date'])) {
+                    $this->annualLeave->syncAccruals($createdUser, new DateTimeImmutable('today'), $actorId);
+                }
                 $this->audit->record($actorId, 'user.created', 'user', $newId, [
                     'name' => $name,
+                    'department' => $department,
+                    'position' => $position,
                     'hire_date' => $hireDate,
                     'employment_end_date' => $employmentEndDate,
                     'role' => $role,
@@ -89,21 +101,35 @@ final class AdminUserController
                 return Response::redirect('/admin/users?message=' . rawurlencode('직원을 추가했습니다.'));
             }
 
-            if ($this->users->findById($id) === null) {
+            $existing = $this->users->findById($id);
+            if ($existing === null) {
                 return Response::redirect('/admin/users?error=' . rawurlencode('직원을 찾을 수 없습니다.'));
             }
 
             $this->users->updateManaged(
                 $id,
                 $name,
+                $department,
+                $position,
                 $hireDate,
                 $employmentEndDate,
                 $telegramUserId,
                 $role,
                 $status,
             );
+            $updatedUser = $this->users->findById($id);
+            if ($updatedUser !== null && !empty($updatedUser['hire_date'])) {
+                if (($existing['hire_date'] ?? null) !== ($updatedUser['hire_date'] ?? null)) {
+                    $this->annualLeave->resyncAccruals($updatedUser, new DateTimeImmutable('today'), $actorId);
+                } else {
+                    $this->annualLeave->syncAccruals($updatedUser, new DateTimeImmutable('today'), $actorId);
+                }
+            }
+
             $this->audit->record($actorId, 'user.updated', 'user', $id, [
                 'name' => $name,
+                'department' => $department,
+                'position' => $position,
                 'hire_date' => $hireDate,
                 'employment_end_date' => $employmentEndDate,
                 'role' => $role,
@@ -117,6 +143,21 @@ final class AdminUserController
 
             throw $exception;
         }
+    }
+
+    private function optionalText(mixed $value, int $maxLength): ?string
+    {
+        $value = trim((string) ($value ?? ''));
+        if ($value === '') {
+            return null;
+        }
+
+        $characters = preg_split('//u', $value, -1, PREG_SPLIT_NO_EMPTY);
+        if (is_array($characters) && count($characters) > $maxLength) {
+            return implode('', array_slice($characters, 0, $maxLength));
+        }
+
+        return $value;
     }
 
     private function optionalId(mixed $value): ?int

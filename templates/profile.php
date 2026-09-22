@@ -22,13 +22,24 @@
             <div><dt>권한</dt><dd><?= $user['role'] === 'admin' ? '관리자' : '사용자' ?></dd></div>
         </dl>
 
-        <form method="post" action="/profile/hire-date">
+        <form class="form-grid" method="post" action="/profile/save">
             <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
             <label>
+                부서
+                <input name="department" maxlength="100" value="<?= htmlspecialchars((string) ($user['department'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+            </label>
+            <label>
+                직책
+                <input name="position" maxlength="100" value="<?= htmlspecialchars((string) ($user['position'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+            </label>
+            <label class="span-2">
                 입사일
                 <input type="date" name="hire_date" required value="<?= htmlspecialchars((string) ($user['hire_date'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
             </label>
-            <button class="button primary" type="submit">입사일 저장</button>
+            <div class="form-actions">
+                <button class="button primary" type="submit">내 정보 저장</button>
+            </div>
+            <p class="form-hint span-2">입사일 저장 시 현재 날짜까지 발생한 연차가 자동으로 동기화됩니다. 입사일을 변경하면 기존 자동 발생분을 다시 계산합니다.</p>
         </form>
     <?php endif; ?>
 </section>
