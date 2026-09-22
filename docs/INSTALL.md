@@ -53,6 +53,8 @@ cp config/config.example.php config/config.php
 
 실제 `config/config.php`는 `.gitignore` 대상이며 저장소에 커밋하지 않는다.
 
+설치 후 회사명, 로고, 대표색, 테마와 Telegram 관리자 알림 Chat ID는 **관리자 → 환경 설정**에서 관리할 수 있다. Telegram Client Secret, Bot Token, 공휴일 ServiceKey 같은 비밀 자격 증명은 보안을 위해 계속 서버의 `config/config.php`에 둔다.
+
 ## 4. Telegram 최초 관리자
 
 1. BotFather에서 Telegram Login/OIDC에 사용할 Bot/Client를 구성한다.
@@ -100,7 +102,13 @@ php bin/check.php
 
 웹에서도 `/health`가 `{ "status": "ok" }`를 반환하는지 확인한다.
 
-## 7. 운영 전 필수 확인
+## 7. 브랜딩 업로드 권한
+
+회사 로고는 `public/uploads/branding/`에 저장된다. Web Station/PHP-FPM 실행 계정이 이 디렉터리에 파일을 생성/교체할 수 있어야 한다.
+
+`php bin/check.php`는 CLI 기준 쓰기 가능 여부도 확인한다. CLI 사용자는 쓰기 가능하지만 웹에서 업로드가 실패하면 Web Station/PHP-FPM 실행 계정의 폴더 권한을 별도로 확인한다.
+
+## 8. 운영 전 필수 확인
 
 - `app.debug=false`
 - HTTPS 적용
