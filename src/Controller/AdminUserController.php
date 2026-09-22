@@ -39,6 +39,7 @@ final class AdminUserController
             'title' => '직원 관리',
             'users' => $this->users->all(),
             'editUser' => $editUser,
+            'activeAdminCount' => $this->users->activeAdminCount(),
             'csrfToken' => $this->csrf->token(),
             'message' => $request->input('message'),
             'error' => $request->input('error'),
