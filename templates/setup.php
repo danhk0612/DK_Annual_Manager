@@ -246,7 +246,7 @@ $appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js')
                         >
                         <datalist id="setup-group-chats" data-setup-group-list>
                             <?php foreach ($telegramChats as $chat): ?>
-                                <?php if (in_array($chat['type'], ['group', 'supergroup', 'channel'], true)): ?>
+                                <?php if (in_array($chat['type'], ['group', 'supergroup'], true)): ?>
                                     <option value="<?= htmlspecialchars($chat['id'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($chat['title'], ENT_QUOTES, 'UTF-8') ?></option>
                                 <?php endif; ?>
                             <?php endforeach; ?>
