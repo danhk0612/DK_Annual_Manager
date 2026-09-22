@@ -6,10 +6,12 @@
 /** @var string|null $returnTo */
 /** @var list<array<string, mixed>>|null $targetUsers */
 /** @var float|null $annualBalance */
+/** @var bool|null $allowAdminDateException */
 
 $returnTo = isset($returnTo) && is_string($returnTo) ? $returnTo : '/leave';
 $targetUsers = isset($targetUsers) && is_array($targetUsers) ? $targetUsers : [];
 $annualBalance = isset($annualBalance) ? (float) $annualBalance : null;
+$allowAdminDateException = isset($allowAdminDateException) ? (bool) $allowAdminDateException : false;
 ?>
 <form class="form-grid leave-form" method="post" action="/leave/create" data-leave-form>
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
@@ -38,6 +40,7 @@ $annualBalance = isset($annualBalance) ? (float) $annualBalance : null;
                 <option
                     value="<?= (int) $type['id'] ?>"
                     data-leave-code="<?= htmlspecialchars((string) $type['code'], ENT_QUOTES, 'UTF-8') ?>"
+                    data-deducts-annual="<?= (int) $type['deducts_annual_leave'] ?>"
                 >
                     <?= htmlspecialchars((string) $type['name'], ENT_QUOTES, 'UTF-8') ?>
                     <?= (int) $type['deducts_annual_leave'] === 1
@@ -101,6 +104,18 @@ $annualBalance = isset($annualBalance) ? (float) $annualBalance : null;
         추가 사유
         <input name="reason_detail" maxlength="500" placeholder="필요한 경우 추가 내용을 입력하세요.">
     </label>
+
+    <?php if ($allowAdminDateException): ?>
+        <label class="span-2 admin-date-exception" data-admin-date-exception-wrap hidden>
+            <span class="check-row">
+                <input type="checkbox" name="admin_date_exception" value="1" data-admin-date-exception>
+                <span>
+                    <strong>과거 기록 예외 등록</strong>
+                    <small>공가·병가·대체휴가의 단일 날짜가 비근무일/공휴일이어도 원본 기록대로 등록합니다.</small>
+                </span>
+            </span>
+        </label>
+    <?php endif; ?>
 
     <div class="form-actions">
         <button class="button primary" type="submit">휴가 신청</button>

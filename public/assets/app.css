@@ -3080,3 +3080,40 @@ html[data-theme="dark"] .calendar-day.non-working-day:not(.public-holiday):not(.
         grid-column: auto;
     }
 }
+
+
+/* T20: explicit historical exception for administrator leave entry */
+.admin-date-exception {
+    padding: 12px 13px;
+    border: 1px solid color-mix(in srgb, var(--warning) 38%, var(--border));
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--warning) 7%, var(--surface));
+}
+
+.admin-date-exception .check-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.admin-date-exception input {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    flex: 0 0 auto;
+}
+
+.admin-date-exception .check-row > span {
+    display: grid;
+    gap: 3px;
+}
+
+.admin-date-exception strong {
+    color: var(--text);
+    font-size: 12px;
+}
+
+.admin-date-exception small {
+    color: var(--muted);
+    line-height: 1.5;
+}

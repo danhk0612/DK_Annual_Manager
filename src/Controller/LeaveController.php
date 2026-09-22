@@ -154,15 +154,30 @@ final class LeaveController
             $start->format('Y-m-d'),
             $end->format('Y-m-d'),
         );
+        $workingWeekdays = $this->settings->workingWeekdays();
         $leaveDates = $this->dates->workingDates(
             $start,
             $end,
             $holidayDates,
-            $this->settings->workingWeekdays(),
+            $workingWeekdays,
         );
 
+        $adminDateOverride = false;
         if ($leaveDates === []) {
-            return $this->redirectError('신청 기간에 설정된 근무일이 없습니다.', $returnTo);
+            $allowHistoricalException = ($actor['role'] ?? null) === 'admin'
+                && (string) $request->input('admin_date_exception', '0') === '1'
+                && (int) $leaveType['deducts_annual_leave'] === 0
+                && $start->format('Y-m-d') === $end->format('Y-m-d');
+
+            if ($allowHistoricalException) {
+                $leaveDates = [$start->format('Y-m-d')];
+                $adminDateOverride = true;
+            } else {
+                return $this->redirectError(
+                    $this->noWorkingDateMessage($start, $end, $workingWeekdays),
+                    $returnTo,
+                );
+            }
         }
 
         if ($this->requests->hasOpenDays((int) $subject['id'], $leaveDates)) {
@@ -216,6 +231,7 @@ final class LeaveController
             'amount' => $requestedAmount,
             'half_day_period' => $halfDayPeriod !== '' ? $halfDayPeriod : null,
             'balance_warning' => $balanceWarning,
+            'admin_date_exception' => $adminDateOverride,
         ], $this->ip($request));
 
         $this->notifications->notifyAdminsOfRequest([
@@ -257,6 +273,55 @@ final class LeaveController
         $this->audit->record((int) $user['id'], 'leave.request_cancelled', 'leave_request', $requestId, [], $this->ip($request));
 
         return Response::redirect('/leave/history?message=' . rawurlencode('휴가 신청을 취소했습니다.'));
+    }
+
+    /** @param list<int> $workingWeekdays */
+    private function noWorkingDateMessage(
+        DateTimeImmutable $start,
+        DateTimeImmutable $end,
+        array $workingWeekdays,
+    ): string {
+        $weekdayNames = [1 => '월', 2 => '화', 3 => '수', 4 => '목', 5 => '금', 6 => '토', 7 => '일'];
+        $configuredDays = array_map(
+            static fn (int $day): string => $weekdayNames[$day] ?? (string) $day,
+            $workingWeekdays,
+        );
+
+        if ($start->format('Y-m-d') === $end->format('Y-m-d')) {
+            $date = $start->format('Y-m-d');
+            $weekday = (int) $start->format('N');
+
+            if (!in_array($weekday, $workingWeekdays, true)) {
+                return sprintf(
+                    '%s(%s)은 현재 비근무 요일입니다. 설정된 근무 요일: %s.',
+                    $date,
+                    $weekdayNames[$weekday] ?? (string) $weekday,
+                    implode('·', $configuredDays),
+                );
+            }
+
+            $holidayEntries = $this->holidays->entriesBetween($date, $date);
+            $excluded = array_values(array_filter(
+                $holidayEntries,
+                static fn (array $item): bool => (int) ($item['is_public_holiday'] ?? 0) === 1,
+            ));
+            if ($excluded !== []) {
+                $names = array_map(
+                    static fn (array $item): string => (string) ($item['name'] ?? '휴일'),
+                    $excluded,
+                );
+                return sprintf(
+                    '%s은 휴가 계산 제외 휴일로 등록되어 있습니다: %s.',
+                    $date,
+                    implode(', ', array_unique($names)),
+                );
+            }
+        }
+
+        return sprintf(
+            '신청 기간에 계산 가능한 근무일이 없습니다. 현재 근무 요일은 %s이며 공휴일/회사 휴무일은 제외됩니다.',
+            implode('·', $configuredDays),
+        );
     }
 
     /** @return list<string> */
