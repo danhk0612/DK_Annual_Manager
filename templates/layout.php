@@ -12,7 +12,7 @@
 $title = isset($title) && is_string($title) ? $title : $appName;
 $isCalendar = ($currentPath === '/' || $currentPath === '/calendar');
 $layoutIsAdmin = ($layoutUser['role'] ?? null) === 'admin';
-$isLeaveHistory = $layoutIsAdmin ? $currentPath === '/admin/requests' : $currentPath === '/leave/history';
+$isLeaveHistory = $currentPath === '/leave/history';
 $isProfile = $currentPath === '/profile';
 $isAdmin = str_starts_with($currentPath, '/admin');
 
@@ -47,7 +47,7 @@ $appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js')
             <a href="/calendar" class="<?= $isCalendar ? 'active' : '' ?>">
                 <i class="bi bi-calendar3"></i><span>달력</span>
             </a>
-            <a href="<?= $layoutIsAdmin ? '/admin/requests' : '/leave/history' ?>" class="<?= $isLeaveHistory ? 'active' : '' ?>">
+            <a href="/leave/history" class="<?= $isLeaveHistory ? 'active' : '' ?>">
                 <i class="bi bi-list-check"></i><span><?= $layoutIsAdmin ? '전체 신청' : '신청 내역' ?></span>
             </a>
             <a href="/profile" class="<?= $isProfile ? 'active' : '' ?>">
