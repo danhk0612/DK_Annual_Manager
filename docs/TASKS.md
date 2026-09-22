@@ -97,9 +97,9 @@
 - [x] 승인 처리 트랜잭션 및 중복 처리 방지
 - [x] 연차/반차 승인 시 연도별 사용 원장 반영
 - [x] 비차감 휴가(P/S/A)는 원장 미차감
-- [x] 신청 시 관리자 Telegram 알림
-- [x] 승인/반려 시 사용자 Telegram 알림
-- [x] 설정 admin_chat_ids + 활성 관리자 Telegram ID 알림 대상
+- [x] 신청 시 활성 관리자 개인 Telegram 알림
+- [x] 승인/반려 시 사용자 개인 Telegram 알림
+- [x] 승인 일정/승인 취소 일정 회사 공용 Telegram 그룹 공유
 - [x] Telegram 실패가 신청/승인 트랜잭션을 되돌리지 않도록 분리
 - [ ] 실제 Bot Token으로 메시지 발송 검증
 - [ ] MariaDB 승인/원장 통합 검증
@@ -220,7 +220,7 @@
 - [x] 대표색 설정
 - [x] 라이트/다크/시스템 테마
 - [x] Telegram 회사 공용 그룹 Chat ID를 DB 설정으로 관리
-- [x] 기존 config Chat ID를 최초 기본값으로 자동 승계
+- [x] 기존 config 그룹 Chat ID를 회사 공용 그룹 기본값으로 자동 승계
 - [x] Telegram Bot 상태/최근 채팅 자동 탐색 및 알림 대상 추가
 - [x] Telegram 테스트 메시지 발송
 - [x] BotFather/공공데이터포털 바로가기
