@@ -32,7 +32,6 @@ final class AdminDashboardController
             'pendingPreview' => $this->reports->pendingRequestPreview(6),
             'currentLeaves' => $this->reports->approvedLeavesOnDate(
                 $today->format('Y-m-d'),
-                12,
             ),
             'upcomingLeaves' => $this->reports->upcomingApprovedLeaves(
                 $today->modify('+1 day')->format('Y-m-d'),
