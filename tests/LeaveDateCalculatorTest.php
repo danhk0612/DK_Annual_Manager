@@ -35,6 +35,21 @@ final class LeaveDateCalculatorTest extends TestCase
         );
     }
 
+    public function testCustomWorkingWeekdaysAreApplied(): void
+    {
+        $calculator = new LeaveDateCalculator();
+
+        self::assertSame(
+            ['2026-09-19', '2026-09-21'],
+            $calculator->workingDates(
+                new DateTimeImmutable('2026-09-18'),
+                new DateTimeImmutable('2026-09-21'),
+                [],
+                [1, 6],
+            )
+        );
+    }
+
     public function testReverseRangeProducesNoDates(): void
     {
         $calculator = new LeaveDateCalculator();
