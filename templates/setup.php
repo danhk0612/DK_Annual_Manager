@@ -13,7 +13,7 @@
 /** @var string $configuredClientId */
 /** @var bool $hasClientSecret */
 /** @var bool $hasBotToken */
-/** @var list<string> $adminChats */
+/** @var string $companyChatId */
 /** @var list<string> $bootstrapAdminIds */
 /** @var bool $hasHolidayKey */
 /** @var string|null $employeeBotLink */
@@ -171,7 +171,7 @@ $appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js')
             <div class="section-head">
                 <div>
                     <p class="eyebrow">Step 3</p>
-                    <h2><i class="bi bi-people"></i> 관리자 그룹 · 최초 관리자 연결</h2>
+                    <h2><i class="bi bi-people"></i> Telegram 채팅 연결</h2>
                 </div>
                 <button
                     class="button small"
@@ -181,7 +181,7 @@ $appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js')
                     <?= !$status['telegram'] ? 'disabled' : '' ?>
                 ><i class="bi bi-arrow-repeat"></i><span>최근 채팅 자동 확인</span></button>
             </div>
-            <p>이 단계에서는 <strong>최초 관리자 개인 채팅</strong>과 <strong>관리자 알림 그룹</strong>을 각각 연결합니다. 둘 다 봇이 메시지를 한 번 받아야 자동 탐색할 수 있습니다.</p>
+            <p>이 단계에서는 <strong>최초 관리자 개인 채팅</strong>과 <strong>회사 공용 그룹</strong>을 각각 연결합니다. 둘 다 봇이 메시지를 한 번 받아야 자동 탐색할 수 있습니다.</p>
 
             <div class="setup-connection-grid">
                 <article class="setup-connection-card">
@@ -194,7 +194,7 @@ $appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js')
                 <article class="setup-connection-card">
                     <span class="setup-substep">3B</span>
                     <div>
-                        <h3><i class="bi bi-people"></i> 관리자 알림 그룹</h3>
+                        <h3><i class="bi bi-people"></i> 회사 공용 그룹</h3>
                         <p>봇을 휴가 알림용 그룹에 추가한 뒤 그룹에서 메시지를 한 번 보냅니다. 자동 확인 후 group/supergroup Chat ID를 선택합니다.</p>
                     </div>
                 </article>
@@ -235,13 +235,13 @@ $appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js')
                     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
 
                     <label>
-                        관리자 알림 그룹 Chat ID
+                        회사 공용 Telegram 그룹 Chat ID
                         <input
-                            name="group_chat_id"
+                            name="company_chat_id"
                             data-setup-group-chat
                             list="setup-group-chats"
                             required
-                            value="<?= htmlspecialchars($adminChats[0] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                            value="<?= htmlspecialchars($companyChatId, ENT_QUOTES, 'UTF-8') ?>"
                             placeholder="-1001234567890"
                         >
                         <datalist id="setup-group-chats" data-setup-group-list>
@@ -273,11 +273,11 @@ $appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js')
                     </label>
 
                     <div class="form-actions">
-                        <button class="button primary" type="submit"><i class="bi bi-check2-circle"></i> 그룹·최초 관리자 저장</button>
+                        <button class="button primary" type="submit"><i class="bi bi-check2-circle"></i> 회사 그룹·최초 관리자 저장</button>
                     </div>
                 </form>
 
-                <p class="setup-help"><i class="bi bi-info-circle"></i> 개인 채팅만 연결했다면 먼저 3A의 User ID만 자동 선택됩니다. 관리자 그룹을 만든 뒤 메시지를 보내고 다시 확인하면 3B Chat ID도 선택할 수 있습니다.</p>
+                <p class="setup-help"><i class="bi bi-info-circle"></i> 회사 공용 그룹은 관리자와 직원이 함께 보는 일정 공유용 채널입니다. 휴가 신청 사유나 잔여 연차 경고 같은 관리 정보는 이 그룹에 보내지 않고 관리자 개인 Telegram으로만 알립니다.</p>
             <?php endif; ?>
         </div>
     </section>
