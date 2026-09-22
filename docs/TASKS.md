@@ -260,3 +260,27 @@
 - [ ] 실제 NAS에서 완전 초기화 후 /setup 전 과정 검증
 - [ ] 최초 관리자/그룹 자동 탐색 및 Telegram 로그인 검증
 - [ ] 공휴일 API 자동 동기화 검증
+
+
+## T15. 설치 자동화 보강 · 보안 하드닝
+
+상태: 구현 완료 / CI 및 NAS 완전 초기화 검증 대기
+
+- [x] 현재 접속 host 기준 Allowed Origin 자동 계산
+- [x] 현재 접속 host 기준 Telegram Redirect URI 자동 계산
+- [x] 리버스 프록시 예외 시 Redirect URI 직접 수정 유지
+- [x] Bot Token / Client ID / Client Secret 획득 위치를 Setup에 단계별 안내
+- [x] BotFather 및 Telegram 공식 Login 문서 바로가기
+- [x] 최초 관리자 개인 채팅과 관리자 그룹 연결을 Step 3A/3B로 명확히 분리
+- [x] 자동 채팅 탐색 실패 시 User ID / Chat ID 직접 입력 fallback
+- [x] 직원 로그인과 개인 알림 연결 흐름 문서화
+- [x] setup route를 설치 키 + 세션으로 보호
+- [x] setup key URL 진입 후 URL에서 키 제거
+- [x] 설치 완료 시 setup key 자동 삭제
+- [x] reset-install 실행 시 새 setup key/URL 자동 생성
+- [x] 기존 운영 DB의 활성 관리자를 감지해 setup.completed 자동 이행
+- [x] schema.sql 재실행 가능하도록 CREATE TABLE IF NOT EXISTS / INSERT IGNORE
+- [x] Telegram/API 오류에서 Secret/Token/ServiceKey가 포함될 수 있는 원문 예외 메시지 비노출
+- [x] 완전 설치 흐름 문서 docs/SETUP_FLOW.md 추가
+- [ ] PHP 8.2/8.4 CI
+- [ ] NAS 완전 초기화 → setup key → DB → Telegram → 그룹/관리자 → 공휴일 → 완료 전 과정 검증
