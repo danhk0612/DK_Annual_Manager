@@ -81,6 +81,48 @@ final class AppSettingRepository extends AbstractRepository
         return array_values($result);
     }
 
+    /** @return list<int> */
+    public function workingWeekdays(): array
+    {
+        $raw = trim((string) $this->get('work.weekdays', '1,2,3,4,5'));
+        $values = preg_split('/[\s,]+/', $raw) ?: [];
+        $days = [];
+
+        foreach ($values as $value) {
+            if (ctype_digit($value)) {
+                $day = (int) $value;
+                if ($day >= 1 && $day <= 7) {
+                    $days[$day] = $day;
+                }
+            }
+        }
+
+        if ($days === []) {
+            return [1, 2, 3, 4, 5];
+        }
+
+        ksort($days);
+        return array_values($days);
+    }
+
+    /** @param list<int> $weekdays */
+    public function setWorkingWeekdays(array $weekdays, int $updatedBy): void
+    {
+        $days = [];
+        foreach ($weekdays as $weekday) {
+            if ($weekday >= 1 && $weekday <= 7) {
+                $days[$weekday] = $weekday;
+            }
+        }
+
+        if ($days === []) {
+            throw new \InvalidArgumentException('At least one working weekday is required.');
+        }
+
+        ksort($days);
+        $this->set('work.weekdays', implode(',', array_values($days)), $updatedBy);
+    }
+
     public function annualLeaveOverride(int $userId, int $year): ?float
     {
         $statement = $this->pdo->prepare(
