@@ -170,7 +170,13 @@ $stepStates = [
                     <p class="eyebrow">Step 3</p>
                     <h2><i class="bi bi-people"></i> 관리자 그룹 · 최초 관리자 연결</h2>
                 </div>
-                <a class="button small <?= !$status['telegram'] ? 'disabled-link' : '' ?>" href="<?= $status['telegram'] ? '/setup?probe_telegram=1' : '#' ?>"><i class="bi bi-arrow-repeat"></i> 최근 채팅 자동 확인</a>
+                <button
+                    class="button small"
+                    type="button"
+                    data-telegram-probe
+                    data-probe-url="/setup/telegram-probe"
+                    <?= !$status['telegram'] ? 'disabled' : '' ?>
+                ><i class="bi bi-arrow-repeat"></i><span>최근 채팅 자동 확인</span></button>
             </div>
             <p>이 단계에서는 <strong>최초 관리자 개인 채팅</strong>과 <strong>관리자 알림 그룹</strong>을 각각 연결합니다. 둘 다 봇이 메시지를 한 번 받아야 자동 탐색할 수 있습니다.</p>
 
@@ -191,9 +197,35 @@ $stepStates = [
                 </article>
             </div>
 
-            <?php if ($probeError !== null): ?>
-                <div class="notice warning"><i class="bi bi-exclamation-triangle"></i> <?= htmlspecialchars($probeError, ENT_QUOTES, 'UTF-8') ?></div>
-            <?php endif; ?>
+            <div class="telegram-probe-status <?= $probeError !== null ? 'error' : '' ?>" data-telegram-probe-status <?= $probeError === null && $telegramChats === [] ? 'hidden' : '' ?>>
+                <i class="bi <?= $probeError !== null ? 'bi-exclamation-triangle' : 'bi-check-circle' ?>" data-telegram-probe-status-icon></i>
+                <span data-telegram-probe-status-text>
+                    <?php if ($probeError !== null): ?>
+                        <?= htmlspecialchars($probeError, ENT_QUOTES, 'UTF-8') ?>
+                    <?php elseif ($telegramChats !== []): ?>
+                        최근 채팅 <?= count($telegramChats) ?>개를 찾았습니다. 아래 목록에서 선택하세요.
+                    <?php endif; ?>
+                </span>
+            </div>
+
+            <div class="telegram-detected-grid" data-telegram-chat-results <?= $telegramChats === [] ? 'hidden' : '' ?>>
+                <?php foreach ($telegramChats as $chat): ?>
+                    <button
+                        type="button"
+                        class="telegram-detected-chat"
+                        data-detected-chat
+                        data-chat-id="<?= htmlspecialchars($chat['id'], ENT_QUOTES, 'UTF-8') ?>"
+                        data-chat-type="<?= htmlspecialchars($chat['type'], ENT_QUOTES, 'UTF-8') ?>"
+                    >
+                        <span class="telegram-detected-icon"><i class="bi <?= $chat['type'] === 'private' ? 'bi-person' : 'bi-people' ?>"></i></span>
+                        <span class="telegram-detected-main">
+                            <strong><?= htmlspecialchars($chat['title'], ENT_QUOTES, 'UTF-8') ?></strong>
+                            <small><?= htmlspecialchars($chat['type'] . ' · ' . $chat['id'], ENT_QUOTES, 'UTF-8') ?></small>
+                        </span>
+                        <span class="telegram-detected-action">선택</span>
+                    </button>
+                <?php endforeach; ?>
+            </div>
 
             <?php if ($status['telegram']): ?>
                 <form class="form-grid setup-form" method="post" action="/setup/telegram-targets">
@@ -203,12 +235,13 @@ $stepStates = [
                         관리자 알림 그룹 Chat ID
                         <input
                             name="group_chat_id"
+                            data-setup-group-chat
                             list="setup-group-chats"
                             required
                             value="<?= htmlspecialchars($adminChats[0] ?? '', ENT_QUOTES, 'UTF-8') ?>"
                             placeholder="-1001234567890"
                         >
-                        <datalist id="setup-group-chats">
+                        <datalist id="setup-group-chats" data-setup-group-list>
                             <?php foreach ($telegramChats as $chat): ?>
                                 <?php if (in_array($chat['type'], ['group', 'supergroup', 'channel'], true)): ?>
                                     <option value="<?= htmlspecialchars($chat['id'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($chat['title'], ENT_QUOTES, 'UTF-8') ?></option>
@@ -221,12 +254,13 @@ $stepStates = [
                         최초 관리자 Telegram User ID
                         <input
                             name="admin_telegram_id"
+                            data-setup-admin-chat
                             list="setup-private-chats"
                             required
                             value="<?= htmlspecialchars($bootstrapAdminIds[0] ?? '', ENT_QUOTES, 'UTF-8') ?>"
                             placeholder="123456789"
                         >
-                        <datalist id="setup-private-chats">
+                        <datalist id="setup-private-chats" data-setup-private-list>
                             <?php foreach ($telegramChats as $chat): ?>
                                 <?php if ($chat['type'] === 'private'): ?>
                                     <option value="<?= htmlspecialchars($chat['id'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($chat['title'], ENT_QUOTES, 'UTF-8') ?></option>
@@ -240,9 +274,7 @@ $stepStates = [
                     </div>
                 </form>
 
-                <?php if ($telegramChats === []): ?>
-                    <p class="setup-help"><i class="bi bi-info-circle"></i> 목록이 비어 있으면 Telegram에서 봇 개인 채팅과 관리자 그룹에 메시지를 보낸 뒤 <strong>최근 채팅 자동 확인</strong>을 다시 누르세요.</p>
-                <?php endif; ?>
+                <p class="setup-help"><i class="bi bi-info-circle"></i> 개인 채팅만 연결했다면 먼저 3A의 User ID만 자동 선택됩니다. 관리자 그룹을 만든 뒤 메시지를 보내고 다시 확인하면 3B Chat ID도 선택할 수 있습니다.</p>
             <?php endif; ?>
         </div>
     </section>
