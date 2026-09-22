@@ -141,17 +141,17 @@ final class SetupController
     {
         try {
             $this->setup->initializeSchema();
-            return $this->message('DB 초기화를 완료했습니다. 다음 단계로 진행하세요.');
+            return $this->message('DB 스키마 생성을 완료했습니다. 다음 단계로 진행하세요.');
         } catch (Throwable $exception) {
             error_log('[DK Annual Setup] Schema initialization failed: ' . $exception::class);
-            return $this->error('DB 초기화에 실패했습니다. 서버 오류 로그를 확인해 주세요.');
+            return $this->error('DB 스키마 생성에 실패했습니다. 서버 오류 로그를 확인해 주세요.');
         }
     }
 
     public function saveTelegram(Request $request): Response
     {
         if (!$this->setup->schemaReady()) {
-            return $this->error('DB 초기화를 먼저 완료해 주세요.');
+            return $this->error('DB 스키마 생성을 먼저 완료해 주세요.');
         }
 
         $settings = new AppSettingRepository($this->pdo);
