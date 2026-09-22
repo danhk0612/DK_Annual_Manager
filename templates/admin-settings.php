@@ -3,8 +3,8 @@
 /** @var string $primaryColor */
 /** @var string $theme */
 /** @var string $logoPath */
-/** @var list<string> $telegramAdminChats */
-/** @var bool $telegramChatsManaged */
+/** @var string $companyChatId */
+/** @var bool $companyChatManaged */
 /** @var array<string, mixed>|null $telegramBotInfo */
 /** @var list<array{id:string,title:string,type:string}> $telegramChats */
 /** @var string|null $telegramProbeError */
@@ -169,36 +169,42 @@
 
         <div class="settings-divider"></div>
 
-        <form class="form-grid" method="post" action="/admin/settings/telegram">
+        <div class="settings-role-note">
+            <div><i class="bi bi-person-lock"></i><strong>관리자 개인 알림</strong><span>휴가 신청 사유, 잔여 연차 경고 등 관리 정보는 활성 관리자에게 개인 Telegram 메시지로 전송합니다.</span></div>
+            <div><i class="bi bi-people"></i><strong>회사 공용 그룹</strong><span>관리자와 직원이 함께 보는 그룹이며 승인된 휴가 일정 등록/취소처럼 공개 가능한 일정 정보만 전송합니다.</span></div>
+        </div>
+
+        <form class="form-grid settings-subsection" method="post" action="/admin/settings/telegram">
             <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
             <label class="span-2">
-                관리자 알림 Chat ID
-                <textarea name="admin_chat_ids" rows="4" placeholder="-1001234567890"><?= htmlspecialchars(implode("\n", $telegramAdminChats), ENT_QUOTES, 'UTF-8') ?></textarea>
+                회사 공용 Telegram 그룹 Chat ID
+                <input name="company_chat_id" required placeholder="-1001234567890" value="<?= htmlspecialchars($companyChatId, ENT_QUOTES, 'UTF-8') ?>">
             </label>
-            <p class="form-hint span-2">한 줄에 하나씩 입력합니다. <?= $telegramChatsManaged ? '관리자 설정값을 사용 중입니다.' : '현재는 기존 config 기본값을 표시합니다. 저장 후 관리자 설정값으로 전환됩니다.' ?></p>
+            <p class="form-hint span-2"><?= $companyChatManaged ? '관리자 화면에서 저장한 회사 공용 그룹을 사용 중입니다.' : '아직 DB 관리값이 없으면 config의 company_chat_id를 기본값으로 사용합니다.' ?></p>
             <div class="form-actions">
-                <button class="button primary" type="submit"><i class="bi bi-bell-fill"></i><span>알림 대상 저장</span></button>
-                <button class="button" type="submit" formaction="/admin/settings/telegram/test"><i class="bi bi-send-check"></i><span>테스트 메시지</span></button>
+                <button class="button primary" type="submit"><i class="bi bi-check2-circle"></i><span>회사 그룹 저장</span></button>
+                <button class="button" type="submit" formaction="/admin/settings/telegram/test"><i class="bi bi-send-check"></i><span>회사 그룹 테스트</span></button>
             </div>
         </form>
 
         <?php if ($telegramChats !== []): ?>
             <div class="detected-chat-list settings-subsection">
-                <h3>최근 확인된 채팅</h3>
+                <h3>최근 확인된 그룹/채널</h3>
                 <?php foreach ($telegramChats as $chat): ?>
+                    <?php if (!in_array($chat['type'], ['group', 'supergroup', 'channel'], true)) { continue; } ?>
                     <div class="detected-chat">
                         <div>
                             <strong><?= htmlspecialchars($chat['title'], ENT_QUOTES, 'UTF-8') ?></strong>
                             <span><?= htmlspecialchars($chat['type'], ENT_QUOTES, 'UTF-8') ?> · <?= htmlspecialchars($chat['id'], ENT_QUOTES, 'UTF-8') ?></span>
                         </div>
-                        <?php if (!in_array($chat['id'], $telegramAdminChats, true) && in_array($chat['type'], ['group', 'supergroup', 'channel'], true)): ?>
+                        <?php if ($chat['id'] !== $companyChatId): ?>
                             <form method="post" action="/admin/settings/telegram/add-chat">
                                 <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                                 <input type="hidden" name="chat_id" value="<?= htmlspecialchars($chat['id'], ENT_QUOTES, 'UTF-8') ?>">
-                                <button class="button small" type="submit"><i class="bi bi-plus-lg"></i><span>추가</span></button>
+                                <button class="button small" type="submit"><i class="bi bi-building-check"></i><span>회사 그룹으로 사용</span></button>
                             </form>
-                        <?php elseif (in_array($chat['id'], $telegramAdminChats, true)): ?>
-                            <span class="badge approved"><i class="bi bi-check2"></i><span>등록됨</span></span>
+                        <?php else: ?>
+                            <span class="badge approved"><i class="bi bi-check2"></i><span>회사 그룹</span></span>
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
