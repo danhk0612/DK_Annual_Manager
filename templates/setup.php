@@ -97,7 +97,13 @@ $stepStates = [
                 </div>
                 <span class="badge <?= $status['telegram'] ? 'approved' : 'pending' ?>"><?= $status['telegram'] ? '저장됨' : '설정 필요' ?></span>
             </div>
-            <p>BotFather에서 봇과 Login Widget/OIDC를 준비한 뒤 아래 값을 입력합니다. 비밀값은 화면에 다시 표시하지 않습니다.</p>
+            <p>BotFather에서 봇을 만든 뒤 Login Widget/OIDC를 활성화하고 아래 값을 입력합니다. 비밀값은 화면에 다시 표시하지 않습니다.</p>
+            <div class="setup-mini-steps">
+                <span><b>1</b> BotFather에서 Bot 생성</span>
+                <span><b>2</b> Login Widget/OIDC 활성화</span>
+                <span><b>3</b> 사이트 Origin과 Callback URI 등록</span>
+                <span><b>4</b> Client ID/Secret + Bot Token 입력</span>
+            </div>
             <div class="setup-links">
                 <a class="button" href="https://t.me/BotFather" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> BotFather 열기</a>
                 <?php if ($appUrl !== ''): ?>
@@ -164,41 +170,39 @@ $stepStates = [
                     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
 
                     <label>
-                        관리자 알림 그룹
-                        <select name="group_chat_id" required>
-                            <option value="">선택</option>
+                        관리자 알림 그룹 Chat ID
+                        <input
+                            name="group_chat_id"
+                            list="setup-group-chats"
+                            required
+                            value="<?= htmlspecialchars($adminChats[0] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                            placeholder="-1001234567890"
+                        >
+                        <datalist id="setup-group-chats">
                             <?php foreach ($telegramChats as $chat): ?>
                                 <?php if (in_array($chat['type'], ['group', 'supergroup', 'channel'], true)): ?>
-                                    <option value="<?= htmlspecialchars($chat['id'], ENT_QUOTES, 'UTF-8') ?>" <?= in_array($chat['id'], $adminChats, true) ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($chat['title'] . ' · ' . $chat['id'], ENT_QUOTES, 'UTF-8') ?>
-                                    </option>
+                                    <option value="<?= htmlspecialchars($chat['id'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($chat['title'], ENT_QUOTES, 'UTF-8') ?></option>
                                 <?php endif; ?>
                             <?php endforeach; ?>
-                            <?php foreach ($adminChats as $chatId): ?>
-                                <?php if (!in_array($chatId, array_column($telegramChats, 'id'), true)): ?>
-                                    <option value="<?= htmlspecialchars($chatId, ENT_QUOTES, 'UTF-8') ?>" selected><?= htmlspecialchars($chatId, ENT_QUOTES, 'UTF-8') ?> (기존 설정)</option>
-                                <?php endif; ?>
-                            <?php endforeach; ?>
-                        </select>
+                        </datalist>
                     </label>
 
                     <label>
-                        최초 관리자 Telegram 계정
-                        <select name="admin_telegram_id" required>
-                            <option value="">선택</option>
+                        최초 관리자 Telegram User ID
+                        <input
+                            name="admin_telegram_id"
+                            list="setup-private-chats"
+                            required
+                            value="<?= htmlspecialchars($bootstrapAdminIds[0] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                            placeholder="123456789"
+                        >
+                        <datalist id="setup-private-chats">
                             <?php foreach ($telegramChats as $chat): ?>
                                 <?php if ($chat['type'] === 'private'): ?>
-                                    <option value="<?= htmlspecialchars($chat['id'], ENT_QUOTES, 'UTF-8') ?>" <?= in_array($chat['id'], $bootstrapAdminIds, true) ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($chat['title'] . ' · ' . $chat['id'], ENT_QUOTES, 'UTF-8') ?>
-                                    </option>
+                                    <option value="<?= htmlspecialchars($chat['id'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($chat['title'], ENT_QUOTES, 'UTF-8') ?></option>
                                 <?php endif; ?>
                             <?php endforeach; ?>
-                            <?php foreach ($bootstrapAdminIds as $telegramId): ?>
-                                <?php if (!in_array($telegramId, array_column($telegramChats, 'id'), true)): ?>
-                                    <option value="<?= htmlspecialchars($telegramId, ENT_QUOTES, 'UTF-8') ?>" selected><?= htmlspecialchars($telegramId, ENT_QUOTES, 'UTF-8') ?> (기존 설정)</option>
-                                <?php endif; ?>
-                            <?php endforeach; ?>
-                        </select>
+                        </datalist>
                     </label>
 
                     <div class="form-actions">
