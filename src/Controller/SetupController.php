@@ -110,7 +110,7 @@ final class SetupController
             foreach ($chats as $chat) {
                 if (($chat['type'] ?? '') === 'private') {
                     $privateCount++;
-                } elseif (in_array(($chat['type'] ?? ''), ['group', 'supergroup', 'channel'], true)) {
+                } elseif (in_array(($chat['type'] ?? ''), ['group', 'supergroup'], true)) {
                     $groupCount++;
                 }
             }
@@ -119,7 +119,7 @@ final class SetupController
                 'ok' => true,
                 'message' => $chats === []
                     ? '최근 Telegram 채팅을 찾지 못했습니다. 봇 개인 채팅에서 /start를 보내거나 회사 공용 그룹에서 메시지를 보낸 뒤 다시 확인하세요.'
-                    : sprintf('최근 채팅 %d개를 찾았습니다. 개인 채팅 %d개, 그룹/채널 %d개입니다.', count($chats), $privateCount, $groupCount),
+                    : sprintf('최근 채팅 %d개를 찾았습니다. 개인 채팅 %d개, 그룹 %d개입니다.', count($chats), $privateCount, $groupCount),
                 'bot' => [
                     'name' => (string) ($botInfo['first_name'] ?? ''),
                     'username' => (string) ($botInfo['username'] ?? ''),
