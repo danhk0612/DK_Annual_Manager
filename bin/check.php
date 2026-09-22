@@ -68,6 +68,42 @@ try {
             : $fail('DB table이 없습니다: ' . $table);
     }
 
+    $columnStatement = $pdo->prepare(
+        'SELECT COUNT(*) FROM information_schema.columns '
+        . 'WHERE table_schema = DATABASE() AND table_name = :table_name AND column_name = :column_name'
+    );
+    foreach ([
+        ['users', 'department'],
+        ['users', 'position'],
+        ['leave_requests', 'half_day_period'],
+    ] as [$table, $column]) {
+        $columnStatement->execute(['table_name' => $table, 'column_name' => $column]);
+        (int) $columnStatement->fetchColumn() === 1
+            ? $pass(sprintf('DB column: %s.%s', $table, $column))
+            : $fail(sprintf('DB column이 없습니다: %s.%s (최신 migration 적용 필요)', $table, $column));
+    }
+
+    $leaveTypeStatement = $pdo->query(
+        "SELECT code, is_active, deducts_annual_leave FROM leave_types WHERE code IN ('P', 'G', 'S', 'A')"
+    );
+    $leaveTypeMap = [];
+    foreach ($leaveTypeStatement->fetchAll() as $leaveTypeRow) {
+        $leaveTypeMap[(string) $leaveTypeRow['code']] = $leaveTypeRow;
+    }
+    isset($leaveTypeMap['G']) && (int) $leaveTypeMap['G']['is_active'] === 1
+        && (int) $leaveTypeMap['G']['deducts_annual_leave'] === 0
+        ? $pass('휴가 종류: 공가 활성 / 연차 미차감')
+        : $fail('공가(G) 설정이 최신 상태가 아닙니다.');
+    !isset($leaveTypeMap['P']) || (int) $leaveTypeMap['P']['is_active'] === 0
+        ? $pass('휴가 종류: 개인 비활성')
+        : $fail('개인(P) 휴가가 아직 활성 상태입니다.');
+    foreach (['S' => '병가', 'A' => '대체휴가'] as $code => $name) {
+        isset($leaveTypeMap[$code]) && (int) $leaveTypeMap[$code]['is_active'] === 1
+            && (int) $leaveTypeMap[$code]['deducts_annual_leave'] === 0
+            ? $pass(sprintf('휴가 종류: %s 연차 미차감', $name))
+            : $fail(sprintf('%s(%s) 설정이 최신 상태가 아닙니다.', $name, $code));
+    }
+
     $appUrl = trim((string) $config->get('app.url', ''));
     str_starts_with($appUrl, 'https://')
         ? $pass('app.url HTTPS')
