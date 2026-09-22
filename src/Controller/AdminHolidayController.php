@@ -59,7 +59,8 @@ final class AdminHolidayController
             ], $this->ip($request));
             return $this->redirect($year, sprintf('%d년 공휴일 %d건을 갱신했습니다.', $year, $count));
         } catch (Throwable $exception) {
-            return $this->redirect($year, null, $exception->getMessage());
+            error_log('[DK Annual Holiday] Public holiday sync failed: ' . $exception::class);
+            return $this->redirect($year, null, '공휴일 API 갱신에 실패했습니다. API 설정과 서버 오류 로그를 확인해 주세요.');
         }
     }
 
@@ -91,7 +92,8 @@ final class AdminHolidayController
             ], $this->ip($request));
             return $this->redirect($year, '휴일을 저장했습니다.');
         } catch (Throwable $exception) {
-            return $this->redirect($year, null, $exception->getMessage());
+            error_log('[DK Annual Holiday] Managed holiday save failed: ' . $exception::class);
+            return $this->redirect($year, null, '휴일 저장에 실패했습니다. 입력값을 확인하거나 서버 오류 로그를 확인해 주세요.');
         }
     }
 
