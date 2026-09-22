@@ -134,6 +134,43 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const completedSetupSteps = Array.from(document.querySelectorAll('.setup-step.complete'));
+
+    completedSetupSteps.forEach((step) => {
+        const main = step.querySelector('.setup-step-main');
+        const header = main ? main.querySelector(':scope > .section-head') : null;
+        if (!main || !header) {
+            return;
+        }
+
+        const setExpanded = (expanded) => {
+            step.classList.toggle('is-collapsed', !expanded);
+            header.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            header.setAttribute('title', expanded ? '완료 단계 접기' : '완료 단계 펼치기');
+        };
+
+        header.classList.add('setup-step-collapse-trigger');
+        header.setAttribute('role', 'button');
+        header.setAttribute('tabindex', '0');
+        setExpanded(false);
+
+        header.addEventListener('click', (event) => {
+            if (event.target.closest('a, button, input, select, textarea, label')) {
+                return;
+            }
+            setExpanded(step.classList.contains('is-collapsed'));
+        });
+
+        header.addEventListener('keydown', (event) => {
+            if (event.target !== header || !['Enter', ' '].includes(event.key)) {
+                return;
+            }
+
+            event.preventDefault();
+            setExpanded(step.classList.contains('is-collapsed'));
+        });
+    });
+
     const telegramProbeButton = document.querySelector('[data-telegram-probe]');
     const telegramProbeStatus = document.querySelector('[data-telegram-probe-status]');
     const telegramProbeStatusIcon = document.querySelector('[data-telegram-probe-status-icon]');

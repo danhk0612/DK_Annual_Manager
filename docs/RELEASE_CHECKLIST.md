@@ -23,6 +23,7 @@
 - [ ] Setup Step 4 최초 관리자 Telegram 로그인 및 자동 admin 활성화
 - [ ] Setup Step 5 공휴일 API 저장 및 현재 연도 동기화
 - [ ] Setup 완료 후 setup key 파일 삭제
+- [ ] 완료된 Setup Step은 기본 접힘 상태이며 클릭/키보드로 다시 펼칠 수 있음
 - [ ] Setup 완료 후 `/setup` 일반 접근 차단
 - [ ] 기존 활성 관리자 운영 DB는 setup.completed 자동 이행
 
