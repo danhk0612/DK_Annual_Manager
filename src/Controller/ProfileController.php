@@ -43,6 +43,7 @@ final class ProfileController
             'user' => $this->users->findById((int) $user['id']),
             'year' => $year,
             'annualSummary' => $this->reports->userAnnualSummary((int) $user['id'], $year),
+            'monthlyLeaveSummary' => $this->reports->userMonthlyLeaveSummary((int) $user['id'], $year),
             'csrfToken' => $this->csrf->token(),
             'message' => $request->input('message'),
             'error' => $request->input('error'),
