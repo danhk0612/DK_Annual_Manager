@@ -36,7 +36,10 @@ jobs:
         shell: bash
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          test "$VERSION" = "1.0.0"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Stable semantic version required: $VERSION"
+            exit 1
+          fi
           test -f "docs/RELEASE_NOTES_${VERSION}.md"
           test -f LICENSE
 
