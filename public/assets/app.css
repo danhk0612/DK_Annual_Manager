@@ -628,6 +628,10 @@ tbody tr:last-child td { border-bottom: 0; }
     font-weight: 750;
 }
 
+.export-form + .form-hint {
+    margin-top: 14px;
+}
+
 .request-detail-actions [hidden],
 .export-form [hidden] {
     display: none !important;
