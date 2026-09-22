@@ -50,7 +50,7 @@ $historyReturnTo = '/leave/history' . ($returnQuery !== [] ? '?' . http_build_qu
             <span>검색</span>
             <div class="input-with-icon">
                 <i class="bi bi-search"></i>
-                <input name="q" value="<?= htmlspecialchars($query, ENT_QUOTES, 'UTF-8') ?>" placeholder="<?= $isAdmin ? '직원, 부서, 휴가 종류, 사유, 관리자 메모' : '휴가 종류, 사유, 관리자 메모' ?>">
+                <input name="q" value="<?= htmlspecialchars($query, ENT_QUOTES, 'UTF-8') ?>" placeholder="<?= $isAdmin ? '직원, 부서, 휴가 종류, 사유, 관리자 메모, 취소 사유, 취소 사유' : '휴가 종류, 사유, 관리자 메모' ?>">
             </div>
         </label>
         <label>
