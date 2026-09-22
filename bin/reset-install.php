@@ -59,16 +59,18 @@ try {
     }
 
     $storageDir = $root . '/storage';
-    if (!is_dir($storageDir) && !mkdir($storageDir, 0700, true) && !is_dir($storageDir)) {
+    if (!is_dir($storageDir) && !mkdir($storageDir, 0755, true) && !is_dir($storageDir)) {
         throw new RuntimeException('setup storage directory creation failed');
     }
+    @chmod($storageDir, 0755);
 
     $setupKey = bin2hex(random_bytes(24));
+    $setupKeyHash = hash('sha256', $setupKey);
     $setupKeyPath = $storageDir . '/setup.key';
-    if (file_put_contents($setupKeyPath, $setupKey . PHP_EOL, LOCK_EX) === false) {
+    if (file_put_contents($setupKeyPath, $setupKeyHash . PHP_EOL, LOCK_EX) === false) {
         throw new RuntimeException('setup access key write failed');
     }
-    @chmod($setupKeyPath, 0600);
+    @chmod($setupKeyPath, 0644);
 
     $setupPath = '/setup?setup_key=' . $setupKey;
     $appUrl = rtrim((string) $config->get('app.url', ''), '/');

@@ -103,9 +103,9 @@ php bin/check.php
 
 ## 7. 브랜딩 업로드 권한
 
-회사 로고는 `public/uploads/branding/`에 저장된다. Web Station/PHP-FPM 실행 계정이 이 디렉터리에 파일을 생성/교체할 수 있어야 한다.
+회사 로고는 `public/uploads/branding/`에 저장된다. 웹 서버/PHP 실행 계정이 이 디렉터리에 파일을 생성/교체할 수 있어야 한다.
 
-`php bin/check.php`는 CLI 기준 쓰기 가능 여부도 확인한다. CLI 사용자는 쓰기 가능하지만 웹에서 업로드가 실패하면 Web Station/PHP-FPM 실행 계정의 폴더 권한을 별도로 확인한다.
+`php bin/check.php`는 CLI 기준 쓰기 가능 여부도 확인한다. CLI 사용자는 쓰기 가능하지만 웹에서 업로드가 실패하면 웹 서버/PHP 실행 계정의 폴더 권한을 별도로 확인한다.
 
 ## 8. 운영 전 필수 확인
 
@@ -136,10 +136,10 @@ php bin/check.php
 DB 접속이 가능한 최소 `config/config.php`와 Composer 의존성 설치가 끝나면 먼저 설치 접근 키를 생성한다.
 
 ```bash
-php84 bin/setup-key.php
+php bin/setup-key.php
 ```
 
-출력된 `/setup?setup_key=...` 주소로 접속한다. 키는 첫 접속 후 URL에서 제거되고 설치 완료 시 파일도 삭제된다. 신규 설치에서는 별도 migration을 적용하지 않고 최신 `database/schema.sql`을 사용한다.
+출력된 `/setup?setup_key=...` 주소로 접속한다. 원본 키는 디스크에 저장하지 않고 SHA-256 해시만 `storage/setup.key`에 저장한다. 키는 첫 접속 후 URL에서 제거되고 설치 완료 시 파일도 삭제된다. 신규 설치에서는 별도 migration을 적용하지 않고 최신 `database/schema.sql`을 사용한다.
 
 설치 마법사는 다음 순서로 진행한다.
 
@@ -157,7 +157,7 @@ Telegram Client Secret, Bot Token, 공휴일 API ServiceKey 등 서비스 연결
 아래 명령은 휴가관리 DB의 모든 테이블과 업로드한 회사 로고를 삭제한다. `config/config.php`, Composer 파일, 소스코드는 유지된다.
 
 ```bash
-php84 bin/reset-install.php --confirm=RESET-INSTALL
+php bin/reset-install.php --confirm=RESET-INSTALL
 ```
 
 초기화 명령이 새 setup key와 보호된 Setup URL을 함께 출력한다. 그 URL로 신규 설치 흐름을 처음부터 검증한다. 운영 데이터가 있는 환경에서는 이 명령을 사용하지 않는다.

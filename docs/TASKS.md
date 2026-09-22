@@ -257,14 +257,14 @@
 - [x] 완전 초기화 후 migration 없이 최신 database/schema.sql만 사용하는 흐름
 - [x] bin/check.php에서 setup 상태와 DB 관리 자격 증명 반영
 - [x] PHP 8.2/8.4 CI
-- [ ] 실제 NAS에서 완전 초기화 후 /setup 전 과정 검증
+- [ ] 실제 실제 서버에서 완전 초기화 후 /setup 전 과정 검증
 - [ ] 최초 관리자/그룹 자동 탐색 및 Telegram 로그인 검증
 - [ ] 공휴일 API 자동 동기화 검증
 
 
 ## T15. 설치 자동화 보강 · 보안 하드닝
 
-상태: 구현 완료 / CI 및 NAS 완전 초기화 검증 대기
+상태: 구현 완료 / CI 및 실제 서버 완전 초기화 검증 대기
 
 - [x] 현재 접속 host 기준 Allowed Origin 자동 계산
 - [x] 현재 접속 host 기준 Telegram Redirect URI 자동 계산
@@ -283,4 +283,4 @@
 - [x] Telegram/API 오류에서 Secret/Token/ServiceKey가 포함될 수 있는 원문 예외 메시지 비노출
 - [x] 완전 설치 흐름 문서 docs/SETUP_FLOW.md 추가
 - [x] PHP 8.2/8.4 CI
-- [ ] NAS 완전 초기화 → setup key → DB → Telegram → 그룹/관리자 → 공휴일 → 완료 전 과정 검증
+- [ ] 실제 서버 완전 초기화 → setup key → DB → Telegram → 그룹/관리자 → 공휴일 → 완료 전 과정 검증

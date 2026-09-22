@@ -7,15 +7,15 @@
 웹에 `/setup`이 그대로 노출되지 않도록 설치 키를 사용한다.
 
 ```bash
-php84 bin/setup-key.php
+php bin/setup-key.php
 ```
 
-출력된 `/setup?setup_key=...` 주소로 한 번 접속하면 현재 브라우저 세션만 설치 권한을 얻고, 키는 URL에서 제거된다. 설치 완료 시 `storage/setup.key`는 삭제된다.
+출력된 `/setup?setup_key=...` 주소로 한 번 접속하면 현재 브라우저 세션만 설치 권한을 얻고, 키는 URL에서 제거된다. 원본 키는 파일에 저장하지 않고 SHA-256 해시만 `storage/setup.key`에 보관한다. 이 파일은 웹 공개 루트 밖에 두고 웹 서버/PHP 실행 계정이 읽을 수 있게 한다. 설치 완료 시 `storage/setup.key`는 삭제된다.
 
 테스트용 완전 초기화:
 
 ```bash
-php84 bin/reset-install.php --confirm=RESET-INSTALL
+php bin/reset-install.php --confirm=RESET-INSTALL
 ```
 
 이 명령은 DB 테이블과 업로드 로고를 삭제하고 새 setup key/URL을 함께 출력한다.

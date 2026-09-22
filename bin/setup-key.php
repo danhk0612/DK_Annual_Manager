@@ -11,17 +11,19 @@ $root = dirname(__DIR__);
 $storage = $root . '/storage';
 $keyPath = $storage . '/setup.key';
 
-if (!is_dir($storage) && !mkdir($storage, 0700, true) && !is_dir($storage)) {
+if (!is_dir($storage) && !mkdir($storage, 0755, true) && !is_dir($storage)) {
     fwrite(STDERR, "storage 디렉터리를 만들 수 없습니다.\n");
     exit(1);
 }
+@chmod($storage, 0755);
 
 $key = bin2hex(random_bytes(24));
-if (file_put_contents($keyPath, $key . PHP_EOL, LOCK_EX) === false) {
+$keyHash = hash('sha256', $key);
+if (file_put_contents($keyPath, $keyHash . PHP_EOL, LOCK_EX) === false) {
     fwrite(STDERR, "setup key를 저장하지 못했습니다.\n");
     exit(1);
 }
-@chmod($keyPath, 0600);
+@chmod($keyPath, 0644);
 
 fwrite(STDOUT, "초기 설정 키를 새로 생성했습니다.\n");
 fwrite(STDOUT, "브라우저에서 아래 경로를 사용하세요.\n\n");
