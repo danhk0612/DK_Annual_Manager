@@ -265,7 +265,7 @@ final class XlsxWriter
 
     private function safeSheetName(string $name): string
     {
-        $name = preg_replace('/[\\\/\?\*\[\]:]/u', ' ', trim($name)) ?? 'Sheet1';
+        $name = str_replace(['\\', '/', '?', '*', '[', ']', ':'], ' ', trim($name));
         if ($name === '') {
             return 'Sheet1';
         }
