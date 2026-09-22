@@ -2332,3 +2332,76 @@ h3 > .bi {
         grid-template-columns: 1fr;
     }
 }
+
+
+.setup-address-grid,
+.setup-connection-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.setup-address-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 10px;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: var(--surface-soft);
+}
+
+.setup-address-card > span {
+    grid-column: 1 / -1;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 750;
+}
+
+.setup-address-card code {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text);
+}
+
+.setup-connection-card {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-soft);
+}
+
+.setup-substep {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 850;
+}
+
+.setup-connection-card h3 {
+    margin: 0;
+}
+
+.setup-connection-card p {
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+@media (max-width: 760px) {
+    .setup-address-grid,
+    .setup-connection-grid {
+        grid-template-columns: 1fr;
+    }
+}

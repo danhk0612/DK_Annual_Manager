@@ -58,9 +58,31 @@ try {
         @unlink($file);
     }
 
+    $storageDir = $root . '/storage';
+    if (!is_dir($storageDir) && !mkdir($storageDir, 0700, true) && !is_dir($storageDir)) {
+        throw new RuntimeException('setup storage directory creation failed');
+    }
+
+    $setupKey = bin2hex(random_bytes(24));
+    $setupKeyPath = $storageDir . '/setup.key';
+    if (file_put_contents($setupKeyPath, $setupKey . PHP_EOL, LOCK_EX) === false) {
+        throw new RuntimeException('setup access key write failed');
+    }
+    @chmod($setupKeyPath, 0600);
+
+    $setupPath = '/setup?setup_key=' . $setupKey;
+    $appUrl = rtrim((string) $config->get('app.url', ''), '/');
+
     fwrite(STDOUT, "\n초기화 완료. config/config.php와 Composer 설치 파일은 유지했습니다.\n");
-    fwrite(STDOUT, "브라우저에서 /setup 을 열어 신규 설치 과정을 시작하세요.\n");
+    fwrite(STDOUT, "초기 설정 접근 키도 새로 생성했습니다.\n\n");
+    fwrite(STDOUT, "경로: " . $setupPath . "\n");
+
+    if ($appUrl !== '' && filter_var($appUrl, FILTER_VALIDATE_URL) !== false && !str_contains($appUrl, 'example.com')) {
+        fwrite(STDOUT, "URL:  " . $appUrl . $setupPath . "\n");
+    } else {
+        fwrite(STDOUT, "현재 서비스 주소 뒤에 위 경로를 붙여 접속하세요.\n");
+    }
 } catch (Throwable $exception) {
-    fwrite(STDERR, "초기화 실패: " . $exception->getMessage() . "\n");
+    fwrite(STDERR, "초기화 실패했습니다. 서버/PHP 로그를 확인하세요. (" . $exception::class . ")\n");
     exit(1);
 }

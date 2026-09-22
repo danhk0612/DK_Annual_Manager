@@ -43,7 +43,8 @@ final class SetupController
                 $telegramBotInfo = $bot->getMe();
                 $telegramChats = $bot->recentChats();
             } catch (Throwable $exception) {
-                $probeError = $exception->getMessage();
+                error_log('[DK Annual Setup] Telegram probe failed: ' . $exception::class);
+                $probeError = 'Telegram Bot 또는 최근 채팅을 확인하지 못했습니다. 입력값과 Bot 권한을 확인해 주세요.';
             }
         }
 
@@ -52,9 +53,14 @@ final class SetupController
             : 0;
 
         $botUsername = is_array($telegramBotInfo) ? trim((string) ($telegramBotInfo['username'] ?? '')) : '';
-        $appUrl = rtrim((string) $this->config->get('app.url', ''), '/');
+        if ($botUsername === '' && $settings !== null) {
+            $botUsername = trim((string) $settings->get('telegram.bot_username', ''));
+        }
+
+        $detectedOrigin = $this->detectedOrigin($request);
+        $appUrl = $detectedOrigin;
         $redirectUri = $settings?->get('telegram.redirect_uri', null)
-            ?? (string) $this->config->get('telegram.redirect_uri', ($appUrl !== '' ? $appUrl . '/auth/telegram/callback' : ''));
+            ?? ($detectedOrigin !== '' ? $detectedOrigin . '/auth/telegram/callback' : '');
 
         return $this->render([
             'status' => $status,
@@ -66,6 +72,7 @@ final class SetupController
             'telegramChats' => $telegramChats,
             'adminCount' => $adminCount,
             'appUrl' => $appUrl,
+            'allowedOrigin' => $detectedOrigin,
             'redirectUri' => $redirectUri,
             'configuredClientId' => $settings?->get('telegram.client_id', '') ?? '',
             'hasClientSecret' => trim((string) ($settings?->get('telegram.client_secret', '') ?? '')) !== '',
@@ -85,7 +92,8 @@ final class SetupController
             $this->setup->initializeSchema();
             return $this->message('DB 초기화를 완료했습니다. 다음 단계로 진행하세요.');
         } catch (Throwable $exception) {
-            return $this->error('DB 초기화 실패: ' . $exception->getMessage());
+            error_log('[DK Annual Setup] Schema initialization failed: ' . $exception::class);
+            return $this->error('DB 초기화에 실패했습니다. 서버 오류 로그를 확인해 주세요.');
         }
     }
 
@@ -124,7 +132,8 @@ final class SetupController
             $bot = new TelegramBotClient($this->config);
             $botInfo = $bot->getMe();
         } catch (Throwable $exception) {
-            return $this->error('Telegram Bot 확인 실패로 설정을 저장하지 않았습니다: ' . $exception->getMessage());
+            error_log('[DK Annual Setup] Telegram verification failed: ' . $exception::class);
+            return $this->error('Telegram Bot 연결 확인에 실패했습니다. Client ID/Secret, Bot Token, Allowed URL 설정을 확인해 주세요.');
         }
 
         $settings->set('telegram.client_id', $clientId, null);
@@ -185,7 +194,8 @@ final class SetupController
                 return $this->error('공휴일 API 연결은 되었지만 현재 연도 데이터가 비어 있습니다.');
             }
         } catch (Throwable $exception) {
-            return $this->error('공휴일 API 확인 실패로 키를 저장하지 않았습니다: ' . $exception->getMessage());
+            error_log('[DK Annual Setup] Holiday API verification failed: ' . $exception::class);
+            return $this->error('공휴일 API 연결 확인에 실패했습니다. ServiceKey 승인 상태와 값을 확인해 주세요.');
         }
 
         $settings = new AppSettingRepository($this->pdo);
@@ -214,6 +224,7 @@ final class SetupController
         $settings = new AppSettingRepository($this->pdo);
         $settings->set('setup.completed', '1', null);
         $settings->set('setup.completed_at', date('c'), null);
+        $this->setup->clearSetupKey();
 
         return Response::redirect('/admin/settings?message=' . rawurlencode('초기 서비스 설정을 완료했습니다.'));
     }
@@ -225,6 +236,24 @@ final class SetupController
         ob_start();
         require $this->templatePath . '/setup.php';
         return Response::html((string) ob_get_clean());
+    }
+
+    private function detectedOrigin(Request $request): string
+    {
+        $forwardedProto = strtolower(trim(explode(',', (string) $request->server('HTTP_X_FORWARDED_PROTO', ''))[0] ?? ''));
+        $scheme = in_array($forwardedProto, ['http', 'https'], true)
+            ? $forwardedProto
+            : (((string) $request->server('HTTPS', '') !== '' && (string) $request->server('HTTPS', '') !== 'off') ? 'https' : 'http');
+
+        $forwardedHost = trim(explode(',', (string) $request->server('HTTP_X_FORWARDED_HOST', ''))[0] ?? '');
+        $host = $forwardedHost !== '' ? $forwardedHost : trim((string) $request->server('HTTP_HOST', ''));
+
+        if ($host === '' || preg_match('/^[A-Za-z0-9.-]+(?::[0-9]{1,5})?$/', $host) !== 1) {
+            $configured = rtrim((string) $this->config->get('app.url', ''), '/');
+            return filter_var($configured, FILTER_VALIDATE_URL) !== false ? $configured : '';
+        }
+
+        return $scheme . '://' . $host;
     }
 
     /** @return list<string> */

@@ -36,6 +36,8 @@ src/
   Holiday/
   Telegram/
   Repository/
+  Setup/
+  Middleware/
   View/
 ```
 
@@ -47,7 +49,7 @@ src/
 
 ### leave_types
 
-Excel의 V/H/P/S/A를 DB 데이터로 관리한다. `deducts_annual_leave`와 `default_amount`로 차감 규칙을 결정한다.
+현재 신규 신청 유형 V/H/G/S/A를 DB 데이터로 관리한다. V/H만 `deducts_annual_leave=1`이고 G/S/A는 미차감이다. 원본 Excel의 P는 신규 신청에서 비활성화한다.
 
 ### leave_requests
 
@@ -104,3 +106,31 @@ grant + carryover + adjustment + usage + reversal
 ```
 
 DB 상태 변경을 먼저 확정한 후 외부 Telegram 전송을 수행한다. Telegram 장애가 핵심 업무 데이터의 일관성을 깨지 않도록 한다.
+
+
+## 설정 계층
+
+`config/config.php`에는 DB 접속 및 웹 실행에 필요한 최소 기본값을 둔다. 서비스 연결/운영 설정은 `app_settings`로 관리할 수 있고, 요청 시작 시 SetupService가 다음 값을 런타임 Config에 overlay한다.
+
+- Telegram Client ID / Client Secret / Bot Token / Redirect URI
+- 최초 관리자 Telegram ID
+- 관리자 알림 Chat ID
+- 공휴일 ServiceKey
+
+회사명, 로고 경로, 대표색, 테마도 `app_settings`에서 읽는다.
+
+## Setup 흐름
+
+```text
+CLI setup key 생성
+ -> 보호된 /setup
+ -> 최신 schema 초기화
+ -> Telegram Bot/OIDC 검증
+ -> private 관리자 채팅 + 관리자 그룹 탐색
+ -> 최초 관리자 OIDC 로그인
+ -> 공휴일 API 검증/동기화
+ -> setup.completed
+ -> setup key 삭제
+```
+
+신규 schema는 재실행 가능하도록 구성한다. 기존 운영 DB는 활성 관리자 계정이 존재하고 fresh setup marker가 없으면 legacy 설치로 자동 이행한다.

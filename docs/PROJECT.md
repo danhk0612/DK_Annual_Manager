@@ -17,10 +17,11 @@
 - 휴가 코드
   - `V`: 휴가/연차
   - `H`: 반차
-  - `P`: 개인
+  - `P`: 개인(원본 Excel 호환 개념, 신규 신청에서는 비활성)
   - `S`: 병가
   - `A`: 대체휴가(기타)
-- `V`는 1일, `H`는 0.5일의 연차 차감
+- 웹 신규 신청 유형은 `V/H/G/S/A`이며 `G` 공가를 추가한다.
+- `V`는 1일, `H`는 0.5일의 연차 차감이고 `G/S/A`는 연차를 차감하지 않는다.
 - 재직연차에 따른 전체 휴가일수 및 잔여 휴가일수
 - 연도별 공휴일 목록
 
@@ -50,12 +51,15 @@
 - 미등록 사용자는 `pending`으로 생성하고 관리자가 활성화한다.
 - 입사일은 최초 Telegram 연결 시 필수가 아니며 이후 관리자 또는 사용자가 입력한다.
 
-최초 관리자 bootstrap:
+최초 관리자 bootstrap은 Setup Wizard에서 진행한다.
 
-1. Telegram으로 한 번 로그인해 pending 계정을 생성한다.
-2. 대기 화면에 표시되는 Telegram User ID를 확인한다.
-3. `config/config.php`의 `telegram.bootstrap_admin_telegram_ids`에 ID를 추가한다.
-4. 다시 로그인하면 해당 계정이 `admin + active`로 활성화된다.
+1. @BotFather에서 Bot과 Login Widget/OIDC를 구성한다.
+2. Setup이 현재 host에서 Allowed Origin과 Redirect URI를 자동 계산한다.
+3. 최초 관리자가 Bot 개인 채팅에 `/start`를 보내고, 관리자 그룹에도 메시지를 1회 보낸다.
+4. 최근 채팅 자동 탐색으로 최초 관리자 User ID와 관리자 그룹 Chat ID를 선택한다.
+5. Telegram OIDC 로그인 결과가 저장된 최초 관리자 User ID와 일치하면 `admin + active`로 활성화된다.
+
+일반 직원은 설치 완료 후 서비스 로그인 링크를 통해 Telegram User ID 기준으로 연결한다.
 
 참고: https://core.telegram.org/bots/telegram-login
 
@@ -69,3 +73,10 @@
 - 회사 자체 휴무일도 별도 source로 저장
 
 참고: https://www.data.go.kr/dataset/15012690/openapi.do
+
+
+## 설치/운영 방향
+
+신규 설치는 migration을 누적 적용하지 않고 최신 `database/schema.sql`을 사용한다. `/setup`은 CLI에서 생성한 설치 키로 보호하고 DB → Telegram → 채팅/관리자 → 공휴일 순서로 진행한다.
+
+운영 중에는 회사명/로고/대표색/테마, Telegram 연결 및 알림 대상, 공휴일 ServiceKey를 관리자 환경설정에서 변경할 수 있다.

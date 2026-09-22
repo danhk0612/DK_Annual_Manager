@@ -53,15 +53,40 @@ final class SetupService
             return false;
         }
 
+        $this->migrateLegacyInstallation();
+
         $settings = new AppSettingRepository($this->pdo);
         return $settings->get('setup.completed', '0') === '1';
     }
 
+    public function migrateLegacyInstallation(): bool
+    {
+        if (!$this->schemaReady()) {
+            return false;
+        }
+
+        $settings = new AppSettingRepository($this->pdo);
+        if ($settings->get('setup.completed', null) !== null || $settings->get('setup.started_at', null) !== null) {
+            return false;
+        }
+
+        $adminCount = (int) $this->pdo
+            ->query("SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'active'")
+            ->fetchColumn();
+
+        if ($adminCount < 1) {
+            return false;
+        }
+
+        $settings->set('setup.completed', '1', null);
+        $settings->set('setup.completed_at', date('c'), null);
+        $settings->set('setup.migrated_legacy', '1', null);
+
+        return true;
+    }
+
     public function initializeSchema(): void
     {
-        if ($this->schemaReady()) {
-            return;
-        }
 
         $schemaPath = $this->rootPath . '/database/schema.sql';
         if (!is_file($schemaPath)) {
@@ -82,6 +107,11 @@ final class SetupService
 
         if (!$this->schemaReady()) {
             throw new RuntimeException('DB 초기화 후 필수 테이블을 확인하지 못했습니다.');
+        }
+
+        $settings = new AppSettingRepository($this->pdo);
+        if ($settings->get('setup.started_at', null) === null) {
+            $settings->set('setup.started_at', date('c'), null);
         }
     }
 
@@ -126,6 +156,14 @@ final class SetupService
         $managedChatsRaw = $settings->get('telegram.admin_chat_ids', null);
         if ($managedChatsRaw !== null) {
             $this->config->set('telegram.admin_chat_ids', $settings->lineList('telegram.admin_chat_ids'));
+        }
+    }
+
+    public function clearSetupKey(): void
+    {
+        $path = $this->rootPath . '/storage/setup.key';
+        if (is_file($path)) {
+            @unlink($path);
         }
     }
 

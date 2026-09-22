@@ -45,25 +45,24 @@ cp config/config.example.php config/config.php
 - `app.timezone`: 기본 `Asia/Seoul`
 - `app.debug`: 운영에서는 `false`
 - `database.*`: MariaDB 접속 정보
-- `telegram.client_id`, `client_secret`, `bot_token`
-- `telegram.redirect_uri`: `<서비스주소>/auth/telegram/callback`
-- `telegram.bootstrap_admin_telegram_ids`: 최초 관리자 Telegram User ID
-- `telegram.admin_chat_ids`: 필요 시 추가 관리자 알림 대상
-- `holiday_api.service_key`: 공공데이터포털 한국천문연구원 특일정보 ServiceKey
+- 신규 설치에서는 Telegram/OIDC, 관리자 Chat ID, 최초 관리자 ID, 공휴일 ServiceKey를 `/setup`에서 입력한다.
+- `telegram.*`, `holiday_api.service_key`의 config 값은 레거시/비상 기본값으로만 사용할 수 있다.
 
 실제 `config/config.php`는 `.gitignore` 대상이며 저장소에 커밋하지 않는다.
 
-설치 후 회사명, 로고, 대표색, 테마와 Telegram 관리자 알림 Chat ID는 **관리자 → 환경 설정**에서 관리할 수 있다. Telegram Client Secret, Bot Token, 공휴일 ServiceKey 같은 비밀 자격 증명은 보안을 위해 계속 서버의 `config/config.php`에 둔다.
+설치 후 회사명, 로고, 대표색, 테마, Telegram Client ID/Secret/Bot Token, 관리자 알림 Chat ID, 공휴일 ServiceKey를 **관리자 → 환경 설정**에서 관리할 수 있다. Secret/Token/API Key는 저장 후 화면에 기존 값을 다시 노출하지 않으며 Audit Log에도 실제 값을 기록하지 않는다.
 
 ## 4. Telegram 최초 관리자
 
-1. BotFather에서 Telegram Login/OIDC에 사용할 Bot/Client를 구성한다.
-2. 서비스 HTTPS URL과 callback URL을 허용한다.
-3. 일반 Telegram 로그인을 한 번 실행해 pending 계정을 만든다.
-4. 화면에 표시되는 Telegram User ID를 확인한다.
-5. 해당 ID를 `telegram.bootstrap_admin_telegram_ids`에 넣는다.
-6. 다시 로그인하면 관리자 계정으로 활성화된다.
-7. 이후 직원/권한 관리는 관리자 화면에서 수행한다.
+신규 설치에서는 `/setup`이 현재 접속 host를 기준으로 Allowed Origin과 Redirect URI를 자동 계산한다.
+
+1. @BotFather에서 `/newbot`으로 Bot 생성 후 Bot Token 확보
+2. 해당 Bot의 **Login Widget**에서 자동 계산된 Allowed Origin / Redirect URI 등록
+3. 같은 화면에서 Client ID / Client Secret 확인
+4. Setup Step 2에 값을 입력하고 Bot 연결 확인
+5. 최초 관리자 개인 채팅에서 `/start`, 관리자 그룹에서도 메시지 1회 전송
+6. Setup Step 3의 최근 채팅 자동 확인으로 개인 User ID와 그룹 Chat ID 선택
+7. Setup Step 4에서 Telegram 로그인하면 최초 관리자 활성화
 
 ## 5. 웹 서버
 
@@ -134,7 +133,13 @@ php bin/check.php
 
 ## 신규 설치 마법사
 
-DB 접속이 가능한 최소 `config/config.php`와 Composer 의존성 설치가 끝나면 브라우저에서 `/setup`을 연다. 신규 설치에서는 별도 migration을 적용하지 않고 최신 `database/schema.sql`을 사용한다.
+DB 접속이 가능한 최소 `config/config.php`와 Composer 의존성 설치가 끝나면 먼저 설치 접근 키를 생성한다.
+
+```bash
+php84 bin/setup-key.php
+```
+
+출력된 `/setup?setup_key=...` 주소로 접속한다. 키는 첫 접속 후 URL에서 제거되고 설치 완료 시 파일도 삭제된다. 신규 설치에서는 별도 migration을 적용하지 않고 최신 `database/schema.sql`을 사용한다.
 
 설치 마법사는 다음 순서로 진행한다.
 
@@ -155,4 +160,4 @@ Telegram Client Secret, Bot Token, 공휴일 API ServiceKey 등 서비스 연결
 php84 bin/reset-install.php --confirm=RESET-INSTALL
 ```
 
-초기화 후 브라우저에서 `/setup`을 열어 신규 설치 흐름을 처음부터 검증한다. 운영 데이터가 있는 환경에서는 이 명령을 사용하지 않는다.
+초기화 명령이 새 setup key와 보호된 Setup URL을 함께 출력한다. 그 URL로 신규 설치 흐름을 처음부터 검증한다. 운영 데이터가 있는 환경에서는 이 명령을 사용하지 않는다.
