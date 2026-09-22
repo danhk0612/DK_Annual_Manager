@@ -69,7 +69,7 @@ $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'
     </div>
     <div class="page-actions">
         <button class="button primary" type="button" data-open-leave-dialog><i class="bi bi-plus-circle"></i> 휴가 신청</button>
-        <a class="button" href="<?= $isAdmin ? '/admin/requests' : '/leave/history' ?>"><i class="bi bi-list-check"></i> <?= $isAdmin ? '전체 신청 내역' : '신청 내역' ?></a>
+        <a class="button" href="/leave/history"><i class="bi bi-list-check"></i> <?= $isAdmin ? '전체 신청 내역' : '신청 내역' ?></a>
     </div>
 </section>
 
