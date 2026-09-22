@@ -35,7 +35,7 @@ $isAdmin = str_starts_with($currentPath, '/admin');
     <div class="topbar-inner">
         <a class="brand" href="/calendar">
             <?php if ($logoPath !== ''): ?>
-                <span class="brand-logo-frame"><img class="brand-logo" src="<?= htmlspecialchars($logoPath, ENT_QUOTES, 'UTF-8') ?>" alt=""></span>
+                <span class="brand-logo-frame custom"><img class="brand-logo" src="<?= htmlspecialchars($logoPath, ENT_QUOTES, 'UTF-8') ?>" alt=""></span>
             <?php else: ?>
                 <span class="brand-logo-frame"><img class="brand-logo" src="/assets/app-icon.svg" alt=""></span>
             <?php endif; ?>
