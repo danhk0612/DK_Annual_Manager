@@ -49,7 +49,7 @@ $appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js')
             <div>
                 <p class="eyebrow">First-run setup</p>
                 <h1>휴가관리 서비스 초기 설정</h1>
-                <p>DB 초기화부터 Telegram, 최초 관리자, 공휴일 API까지 순서대로 연결합니다.</p>
+                <p>DB 스키마 생성부터 Telegram, 최초 관리자, 공휴일 API까지 순서대로 연결합니다.</p>
             </div>
         </div>
         <div class="setup-progress">
@@ -75,11 +75,11 @@ $appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js')
             <div class="section-head">
                 <div>
                     <p class="eyebrow">Step 1</p>
-                    <h2><i class="bi bi-database"></i> DB 초기화</h2>
+                    <h2><i class="bi bi-database"></i> DB 스키마 생성</h2>
                 </div>
                 <span class="badge <?= $status['schema'] ? 'approved' : 'pending' ?>"><?= $status['schema'] ? '완료' : '필요' ?></span>
             </div>
-            <p>현재 config의 DB 연결 정보를 사용해 최신 schema를 직접 생성합니다. 별도 migration은 사용하지 않습니다.</p>
+            <p>현재 config의 DB 연결 정보를 사용해 최신 schema를 생성합니다. 이 단계는 기존 데이터를 삭제하는 기능이 아닙니다. 기존 설치를 완전히 지우려면 관리자 환경 설정의 재설치 · 완전 초기화 또는 CLI reset-install 명령을 사용해야 합니다.</p>
             <?php if (!$status['schema']): ?>
                 <form method="post" action="/setup/database" class="setup-action-row">
                     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
