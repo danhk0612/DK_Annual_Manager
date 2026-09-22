@@ -33,10 +33,14 @@ final class XlsxWriterTest extends TestCase
         self::assertStringContainsString('=FORMULA가 아닌 문자열', $xlsx);
         self::assertStringContainsString("PK\x05\x06", $xlsx);
 
-        $this->assertZipStructure($xlsx);
+        $entries = $this->assertZipStructure($xlsx);
+        $this->assertXmlEntriesAreWellFormed($entries);
     }
 
-    private function assertZipStructure(string $zip): void
+    /**
+     * @return array<string, string>
+     */
+    private function assertZipStructure(string $zip): array
     {
         $eocd = strrpos($zip, "PK\x05\x06");
         self::assertNotFalse($eocd);
@@ -50,6 +54,7 @@ final class XlsxWriterTest extends TestCase
 
         $position = 0;
         $localCount = 0;
+        $entries = [];
         while ($position < $end['central_offset']) {
             $header = unpack(
                 'Vsignature/vversion/vflags/vmethod/vtime/vdate/Vcrc/Vcompressed/Vuncompressed/vname_length/vextra_length',
@@ -60,11 +65,13 @@ final class XlsxWriterTest extends TestCase
             self::assertSame(0, $header['method']);
 
             $nameStart = $position + 30;
+            $name = substr($zip, $nameStart, $header['name_length']);
             $dataStart = $nameStart + $header['name_length'] + $header['extra_length'];
             $data = substr($zip, $dataStart, $header['compressed']);
             self::assertSame($header['uncompressed'], strlen($data));
             self::assertSame($header['crc'], crc32($data));
 
+            $entries[$name] = $data;
             $position = $dataStart + $header['compressed'];
             $localCount++;
         }
@@ -72,5 +79,42 @@ final class XlsxWriterTest extends TestCase
         self::assertSame(6, $localCount);
         self::assertSame($end['central_offset'], $position);
         self::assertSame("PK\x01\x02", substr($zip, $end['central_offset'], 4));
+
+        return $entries;
+    }
+
+    /**
+     * @param array<string, string> $entries
+     */
+    private function assertXmlEntriesAreWellFormed(array $entries): void
+    {
+        foreach ($entries as $name => $content) {
+            if (!str_ends_with($name, '.xml') && !str_ends_with($name, '.rels')) {
+                continue;
+            }
+
+            $previous = libxml_use_internal_errors(true);
+            libxml_clear_errors();
+            $parsed = simplexml_load_string($content);
+            $errors = libxml_get_errors();
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
+
+            self::assertNotFalse(
+                $parsed,
+                sprintf(
+                    '%s is not well-formed XML: %s',
+                    $name,
+                    implode(' | ', array_map(
+                        static fn (LibXMLError $error): string => trim($error->message),
+                        $errors,
+                    )),
+                ),
+            );
+        }
+
+        self::assertArrayHasKey('xl/styles.xml', $entries);
+        self::assertStringContainsString('</bottom><diagonal/>', $entries['xl/styles.xml']);
+        self::assertStringNotContainsString('</bottom/>', $entries['xl/styles.xml']);
     }
 }
