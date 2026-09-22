@@ -9,6 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const halfDaySelect = form.querySelector('[data-half-day-select]');
         const adminDateExceptionWrap = form.querySelector('[data-admin-date-exception-wrap]');
         const adminDateException = form.querySelector('[data-admin-date-exception]');
+        const targetUserSelect = form.querySelector('[name="target_user_id"]');
+        const submitButton = form.querySelector('[data-leave-submit]');
+        const hireDateWarning = form.querySelector('[data-hire-date-warning]');
+        const today = form.dataset.today || '';
 
         if (!typeSelect || !startDate || !endDate || !hiddenEndDate || !halfDaySelect) {
             return;
@@ -70,9 +74,46 @@ document.addEventListener('DOMContentLoaded', () => {
             syncDates();
         };
 
+        const syncHireDateEligibility = () => {
+            let hireDate = form.dataset.subjectHireDate || '';
+            if (targetUserSelect) {
+                const selectedTarget = targetUserSelect.options[targetUserSelect.selectedIndex] || null;
+                hireDate = selectedTarget ? selectedTarget.dataset.hireDate || '' : '';
+            }
+
+            const available = hireDate.trim() !== '';
+            if (submitButton) {
+                submitButton.disabled = !available;
+            }
+            if (hireDateWarning) {
+                hireDateWarning.hidden = available;
+            }
+        };
+
         typeSelect.addEventListener('change', syncTypeControls);
-        startDate.addEventListener('change', syncDates);
+        startDate.addEventListener('change', () => {
+            if (startDate.value !== '') {
+                endDate.value = startDate.value;
+            }
+            syncDates();
+        });
         endDate.addEventListener('change', syncDates);
+        if (targetUserSelect) {
+            targetUserSelect.addEventListener('change', syncHireDateEligibility);
+        }
+
+        form.addEventListener('submit', (event) => {
+            const includesPastDate = today !== ''
+                && ((startDate.value !== '' && startDate.value < today)
+                    || (endDate.value !== '' && endDate.value < today));
+
+            if (
+                includesPastDate
+                && !window.confirm('휴가 기간에 과거 날짜가 포함되어 있습니다. 이전 미기록 휴가를 작성하는 것이 맞습니까?')
+            ) {
+                event.preventDefault();
+            }
+        });
 
         form.addEventListener('set-leave-date', (event) => {
             const date = event.detail && event.detail.date ? event.detail.date : '';
@@ -86,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         syncTypeControls();
+        syncHireDateEligibility();
     };
 
     leaveForms.forEach(initializeLeaveForm);
@@ -369,6 +411,11 @@ document.addEventListener('DOMContentLoaded', () => {
         '[data-holiday-add-dialog]',
         '[data-open-holiday-add-dialog]',
         '[data-close-holiday-add-dialog]'
+    );
+    bindSimpleDialog(
+        '[data-closed-history-dialog]',
+        '[data-open-closed-history-dialog]',
+        '[data-close-closed-history-dialog]'
     );
 
     document.querySelectorAll('[data-confirm-message]').forEach((form) => {
