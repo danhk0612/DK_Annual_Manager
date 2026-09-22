@@ -10,3 +10,6 @@ Thumbs.db
 !/public/uploads/branding/
 /public/uploads/branding/*
 !/public/uploads/branding/.gitkeep
+
+/storage/*
+!/storage/.gitkeep
