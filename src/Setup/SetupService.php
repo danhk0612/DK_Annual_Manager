@@ -154,6 +154,14 @@ final class SetupService
         }
     }
 
+    public function clearSetupKey(): void
+    {
+        $path = $this->rootPath . '/storage/setup.key';
+        if (is_file($path)) {
+            @unlink($path);
+        }
+    }
+
     /** @return array<string, bool> */
     public function status(): array
     {
