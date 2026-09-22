@@ -282,5 +282,5 @@
 - [x] schema.sql 재실행 가능하도록 CREATE TABLE IF NOT EXISTS / INSERT IGNORE
 - [x] Telegram/API 오류에서 Secret/Token/ServiceKey가 포함될 수 있는 원문 예외 메시지 비노출
 - [x] 완전 설치 흐름 문서 docs/SETUP_FLOW.md 추가
-- [ ] PHP 8.2/8.4 CI
+- [x] PHP 8.2/8.4 CI
 - [ ] NAS 완전 초기화 → setup key → DB → Telegram → 그룹/관리자 → 공휴일 → 완료 전 과정 검증
