@@ -66,7 +66,7 @@ final class SetupService
         }
 
         $settings = new AppSettingRepository($this->pdo);
-        if ($settings->get('setup.completed', null) !== null) {
+        if ($settings->get('setup.completed', null) !== null || $settings->get('setup.started_at', null) !== null) {
             return false;
         }
 
@@ -107,6 +107,11 @@ final class SetupService
 
         if (!$this->schemaReady()) {
             throw new RuntimeException('DB 초기화 후 필수 테이블을 확인하지 못했습니다.');
+        }
+
+        $settings = new AppSettingRepository($this->pdo);
+        if ($settings->get('setup.started_at', null) === null) {
+            $settings->set('setup.started_at', date('c'), null);
         }
     }
 
