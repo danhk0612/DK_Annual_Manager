@@ -62,6 +62,7 @@ final class AdminAnnualLeaveController
             'balance' => $balance,
             'totalEntitlement' => $totalEntitlement,
             'overrideAmount' => $overrideAmount,
+            'manageOpen' => $selectedUser !== null && (string) $request->input('manage', '') === '1',
             'csrfToken' => $this->csrf->token(),
             'message' => $request->input('message'),
             'error' => $request->input('error'),
@@ -99,6 +100,7 @@ final class AdminAnnualLeaveController
         return Response::redirect(
             '/admin/annual-leave?user_id=' . $userId
             . '&year=' . (int) date('Y')
+            . '&manage=1'
             . '&message=' . rawurlencode(sprintf('발생 원장 %d건을 추가했습니다.', $count))
         );
     }
@@ -153,6 +155,7 @@ final class AdminAnnualLeaveController
         return Response::redirect(
             '/admin/annual-leave?user_id=' . $userId
             . '&year=' . $year
+            . '&manage=1'
             . '&message=' . rawurlencode('연차 원장을 조정했습니다.')
         );
     }
@@ -194,6 +197,7 @@ final class AdminAnnualLeaveController
         return Response::redirect(
             '/admin/annual-leave?user_id=' . $userId
             . '&year=' . $year
+            . '&manage=1'
             . '&message=' . rawurlencode(sprintf('총 연차를 %.1f일로 설정했습니다.', $target))
         );
     }
@@ -222,6 +226,7 @@ final class AdminAnnualLeaveController
         return Response::redirect(
             '/admin/annual-leave?user_id=' . $userId
             . '&year=' . $year
+            . '&manage=1'
             . '&message=' . rawurlencode('총 연차 고정을 해제하고 자동 계산값으로 복귀했습니다.')
         );
     }
@@ -238,7 +243,7 @@ final class AdminAnnualLeaveController
             }
         }
 
-        return $users[0] ?? null;
+        return null;
     }
 
     private function selectedYear(Request $request): int
@@ -265,6 +270,9 @@ final class AdminAnnualLeaveController
         }
         if ($year !== null) {
             $query['year'] = $year;
+        }
+        if ($userId !== null) {
+            $query['manage'] = '1';
         }
         $query['error'] = $message;
 
