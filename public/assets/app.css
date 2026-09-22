@@ -2581,3 +2581,74 @@ input.selection-applied {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* T17: completed setup steps stay compact until the user opens them. */
+.setup-step.complete .setup-step-collapse-trigger {
+    position: relative;
+    padding-right: 38px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.setup-step.complete .setup-step-collapse-trigger::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    width: 9px;
+    height: 9px;
+    border-right: 2px solid var(--muted);
+    border-bottom: 2px solid var(--muted);
+    transform: translateY(-65%) rotate(45deg);
+    transition: transform .16s ease, border-color .16s ease;
+}
+
+.setup-step.complete:not(.is-collapsed) .setup-step-collapse-trigger::after {
+    transform: translateY(-25%) rotate(225deg);
+}
+
+.setup-step.complete .setup-step-collapse-trigger:hover::after,
+.setup-step.complete .setup-step-collapse-trigger:focus-visible::after {
+    border-color: var(--primary);
+}
+
+.setup-step.complete .setup-step-collapse-trigger:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--primary) 45%, transparent);
+    outline-offset: 4px;
+    border-radius: 8px;
+}
+
+.setup-step.complete.is-collapsed {
+    padding-top: 16px;
+    padding-bottom: 16px;
+    box-shadow: none;
+}
+
+.setup-step.complete.is-collapsed .setup-step-main > :not(.section-head) {
+    display: none;
+}
+
+.setup-step.complete.is-collapsed .section-head {
+    margin-bottom: 0;
+}
+
+.setup-step.complete.is-collapsed .setup-step-number {
+    align-self: center;
+}
+
+@media (max-width: 760px) {
+    .setup-step.complete.is-collapsed {
+        grid-template-columns: 34px minmax(0, 1fr);
+        gap: 12px;
+        align-items: center;
+    }
+
+    .setup-step.complete.is-collapsed .setup-step-main {
+        min-width: 0;
+    }
+
+    .setup-step.complete .setup-step-collapse-trigger {
+        padding-right: 32px;
+    }
+}
