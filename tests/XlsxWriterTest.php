@@ -25,7 +25,7 @@ final class XlsxWriterTest extends TestCase
         );
 
         self::assertStringStartsWith("PK\x03\x04", $xlsx);
-        self::assertStringEndsWith(substr($xlsx, -22), $xlsx);
+        self::assertSame("PK\x05\x06", substr($xlsx, -22, 4));
         self::assertStringContainsString('[Content_Types].xml', $xlsx);
         self::assertStringContainsString('xl/workbook.xml', $xlsx);
         self::assertStringContainsString('xl/worksheets/sheet1.xml', $xlsx);
