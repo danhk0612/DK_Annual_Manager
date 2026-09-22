@@ -8,6 +8,7 @@
 /** @var list<array{id:string,title:string,type:string}> $telegramChats */
 /** @var int $adminCount */
 /** @var string $appUrl */
+/** @var string $allowedOrigin */
 /** @var string $redirectUri */
 /** @var string $configuredClientId */
 /** @var bool $hasClientSecret */
@@ -97,18 +98,29 @@ $stepStates = [
                 </div>
                 <span class="badge <?= $status['telegram'] ? 'approved' : 'pending' ?>"><?= $status['telegram'] ? '저장됨' : '설정 필요' ?></span>
             </div>
-            <p>BotFather에서 봇을 만든 뒤 Login Widget/OIDC를 활성화하고 아래 값을 입력합니다. 비밀값은 화면에 다시 표시하지 않습니다.</p>
+            <p>Bot Token과 Login용 Client ID/Secret의 발급 자체는 Telegram에서 진행해야 합니다. 이 화면은 필요한 주소를 현재 접속 호스트에서 자동 계산하고, 입력값을 즉시 검증합니다.</p>
             <div class="setup-mini-steps">
-                <span><b>1</b> BotFather에서 Bot 생성</span>
-                <span><b>2</b> Login Widget/OIDC 활성화</span>
-                <span><b>3</b> 사이트 Origin과 Callback URI 등록</span>
-                <span><b>4</b> Client ID/Secret + Bot Token 입력</span>
+                <span><b>1</b> BotFather → <code>/newbot</code>으로 Bot 생성 · Bot Token 복사</span>
+                <span><b>2</b> Bot 선택 → <strong>Login Widget</strong> 열기</span>
+                <span><b>3</b> 아래 Allowed Origin / Redirect URI 등록</span>
+                <span><b>4</b> 같은 화면의 Client ID / Client Secret 복사</span>
             </div>
             <div class="setup-links">
-                <a class="button" href="https://t.me/BotFather" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> BotFather 열기</a>
-                <?php if ($appUrl !== ''): ?>
-                    <button class="button" type="button" data-copy-text="<?= htmlspecialchars($redirectUri, ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-copy"></i> Callback 주소 복사</button>
-                <?php endif; ?>
+                <a class="button primary" href="https://t.me/BotFather" target="_blank" rel="noopener"><i class="bi bi-telegram"></i><span>BotFather 열기</span></a>
+                <a class="button" href="https://core.telegram.org/bots/telegram-login" target="_blank" rel="noopener"><i class="bi bi-book"></i><span>Telegram 공식 Login 안내</span></a>
+            </div>
+
+            <div class="setup-address-grid">
+                <div class="setup-address-card">
+                    <span>Allowed Origin · 자동 감지</span>
+                    <code><?= htmlspecialchars($allowedOrigin, ENT_QUOTES, 'UTF-8') ?></code>
+                    <button class="button small" type="button" data-copy-text="<?= htmlspecialchars($allowedOrigin, ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-copy"></i><span>복사</span></button>
+                </div>
+                <div class="setup-address-card">
+                    <span>Redirect URI · 자동 감지</span>
+                    <code><?= htmlspecialchars($redirectUri, ENT_QUOTES, 'UTF-8') ?></code>
+                    <button class="button small" type="button" data-copy-text="<?= htmlspecialchars($redirectUri, ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-copy"></i><span>복사</span></button>
+                </div>
             </div>
 
             <?php if ($status['schema']): ?>
@@ -129,6 +141,7 @@ $stepStates = [
                     <label class="span-2">
                         Redirect URI
                         <input name="redirect_uri" required value="<?= htmlspecialchars($redirectUri, ENT_QUOTES, 'UTF-8') ?>">
+                        <span class="form-hint">현재 접속 주소에서 자동 계산했습니다. 리버스 프록시 주소와 다를 때만 수정하세요.</span>
                     </label>
                     <div class="form-actions">
                         <button class="button primary" type="submit"><i class="bi bi-plug"></i> 저장하고 봇 연결 확인</button>
@@ -159,7 +172,24 @@ $stepStates = [
                 </div>
                 <a class="button small <?= !$status['telegram'] ? 'disabled-link' : '' ?>" href="<?= $status['telegram'] ? '/setup?probe_telegram=1' : '#' ?>"><i class="bi bi-arrow-repeat"></i> 최근 채팅 자동 확인</a>
             </div>
-            <p>봇을 관리자 그룹에 추가하고 그룹에서 메시지를 한 번 보냅니다. 최초 관리자는 봇 개인 채팅에서 <code>/start</code>를 한 번 보낸 뒤 자동 확인하면 선택할 수 있습니다.</p>
+            <p>이 단계에서는 <strong>최초 관리자 개인 채팅</strong>과 <strong>관리자 알림 그룹</strong>을 각각 연결합니다. 둘 다 봇이 메시지를 한 번 받아야 자동 탐색할 수 있습니다.</p>
+
+            <div class="setup-connection-grid">
+                <article class="setup-connection-card">
+                    <span class="setup-substep">3A</span>
+                    <div>
+                        <h3><i class="bi bi-person"></i> 최초 관리자 개인 채팅</h3>
+                        <p>관리자 본인이 봇 개인 채팅을 열고 <code>/start</code>를 보냅니다. 이후 <strong>최근 채팅 자동 확인</strong>을 누르면 private 채팅의 User ID가 후보로 표시됩니다.</p>
+                    </div>
+                </article>
+                <article class="setup-connection-card">
+                    <span class="setup-substep">3B</span>
+                    <div>
+                        <h3><i class="bi bi-people"></i> 관리자 알림 그룹</h3>
+                        <p>봇을 휴가 알림용 그룹에 추가한 뒤 그룹에서 메시지를 한 번 보냅니다. 자동 확인 후 group/supergroup Chat ID를 선택합니다.</p>
+                    </div>
+                </article>
+            </div>
 
             <?php if ($probeError !== null): ?>
                 <div class="notice warning"><i class="bi bi-exclamation-triangle"></i> <?= htmlspecialchars($probeError, ENT_QUOTES, 'UTF-8') ?></div>
@@ -227,7 +257,7 @@ $stepStates = [
                 </div>
                 <span class="badge <?= $adminCount > 0 ? 'approved' : 'pending' ?>"><?= $adminCount > 0 ? '관리자 연결 완료' : '로그인 필요' ?></span>
             </div>
-            <p>위에서 지정한 Telegram 계정으로 로그인하면 해당 계정이 최초 관리자로 활성화됩니다.</p>
+            <p>Step 3A에서 확인한 Telegram User ID와 실제 Telegram 로그인 계정이 일치하면 해당 계정을 최초 관리자로 활성화합니다. 이후 일반 직원은 서비스 로그인 링크로 로그인하면 사용자 계정이 자동 연결됩니다.</p>
             <?php if ($status['chat'] && $status['admin'] && $adminCount === 0): ?>
                 <a class="button primary" href="/auth/telegram/start"><i class="bi bi-telegram"></i> Telegram으로 관리자 연결</a>
             <?php elseif ($adminCount > 0): ?>
@@ -287,7 +317,7 @@ $stepStates = [
                     <h2><i class="bi bi-person-plus"></i> 직원 초대 링크</h2>
                 </div>
             </div>
-            <p>초기 설정 후 직원에게 아래 링크를 전달할 수 있습니다. Telegram 봇 링크는 봇 개인 채팅을 열고, 서비스 로그인 링크는 실제 계정 연결을 시작합니다.</p>
+            <p>초기 설정 후 직원에게 아래 링크를 전달합니다. <strong>서비스 로그인 링크가 계정 연결의 기본 경로</strong>이며, 로그인 시 <code>telegram:bot_access</code> 권한을 통해 개인 알림 권한도 함께 요청합니다. Telegram 봇 링크는 봇 채팅을 미리 열어보는 보조 경로입니다.</p>
             <div class="invite-link-grid">
                 <?php if ($employeeBotLink !== null): ?>
                     <div class="invite-link-card">
