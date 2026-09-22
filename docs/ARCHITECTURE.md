@@ -99,10 +99,11 @@ grant + carryover + adjustment + usage + reversal
  -> 주말/공휴일 계산
  -> 실제 차감 날짜 생성
  -> leave_requests + leave_request_days 저장
- -> 관리자 Telegram 알림
+ -> 활성 관리자 개인 Telegram 신청 알림
  -> 관리자 승인
  -> annual_leave_ledger usage 기록
  -> 사용자 Telegram 결과 알림
+ -> 승인 일정은 회사 공용 Telegram 그룹에 공유
 ```
 
 DB 상태 변경을 먼저 확정한 후 외부 Telegram 전송을 수행한다. Telegram 장애가 핵심 업무 데이터의 일관성을 깨지 않도록 한다.
@@ -114,7 +115,7 @@ DB 상태 변경을 먼저 확정한 후 외부 Telegram 전송을 수행한다.
 
 - Telegram Client ID / Client Secret / Bot Token / Redirect URI
 - 최초 관리자 Telegram ID
-- 관리자 알림 Chat ID
+- 회사 공용 Telegram 그룹 Chat ID
 - 공휴일 ServiceKey
 
 회사명, 로고 경로, 대표색, 테마도 `app_settings`에서 읽는다.
@@ -126,7 +127,7 @@ CLI setup key 생성
  -> 보호된 /setup
  -> 최신 schema 초기화
  -> Telegram Bot/OIDC 검증
- -> private 관리자 채팅 + 관리자 그룹 탐색
+ -> private 최초 관리자 채팅 + 회사 공용 그룹 탐색
  -> 최초 관리자 OIDC 로그인
  -> 공휴일 API 검증/동기화
  -> setup.completed
@@ -134,3 +135,10 @@ CLI setup key 생성
 ```
 
 신규 schema는 재실행 가능하도록 구성한다. 기존 운영 DB는 활성 관리자 계정이 존재하고 fresh setup marker가 없으면 legacy 설치로 자동 이행한다.
+
+
+## Telegram 알림 경계
+
+- **관리자 개인 알림**: 활성 관리자 `telegram_user_id`에 휴가 신청, 신청 사유, 잔여 연차 경고 등 관리 정보를 전송한다.
+- **신청자 개인 알림**: 승인/반려/승인 취소 결과와 관리자 메모를 신청자에게 전송한다.
+- **회사 공용 그룹**: 관리자와 직원이 함께 보는 그룹이다. 승인된 휴가 일정 등록과 승인 취소만 공유하며 신청 사유, 잔여 연차, 관리자 메모는 포함하지 않는다.

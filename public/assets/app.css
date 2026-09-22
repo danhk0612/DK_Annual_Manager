@@ -2533,3 +2533,51 @@ input.selection-applied {
     padding-top: 14px;
     border-top: 1px solid var(--border);
 }
+
+
+/* T16: distinguish administrator-private alerts from company-wide Telegram updates */
+.settings-role-note {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.settings-role-note > div {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 3px 10px;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: var(--surface-soft);
+}
+
+.settings-role-note .bi {
+    grid-row: 1 / span 2;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-size: 16px;
+}
+
+.settings-role-note strong {
+    font-size: 12px;
+}
+
+.settings-role-note span {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.55;
+}
+
+@media (max-width: 760px) {
+    .settings-role-note {
+        grid-template-columns: 1fr;
+    }
+}

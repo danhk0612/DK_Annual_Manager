@@ -44,7 +44,7 @@
 - 공휴일 API를 갱신하고 회사 휴무일을 관리한다.
 - 주요 관리 작업의 Audit Log를 확인한다.
 - 회사명/프로그램명, 로고, 대표색, 라이트/다크/시스템 테마를 관리한다.
-- Telegram 연결 정보, 관리자 알림 Chat ID, 공휴일 ServiceKey를 환경 설정에서 관리한다.
+- Telegram 연결 정보, 회사 공용 그룹 Chat ID, 공휴일 ServiceKey를 환경 설정에서 관리한다.
 - 직원용 Telegram Bot 링크와 서비스 로그인 링크를 복사할 수 있다.
 
 ## Telegram
@@ -52,12 +52,14 @@
 - Authorization Code Flow + PKCE 방식의 Telegram OIDC 로그인을 사용한다.
 - `openid profile telegram:bot_access` scope를 사용한다.
 - 로그인 사용자의 안정적인 Telegram User ID를 내부 사용자와 연결한다.
-- 휴가 신청 시 관리자 그룹/관리자 Telegram 대상으로 Bot 메시지를 전송한다.
-- 승인/반려/승인 취소 시 신청자에게 결과를 전송한다.
+- 휴가 신청 시 휴가 사유와 잔여 연차 경고를 포함한 관리 알림을 활성 관리자 개인 Telegram으로 전송한다.
+- 승인/반려/승인 취소 시 신청자에게 개인 결과 알림을 전송한다.
+- 승인된 휴가 일정과 승인 취소된 일정은 회사 공용 Telegram 그룹에 공유한다.
+- 회사 공용 그룹에는 휴가 신청 사유, 잔여 연차 경고, 관리자 검토 메모 등 관리용 정보를 전송하지 않는다.
 - Telegram 메시지 전송 실패가 핵심 DB 처리 자체를 롤백하지 않게 한다.
 - 최초 설치에서는 @BotFather에서 Bot Token과 Login Widget Client ID/Secret을 발급받는다.
 - 현재 서비스 host를 기준으로 Allowed Origin과 Redirect URI를 자동 계산한다.
-- 최초 관리자 개인 채팅과 관리자 알림 그룹은 Bot API 최근 채팅 탐색으로 연결하며 수동 ID 입력 fallback을 제공한다.
+- 최초 관리자 개인 채팅과 회사 공용 그룹은 Bot API 최근 채팅 탐색으로 연결하며 수동 ID 입력 fallback을 제공한다.
 - Bot API만으로 새 Telegram 그룹 생성/자동 가입을 구현하지 않는다. 별도 사용자 MTProto 세션을 요구하는 구조는 현재 범위에서 제외한다.
 
 ## 초기 설치
@@ -66,7 +68,7 @@
 - 설치 페이지는 CLI에서 생성한 setup key로 보호한다.
 - 신규 설치는 migration 없이 현재 `database/schema.sql`만 사용한다.
 - schema 초기화는 중간 실패 후 재실행할 수 있어야 한다.
-- 설치 순서는 DB → Telegram Bot/OIDC → 최초 관리자 개인 채팅/관리자 그룹 → 최초 관리자 로그인 → 공휴일 API → 완료이다.
+- 설치 순서는 DB → Telegram Bot/OIDC → 최초 관리자 개인 채팅/회사 공용 그룹 → 최초 관리자 로그인 → 공휴일 API → 완료이다.
 - 설치 완료 후 setup key를 삭제하고 일반 사용자의 Setup 접근을 차단한다.
 - 기존 운영 DB는 활성 관리자 계정이 있으면 legacy 설치로 인식해 setup 완료 상태로 자동 이행한다.
 

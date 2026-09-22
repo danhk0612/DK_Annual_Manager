@@ -55,8 +55,8 @@
 
 1. @BotFather에서 Bot과 Login Widget/OIDC를 구성한다.
 2. Setup이 현재 host에서 Allowed Origin과 Redirect URI를 자동 계산한다.
-3. 최초 관리자가 Bot 개인 채팅에 `/start`를 보내고, 관리자 그룹에도 메시지를 1회 보낸다.
-4. 최근 채팅 자동 탐색으로 최초 관리자 User ID와 관리자 그룹 Chat ID를 선택한다.
+3. 최초 관리자가 Bot 개인 채팅에 `/start`를 보내고, 관리자와 직원이 함께 사용하는 회사 공용 그룹에도 메시지를 1회 보낸다.
+4. 최근 채팅 자동 탐색으로 최초 관리자 User ID와 회사 공용 그룹 Chat ID를 선택한다.
 5. Telegram OIDC 로그인 결과가 저장된 최초 관리자 User ID와 일치하면 `admin + active`로 활성화된다.
 
 일반 직원은 설치 완료 후 서비스 로그인 링크를 통해 Telegram User ID 기준으로 연결한다.
@@ -79,4 +79,6 @@
 
 신규 설치는 migration을 누적 적용하지 않고 최신 `database/schema.sql`을 사용한다. `/setup`은 CLI에서 생성한 설치 키로 보호하고 DB → Telegram → 채팅/관리자 → 공휴일 순서로 진행한다.
 
-운영 중에는 회사명/로고/대표색/테마, Telegram 연결 및 알림 대상, 공휴일 ServiceKey를 관리자 환경설정에서 변경할 수 있다.
+운영 중에는 회사명/로고/대표색/테마, Telegram 연결 및 회사 공용 그룹, 공휴일 ServiceKey를 관리자 환경설정에서 변경할 수 있다.
+
+Telegram 알림은 역할별로 분리한다. 휴가 신청/잔여 경고 등 관리용 정보는 활성 관리자 개인 Telegram으로만 전송하고, 승인된 휴가 일정과 일정 취소만 회사 공용 그룹에 공유한다.

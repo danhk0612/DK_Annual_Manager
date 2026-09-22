@@ -51,10 +51,10 @@ final class AdminSettingsController
             }
         }
 
-        $managedTelegramRaw = $this->settings->get('telegram.admin_chat_ids', null);
-        $telegramAdminChats = $managedTelegramRaw !== null
-            ? $this->settings->lineList('telegram.admin_chat_ids')
-            : $this->configuredAdminChats();
+        $managedCompanyChat = trim((string) $this->settings->get('telegram.company_chat_id', ''));
+        $companyChatId = $managedCompanyChat !== ''
+            ? $managedCompanyChat
+            : $this->configuredCompanyChatId();
 
         $botUsername = trim((string) $this->settings->get('telegram.bot_username', ''));
         if ($telegramBotInfo !== null && !empty($telegramBotInfo['username'])) {
@@ -76,8 +76,8 @@ final class AdminSettingsController
             'primaryColor' => (string) $this->settings->get('ui.primary_color', '#315efb'),
             'theme' => (string) $this->settings->get('ui.theme', 'system'),
             'logoPath' => (string) $this->settings->get('ui.logo_path', ''),
-            'telegramAdminChats' => $telegramAdminChats,
-            'telegramChatsManaged' => $managedTelegramRaw !== null,
+            'companyChatId' => $companyChatId,
+            'companyChatManaged' => $managedCompanyChat !== '',
             'telegramBotInfo' => $telegramBotInfo,
             'telegramChats' => $telegramChats,
             'telegramProbeError' => $telegramProbeError,
@@ -194,30 +194,25 @@ final class AdminSettingsController
     public function saveTelegram(Request $request): Response
     {
         $actor = $this->requireActor();
-        $raw = trim((string) $request->input('admin_chat_ids', ''));
-        $ids = preg_split('/[\r\n,]+/', $raw) ?: [];
-        $normalized = [];
+        $chatId = trim((string) $request->input('company_chat_id', ''));
 
-        foreach ($ids as $id) {
-            $id = trim($id);
-            if ($id === '') {
-                continue;
-            }
-            if (preg_match('/^-?\d+$/', $id) !== 1) {
-                return $this->error('Telegram Chat ID는 숫자로 입력해 주세요.');
-            }
-            $normalized[$id] = $id;
+        if ($chatId === '' || preg_match('/^-?\d+$/', $chatId) !== 1) {
+            return $this->error('회사 공용 Telegram 그룹 Chat ID를 확인해 주세요.');
         }
 
-        $value = implode("\n", array_values($normalized));
-        $this->settings->set('telegram.admin_chat_ids', $value, (int) $actor['id']);
-        $this->config->set('telegram.admin_chat_ids', array_values($normalized));
+        if (!$this->isCompanyGroup($chatId)) {
+            return $this->error('회사 공용 Telegram 그룹은 Bot이 참여 중인 group 또는 supergroup이어야 합니다.');
+        }
 
-        $this->audit->record((int) $actor['id'], 'settings.telegram_chats_updated', 'app_settings', null, [
-            'chat_ids' => array_values($normalized),
+        $this->settings->set('telegram.company_chat_id', $chatId, (int) $actor['id']);
+        $this->settings->delete('telegram.admin_chat_ids');
+        $this->config->set('telegram.company_chat_id', $chatId);
+
+        $this->audit->record((int) $actor['id'], 'settings.telegram_company_chat_updated', 'app_settings', null, [
+            'company_chat_id' => $chatId,
         ], $this->ip($request));
 
-        return $this->message('Telegram 알림 대상을 저장했습니다.');
+        return $this->message('회사 공용 Telegram 그룹을 저장했습니다.');
     }
 
     public function saveHolidayApi(Request $request): Response
@@ -254,59 +249,51 @@ final class AdminSettingsController
         $actor = $this->requireActor();
         $chatId = trim((string) $request->input('chat_id', ''));
 
-        if (preg_match('/^-?\d+$/', $chatId) !== 1) {
-            return $this->error('추가할 Telegram Chat ID를 확인해 주세요.');
+        if ($chatId === '' || preg_match('/^-?\d+$/', $chatId) !== 1) {
+            return $this->error('회사 공용 Telegram 그룹 Chat ID를 확인해 주세요.');
         }
 
-        $ids = $this->settings->get('telegram.admin_chat_ids', null) !== null
-            ? $this->settings->lineList('telegram.admin_chat_ids')
-            : $this->configuredAdminChats();
-        $ids[] = $chatId;
-        $ids = array_values(array_unique($ids));
-        $this->settings->set('telegram.admin_chat_ids', implode("\n", $ids), (int) $actor['id']);
-        $this->config->set('telegram.admin_chat_ids', $ids);
+        if (!$this->isCompanyGroup($chatId)) {
+            return $this->error('회사 공용 Telegram 그룹은 Bot이 참여 중인 group 또는 supergroup이어야 합니다.');
+        }
 
-        $this->audit->record((int) $actor['id'], 'settings.telegram_chat_added', 'app_settings', null, [
-            'chat_id' => $chatId,
+        $this->settings->set('telegram.company_chat_id', $chatId, (int) $actor['id']);
+        $this->settings->delete('telegram.admin_chat_ids');
+        $this->config->set('telegram.company_chat_id', $chatId);
+
+        $this->audit->record((int) $actor['id'], 'settings.telegram_company_chat_selected', 'app_settings', null, [
+            'company_chat_id' => $chatId,
         ], $this->ip($request));
 
-        return Response::redirect('/admin/settings?probe_telegram=1&message=' . rawurlencode('Telegram 알림 대상을 추가했습니다.'));
+        return Response::redirect('/admin/settings?probe_telegram=1&message=' . rawurlencode('회사 공용 Telegram 그룹을 선택했습니다.'));
     }
 
     public function testTelegram(Request $request): Response
     {
         $actor = $this->requireActor();
-        $targets = $this->settings->get('telegram.admin_chat_ids', null) !== null
-            ? $this->settings->lineList('telegram.admin_chat_ids')
-            : $this->configuredAdminChats();
-
-        if ($targets === []) {
-            return $this->error('테스트할 Telegram 알림 대상이 없습니다.');
+        $chatId = trim((string) $this->settings->get('telegram.company_chat_id', ''));
+        if ($chatId === '') {
+            $chatId = $this->configuredCompanyChatId();
         }
 
-        $sent = 0;
-        foreach ($targets as $chatId) {
-            try {
-                $this->telegramBot->sendMessage(
-                    $chatId,
-                    '[휴가관리 설정 테스트]' . "\n" . '관리자 알림 연결이 정상입니다.',
-                );
-                $sent++;
-            } catch (Throwable) {
-                // Continue testing remaining targets.
-            }
+        if ($chatId === '') {
+            return $this->error('테스트할 회사 공용 Telegram 그룹이 설정되지 않았습니다.');
         }
 
-        $this->audit->record((int) $actor['id'], 'settings.telegram_tested', 'app_settings', null, [
-            'target_count' => count($targets),
-            'sent_count' => $sent,
+        try {
+            $this->telegramBot->sendMessage(
+                $chatId,
+                '[휴가관리 설정 테스트]' . "\n" . '회사 공용 그룹 연결이 정상입니다.',
+            );
+        } catch (Throwable) {
+            return $this->error('회사 공용 그룹으로 테스트 메시지를 전송하지 못했습니다. Bot 권한과 Chat ID를 확인해 주세요.');
+        }
+
+        $this->audit->record((int) $actor['id'], 'settings.telegram_company_chat_tested', 'app_settings', null, [
+            'company_chat_id' => $chatId,
         ], $this->ip($request));
 
-        if ($sent === 0) {
-            return $this->error('Telegram 테스트 메시지를 전송하지 못했습니다. Bot 권한과 Chat ID를 확인해 주세요.');
-        }
-
-        return $this->message(sprintf('Telegram 테스트 메시지 %d/%d건을 전송했습니다.', $sent, count($targets)));
+        return $this->message('회사 공용 Telegram 그룹으로 테스트 메시지를 전송했습니다.');
     }
 
     public function uploadLogo(Request $request): Response
@@ -395,24 +382,23 @@ final class AdminSettingsController
         return filter_var($configured, FILTER_VALIDATE_URL) !== false ? $configured : '';
     }
 
-    /** @return list<string> */
-    private function configuredAdminChats(): array
+    private function isCompanyGroup(string $chatId): bool
     {
-        $configured = $this->config->get('telegram.admin_chat_ids', []);
-        if (!is_array($configured)) {
-            return [];
+        try {
+            $chat = $this->telegramBot->getChat($chatId);
+            return in_array((string) ($chat['type'] ?? ''), ['group', 'supergroup'], true);
+        } catch (Throwable $exception) {
+            error_log('[DK Annual Settings] Company Telegram group validation failed: ' . $exception::class);
+            return false;
         }
-
-        $result = [];
-        foreach ($configured as $chatId) {
-            $value = trim((string) $chatId);
-            if ($value !== '') {
-                $result[$value] = $value;
-            }
-        }
-
-        return array_values($result);
     }
+
+    private function configuredCompanyChatId(): string
+    {
+        $configured = trim((string) $this->config->get('telegram.company_chat_id', ''));
+        return preg_match('/^-?\d+$/', $configured) === 1 ? $configured : '';
+    }
+
 
     /** @return array<string, mixed> */
     private function requireActor(): array

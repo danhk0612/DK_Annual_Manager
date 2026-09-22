@@ -84,6 +84,9 @@ final class AdminLeaveRequestController
         );
 
         $this->notifications->notifyUserOfDecision($result['request']);
+        if ($action === 'approve') {
+            $this->notifications->notifyCompanyOfApprovedLeave($result['request']);
+        }
 
         return Response::redirect('/admin/requests?message=' . rawurlencode(
             $action === 'approve' ? '휴가 신청을 승인했습니다.' : '휴가 신청을 반려했습니다.'
@@ -124,6 +127,7 @@ final class AdminLeaveRequestController
         );
 
         $this->notifications->notifyUserOfDecision($result['request']);
+        $this->notifications->notifyCompanyOfCancelledLeave($result['request']);
 
         return Response::redirect('/admin/requests?message=' . rawurlencode(
             '승인을 취소하고 차감된 연차를 복원했습니다. 일정 변경이 필요하면 아래 대리 신청으로 새 일정을 등록하세요.'

@@ -77,7 +77,9 @@ final class SetupController
             'configuredClientId' => $settings?->get('telegram.client_id', '') ?? '',
             'hasClientSecret' => trim((string) ($settings?->get('telegram.client_secret', '') ?? '')) !== '',
             'hasBotToken' => trim((string) ($settings?->get('telegram.bot_token', '') ?? '')) !== '',
-            'adminChats' => $status['schema'] && $settings !== null ? $settings->lineList('telegram.admin_chat_ids') : [],
+            'companyChatId' => $status['schema'] && $settings !== null
+                ? trim((string) $settings->get('telegram.company_chat_id', ''))
+                : '',
             'bootstrapAdminIds' => $status['schema'] && $settings !== null ? $settings->lineList('telegram.bootstrap_admin_telegram_ids') : [],
             'hasHolidayKey' => $status['schema']
                 && trim((string) ($settings?->get('holiday_api.service_key', '') ?? '')) !== '',
@@ -108,7 +110,7 @@ final class SetupController
             foreach ($chats as $chat) {
                 if (($chat['type'] ?? '') === 'private') {
                     $privateCount++;
-                } elseif (in_array(($chat['type'] ?? ''), ['group', 'supergroup', 'channel'], true)) {
+                } elseif (in_array(($chat['type'] ?? ''), ['group', 'supergroup'], true)) {
                     $groupCount++;
                 }
             }
@@ -116,8 +118,8 @@ final class SetupController
             return Response::json([
                 'ok' => true,
                 'message' => $chats === []
-                    ? '최근 Telegram 채팅을 찾지 못했습니다. 봇 개인 채팅에서 /start를 보내거나 관리자 그룹에서 메시지를 보낸 뒤 다시 확인하세요.'
-                    : sprintf('최근 채팅 %d개를 찾았습니다. 개인 채팅 %d개, 그룹/채널 %d개입니다.', count($chats), $privateCount, $groupCount),
+                    ? '최근 Telegram 채팅을 찾지 못했습니다. 봇 개인 채팅에서 /start를 보내거나 회사 공용 그룹에서 메시지를 보낸 뒤 다시 확인하세요.'
+                    : sprintf('최근 채팅 %d개를 찾았습니다. 개인 채팅 %d개, 그룹 %d개입니다.', count($chats), $privateCount, $groupCount),
                 'bot' => [
                     'name' => (string) ($botInfo['first_name'] ?? ''),
                     'username' => (string) ($botInfo['username'] ?? ''),
@@ -206,21 +208,34 @@ final class SetupController
             return $this->error('DB 초기화를 먼저 완료해 주세요.');
         }
 
-        $groupChatId = trim((string) $request->input('group_chat_id', ''));
+        $groupChatId = trim((string) $request->input('company_chat_id', ''));
         $adminTelegramId = trim((string) $request->input('admin_telegram_id', ''));
 
         if ($groupChatId === '' || preg_match('/^-?\d+$/', $groupChatId) !== 1) {
-            return $this->error('관리자 알림 그룹 Chat ID를 확인해 주세요.');
+            return $this->error('회사 공용 그룹 Chat ID를 확인해 주세요.');
         }
         if ($adminTelegramId === '' || preg_match('/^\d+$/', $adminTelegramId) !== 1) {
             return $this->error('최초 관리자 Telegram User ID를 확인해 주세요.');
         }
 
+        try {
+            $this->setup->applyManagedConfig();
+            $bot = new TelegramBotClient($this->config);
+            $companyChat = $bot->getChat($groupChatId);
+            if (!in_array((string) ($companyChat['type'] ?? ''), ['group', 'supergroup'], true)) {
+                return $this->error('회사 공용 Telegram 그룹은 group 또는 supergroup이어야 합니다.');
+            }
+        } catch (Throwable $exception) {
+            error_log('[DK Annual Setup] Company Telegram group validation failed: ' . $exception::class);
+            return $this->error('회사 공용 Telegram 그룹을 확인하지 못했습니다. Bot이 그룹에 참여 중인지 확인해 주세요.');
+        }
+
         $settings = new AppSettingRepository($this->pdo);
-        $settings->set('telegram.admin_chat_ids', $groupChatId, null);
+        $settings->set('telegram.company_chat_id', $groupChatId, null);
+        $settings->delete('telegram.admin_chat_ids');
         $settings->set('telegram.bootstrap_admin_telegram_ids', $adminTelegramId, null);
 
-        return $this->message('관리자 그룹과 최초 관리자 계정을 저장했습니다. 이제 Telegram 로그인을 실행하세요.');
+        return $this->message('회사 공용 그룹과 최초 관리자 계정을 저장했습니다. 이제 Telegram 로그인을 실행하세요.');
     }
 
     public function saveHoliday(Request $request): Response

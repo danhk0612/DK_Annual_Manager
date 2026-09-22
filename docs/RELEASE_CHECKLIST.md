@@ -19,7 +19,7 @@
 - [ ] BotFather에서 Bot Token과 Login Widget Client ID/Secret 발급 안내 확인
 - [ ] Setup Step 2 Telegram Bot/OIDC 저장 및 Bot 연결 확인
 - [ ] Setup Step 3A 최초 관리자 private 채팅 자동 탐색
-- [ ] Setup Step 3B 관리자 group/supergroup 자동 탐색
+- [ ] Setup Step 3B 회사 공용 group/supergroup 자동 탐색
 - [ ] Setup Step 4 최초 관리자 Telegram 로그인 및 자동 admin 활성화
 - [ ] Setup Step 5 공휴일 API 저장 및 현재 연도 동기화
 - [ ] Setup 완료 후 setup key 파일 삭제
@@ -66,8 +66,14 @@
 
 ## Telegram
 
-- [ ] 신청 시 관리자 알림
-- [ ] 승인/반려 시 사용자 알림
+- [ ] 휴가 신청 시 활성 관리자 개인 Telegram에 신청 정보/사유/잔여 경고 전달
+- [ ] 휴가 신청 단계에서 회사 공용 그룹에는 메시지가 전송되지 않음
+- [ ] 승인 시 신청자 개인 Telegram에 결과 전달
+- [ ] 승인 시 회사 공용 그룹에 직원/종류/기간/일수만 공유
+- [ ] 반려 시 신청자 개인 Telegram에만 결과 전달
+- [ ] 승인 취소 시 신청자 개인 Telegram에 결과 전달
+- [ ] 승인 취소 시 회사 공용 그룹에 일정 취소 공유
+- [ ] 회사 공용 그룹 메시지에 신청 사유/잔여 연차/관리자 메모가 포함되지 않음
 - [ ] Telegram 장애 시 웹 DB 처리 자체는 유지
 
 ## 공휴일
@@ -104,11 +110,11 @@
 - [ ] 현재 메뉴 활성 상태 강조
 - [ ] Bootstrap Icons 정상 로드
 - [ ] Telegram Client ID/Secret/Bot Token을 관리자 환경설정에서 변경
-- [ ] Telegram 관리자 알림 Chat ID를 관리자 환경설정에서 변경
+- [ ] Telegram 회사 공용 그룹 Chat ID를 관리자 환경설정에서 변경
 - [ ] 직원용 Telegram Bot/서비스 로그인 초대 링크 복사
 - [ ] 공휴일 API ServiceKey를 관리자 환경설정에서 변경 및 연결 확인
 - [ ] Telegram Bot 자동 확인 및 최근 채팅 탐색
-- [ ] Telegram 테스트 메시지 발송
+- [ ] 회사 공용 Telegram 그룹 테스트 메시지 발송
 - [ ] 관리자 설정 화면에서 비밀 자격 증명 값이 노출되지 않음
 - [ ] public/uploads/branding 웹 실행 계정 쓰기 권한 확인
 

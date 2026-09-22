@@ -84,27 +84,51 @@ final class LeaveNotificationService
         }
     }
 
+    /** @param array<string, mixed> $request */
+    public function notifyCompanyOfApprovedLeave(array $request): bool
+    {
+        return $this->notifyCompany($request, '휴가 일정 등록');
+    }
+
+    /** @param array<string, mixed> $request */
+    public function notifyCompanyOfCancelledLeave(array $request): bool
+    {
+        return $this->notifyCompany($request, '휴가 일정 취소');
+    }
+
+    /** @param array<string, mixed> $request */
+    private function notifyCompany(array $request, string $heading): bool
+    {
+        $chatId = $this->companyChatId();
+        if ($chatId === null) {
+            return false;
+        }
+
+        $halfDayPeriod = (string) ($request['half_day_period'] ?? '');
+        $halfDayLabel = $halfDayPeriod === 'am' ? '오전 반차' : ($halfDayPeriod === 'pm' ? '오후 반차' : '');
+        $text = sprintf(
+            "[%s]\n직원: %s\n종류: %s%s\n기간: %s ~ %s\n일수: %.1f일",
+            $heading,
+            (string) ($request['user_name'] ?? ''),
+            (string) ($request['leave_type_name'] ?? ''),
+            $halfDayLabel !== '' ? ' (' . $halfDayLabel . ')' : '',
+            (string) ($request['start_date'] ?? ''),
+            (string) ($request['end_date'] ?? ''),
+            (float) ($request['requested_amount'] ?? 0),
+        );
+
+        try {
+            $this->bot->sendMessage($chatId, $text);
+            return true;
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
     /** @return list<int|string> */
     private function adminTargets(): array
     {
         $targets = [];
-        $managedRaw = $this->settings->get('telegram.admin_chat_ids', null);
-
-        if ($managedRaw !== null) {
-            foreach ($this->settings->lineList('telegram.admin_chat_ids') as $chatId) {
-                $targets[] = $chatId;
-            }
-        } else {
-            $configured = $this->config->get('telegram.admin_chat_ids', []);
-            if (is_array($configured)) {
-                foreach ($configured as $chatId) {
-                    if ((is_int($chatId) || is_string($chatId)) && (string) $chatId !== '') {
-                        $targets[] = $chatId;
-                    }
-                }
-            }
-        }
-
         foreach ($this->users->activeAdminTelegramIds() as $telegramUserId) {
             $targets[] = $telegramUserId;
         }
@@ -115,6 +139,21 @@ final class LeaveNotificationService
         }
 
         return array_values($unique);
+    }
+
+    private function companyChatId(): int|string|null
+    {
+        $managed = trim((string) $this->settings->get('telegram.company_chat_id', ''));
+        if ($managed !== '' && preg_match('/^-?\d+$/', $managed) === 1) {
+            return $managed;
+        }
+
+        $configured = trim((string) $this->config->get('telegram.company_chat_id', ''));
+        if ($configured !== '' && preg_match('/^-?\d+$/', $configured) === 1) {
+            return $configured;
+        }
+
+        return null;
     }
 
     /** @param list<int|string> $targets */

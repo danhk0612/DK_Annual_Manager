@@ -142,23 +142,30 @@ try {
     if (!is_dir($brandingUploadDir)) {
         $fail('브랜딩 업로드 폴더가 없습니다: public/uploads/branding');
     } elseif (!is_writable($brandingUploadDir)) {
-        $warn('브랜딩 업로드 폴더가 현재 CLI 사용자에게 쓰기 불가입니다. Web Station/PHP-FPM 실행 계정도 쓰기 가능한지 확인하세요.');
+        $warn('브랜딩 업로드 폴더가 현재 CLI 사용자에게 쓰기 불가입니다. 웹 서버/PHP 실행 계정도 쓰기 가능한지 확인하세요.');
     } else {
         $pass('브랜딩 업로드 폴더 쓰기 가능');
     }
 
     $managedChatStatement = $pdo->prepare(
-        "SELECT setting_value FROM app_settings WHERE setting_key = 'telegram.admin_chat_ids' LIMIT 1"
+        "SELECT setting_value FROM app_settings WHERE setting_key = 'telegram.company_chat_id' LIMIT 1"
     );
     $managedChatStatement->execute();
-    $managedChats = $managedChatStatement->fetchColumn();
-    if ($managedChats !== false) {
-        $pass('Telegram 관리자 알림 대상: 관리자 설정 사용');
-    } elseif (is_array($config->get('telegram.admin_chat_ids', [])) && $config->get('telegram.admin_chat_ids', []) !== []) {
-        $pass('Telegram 관리자 알림 대상: config 기본값 사용');
+    $managedCompanyChat = $managedChatStatement->fetchColumn();
+    if ($managedCompanyChat !== false && trim((string) $managedCompanyChat) !== '') {
+        $pass('Telegram 회사 공용 그룹: 관리자 설정 사용');
+    } elseif (trim((string) $config->get('telegram.company_chat_id', '')) !== '') {
+        $pass('Telegram 회사 공용 그룹: config 기본값 사용');
     } else {
-        $warn('Telegram 관리자 알림 대상이 비어 있습니다.');
+        $warn('Telegram 회사 공용 그룹이 비어 있습니다.');
     }
+
+    $adminTelegramCount = (int) $pdo->query(
+        "SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'active' AND telegram_user_id IS NOT NULL"
+    )->fetchColumn();
+    $adminTelegramCount > 0
+        ? $pass(sprintf('Telegram 관리자 개인 알림 대상: %d명', $adminTelegramCount))
+        : $warn('Telegram 개인 알림을 받을 활성 관리자가 없습니다.');
 } catch (\Throwable $exception) {
     $fail('환경 확인 중 오류: ' . $exception->getMessage());
 }

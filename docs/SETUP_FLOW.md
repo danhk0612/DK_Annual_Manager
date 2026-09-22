@@ -48,7 +48,7 @@ Redirect URI:   https://leave.example.com/auth/telegram/callback
 
 리버스 프록시 감지가 실제 외부 주소와 다른 경우 Redirect URI만 직접 수정할 수 있다.
 
-## 3. 관리자 개인 채팅 / 관리자 그룹
+## 3. 최초 관리자 개인 채팅 / 회사 공용 그룹
 
 ### 3A. 최초 관리자 개인 채팅
 
@@ -57,13 +57,15 @@ Redirect URI:   https://leave.example.com/auth/telegram/callback
 3. Setup에서 **최근 채팅 자동 확인**을 실행한다.
 4. private 채팅 후보에서 Telegram User ID를 선택한다.
 
-### 3B. 관리자 알림 그룹
+### 3B. 회사 공용 그룹
 
-1. Telegram에서 알림용 그룹을 만든다.
+1. 관리자와 직원이 함께 사용할 회사 Telegram 그룹을 준비한다.
 2. Bot을 그룹에 추가한다.
 3. 그룹에 메시지를 한 번 보낸다.
 4. Setup에서 **최근 채팅 자동 확인**을 실행한다.
-5. group/supergroup Chat ID를 선택한다.
+5. group/supergroup Chat ID를 회사 공용 그룹으로 선택한다.
+
+회사 공용 그룹에는 승인된 휴가 일정/일정 취소만 공유한다. 신청 사유, 잔여 연차 경고 등 관리 정보는 활성 관리자 개인 Telegram으로만 전송한다.
 
 Bot API만으로 Telegram 그룹 자체를 생성하거나 Bot을 스스로 그룹에 가입시키지는 않는다. 이를 자동화하려면 사용자 MTProto 세션이 필요해 설치 구조가 크게 복잡해지므로 현재 프로젝트에서는 기존 그룹 연결 방식으로 유지한다.
 

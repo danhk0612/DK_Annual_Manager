@@ -45,12 +45,12 @@ cp config/config.example.php config/config.php
 - `app.timezone`: 기본 `Asia/Seoul`
 - `app.debug`: 운영에서는 `false`
 - `database.*`: MariaDB 접속 정보
-- 신규 설치에서는 Telegram/OIDC, 관리자 Chat ID, 최초 관리자 ID, 공휴일 ServiceKey를 `/setup`에서 입력한다.
+- 신규 설치에서는 Telegram/OIDC, 회사 공용 그룹 Chat ID, 최초 관리자 ID, 공휴일 ServiceKey를 `/setup`에서 입력한다.
 - `telegram.*`, `holiday_api.service_key`의 config 값은 레거시/비상 기본값으로만 사용할 수 있다.
 
 실제 `config/config.php`는 `.gitignore` 대상이며 저장소에 커밋하지 않는다.
 
-설치 후 회사명, 로고, 대표색, 테마, Telegram Client ID/Secret/Bot Token, 관리자 알림 Chat ID, 공휴일 ServiceKey를 **관리자 → 환경 설정**에서 관리할 수 있다. Secret/Token/API Key는 저장 후 화면에 기존 값을 다시 노출하지 않으며 Audit Log에도 실제 값을 기록하지 않는다.
+설치 후 회사명, 로고, 대표색, 테마, Telegram Client ID/Secret/Bot Token, 회사 공용 그룹 Chat ID, 공휴일 ServiceKey를 **관리자 → 환경 설정**에서 관리할 수 있다. Secret/Token/API Key는 저장 후 화면에 기존 값을 다시 노출하지 않으며 Audit Log에도 실제 값을 기록하지 않는다.
 
 ## 4. Telegram 최초 관리자
 
@@ -60,8 +60,8 @@ cp config/config.example.php config/config.php
 2. 해당 Bot의 **Login Widget**에서 자동 계산된 Allowed Origin / Redirect URI 등록
 3. 같은 화면에서 Client ID / Client Secret 확인
 4. Setup Step 2에 값을 입력하고 Bot 연결 확인
-5. 최초 관리자 개인 채팅에서 `/start`, 관리자 그룹에서도 메시지 1회 전송
-6. Setup Step 3의 최근 채팅 자동 확인으로 개인 User ID와 그룹 Chat ID 선택
+5. 최초 관리자 개인 채팅에서 `/start`, 관리자와 직원이 함께 사용할 회사 공용 그룹에서도 메시지 1회 전송
+6. Setup Step 3의 최근 채팅 자동 확인으로 개인 User ID와 회사 공용 그룹 Chat ID 선택
 7. Setup Step 4에서 Telegram 로그인하면 최초 관리자 활성화
 
 ## 5. 웹 서버
@@ -145,7 +145,7 @@ php bin/setup-key.php
 
 1. DB schema 생성
 2. Telegram Bot/OIDC 연결
-3. 최근 Telegram 채팅에서 관리자 그룹과 최초 관리자 계정 선택
+3. 최근 Telegram 채팅에서 회사 공용 그룹과 최초 관리자 계정 선택
 4. 최초 관리자 Telegram 로그인
 5. 공휴일 API ServiceKey 연결 및 현재 연도 동기화
 6. 초기 설정 완료
@@ -161,3 +161,10 @@ php bin/reset-install.php --confirm=RESET-INSTALL
 ```
 
 초기화 명령이 새 setup key와 보호된 Setup URL을 함께 출력한다. 그 URL로 신규 설치 흐름을 처음부터 검증한다. 운영 데이터가 있는 환경에서는 이 명령을 사용하지 않는다.
+
+
+### Telegram 알림 구분
+
+- 활성 관리자는 휴가 신청 사유와 잔여 연차 경고를 개인 Telegram으로 받는다.
+- 신청자는 승인/반려/승인 취소 결과를 개인 Telegram으로 받는다.
+- 회사 공용 그룹은 관리자와 직원이 함께 보는 그룹으로, 승인된 휴가 일정 등록/취소만 공유한다.

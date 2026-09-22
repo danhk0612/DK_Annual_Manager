@@ -97,9 +97,9 @@
 - [x] 승인 처리 트랜잭션 및 중복 처리 방지
 - [x] 연차/반차 승인 시 연도별 사용 원장 반영
 - [x] 비차감 휴가(P/S/A)는 원장 미차감
-- [x] 신청 시 관리자 Telegram 알림
-- [x] 승인/반려 시 사용자 Telegram 알림
-- [x] 설정 admin_chat_ids + 활성 관리자 Telegram ID 알림 대상
+- [x] 신청 시 활성 관리자 개인 Telegram 알림
+- [x] 승인/반려 시 사용자 개인 Telegram 알림
+- [x] 승인 일정/승인 취소 일정 회사 공용 Telegram 그룹 공유
 - [x] Telegram 실패가 신청/승인 트랜잭션을 되돌리지 않도록 분리
 - [ ] 실제 Bot Token으로 메시지 발송 검증
 - [ ] MariaDB 승인/원장 통합 검증
@@ -219,8 +219,8 @@
 - [x] 회사 로고 업로드 및 기본 아이콘 복원
 - [x] 대표색 설정
 - [x] 라이트/다크/시스템 테마
-- [x] Telegram 관리자 알림 Chat ID를 DB 설정으로 관리
-- [x] 기존 config Chat ID를 최초 기본값으로 자동 승계
+- [x] Telegram 회사 공용 그룹 Chat ID를 DB 설정으로 관리
+- [x] 기존 config 그룹 Chat ID를 회사 공용 그룹 기본값으로 자동 승계
 - [x] Telegram Bot 상태/최근 채팅 자동 탐색 및 알림 대상 추가
 - [x] Telegram 테스트 메시지 발송
 - [x] BotFather/공공데이터포털 바로가기
@@ -247,7 +247,7 @@
 - [x] 첫 실행 /setup 순차 설치 마법사
 - [x] Step 1 DB 최신 schema 자동 생성
 - [x] Step 2 Telegram 봇/OIDC 입력 및 Bot 연결 확인
-- [x] Step 3 최근 채팅 자동 탐색으로 관리자 그룹/최초 관리자 선택
+- [x] Step 3 최근 채팅 자동 탐색으로 회사 공용 그룹/최초 관리자 선택
 - [x] Step 4 최초 관리자 Telegram 로그인 및 자동 활성화
 - [x] Step 5 공휴일 API 연결 및 현재 연도 자동 동기화
 - [x] 필수 단계 완료 후 setup 잠금
@@ -257,7 +257,7 @@
 - [x] 완전 초기화 후 migration 없이 최신 database/schema.sql만 사용하는 흐름
 - [x] bin/check.php에서 setup 상태와 DB 관리 자격 증명 반영
 - [x] PHP 8.2/8.4 CI
-- [ ] 실제 실제 서버에서 완전 초기화 후 /setup 전 과정 검증
+- [ ] 실제 서버에서 완전 초기화 후 /setup 전 과정 검증
 - [ ] 최초 관리자/그룹 자동 탐색 및 Telegram 로그인 검증
 - [ ] 공휴일 API 자동 동기화 검증
 
@@ -271,7 +271,7 @@
 - [x] 리버스 프록시 예외 시 Redirect URI 직접 수정 유지
 - [x] Bot Token / Client ID / Client Secret 획득 위치를 Setup에 단계별 안내
 - [x] BotFather 및 Telegram 공식 Login 문서 바로가기
-- [x] 최초 관리자 개인 채팅과 관리자 그룹 연결을 Step 3A/3B로 명확히 분리
+- [x] 최초 관리자 개인 채팅과 회사 공용 그룹 연결을 Step 3A/3B로 명확히 분리
 - [x] 자동 채팅 탐색 실패 시 User ID / Chat ID 직접 입력 fallback
 - [x] 직원 로그인과 개인 알림 연결 흐름 문서화
 - [x] setup route를 설치 키 + 세션으로 보호
@@ -284,3 +284,24 @@
 - [x] 완전 설치 흐름 문서 docs/SETUP_FLOW.md 추가
 - [x] PHP 8.2/8.4 CI
 - [ ] 실제 서버 완전 초기화 → setup key → DB → Telegram → 그룹/관리자 → 공휴일 → 완료 전 과정 검증
+
+
+## T16. Telegram 알림 역할 분리
+
+상태: 구현 완료 / CI 및 실제 연동 검증 대기
+
+- [x] 기존 관리자 그룹 개념을 회사 공용 Telegram 그룹으로 명확히 변경
+- [x] 설정 키를 telegram.company_chat_id 단일 그룹으로 정리
+- [x] 휴가 신청 알림은 활성 관리자 개인 Telegram으로만 전송
+- [x] 신청 사유/잔여 연차 경고 등 관리 정보는 회사 공용 그룹에 전송하지 않음
+- [x] 승인된 휴가 일정은 회사 공용 그룹에 공유
+- [x] 승인 취소된 휴가 일정도 회사 공용 그룹에 공유
+- [x] 승인/반려/승인 취소 결과는 신청자 개인 Telegram으로 유지
+- [x] Setup Step 3을 최초 관리자 개인 채팅 + 회사 공용 그룹 연결로 정리
+- [x] 관리자 환경설정에서 회사 공용 그룹 단일 선택/테스트 제공
+- [x] 환경 점검에서 회사 공용 그룹과 관리자 개인 알림 대상을 분리 확인
+- [x] 기준 문서 동기화
+- [x] PHP 8.2/8.4 CI
+- [ ] 실제 Bot으로 신청 → 관리자 개인 알림 검증
+- [ ] 승인 → 신청자 개인 + 회사 공용 그룹 알림 검증
+- [ ] 승인 취소 → 신청자 개인 + 회사 공용 그룹 일정 취소 알림 검증

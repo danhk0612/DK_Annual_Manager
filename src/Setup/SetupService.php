@@ -122,6 +122,7 @@ final class SetupService
         }
 
         $settings = new AppSettingRepository($this->pdo);
+        $this->migrateCompanyChatSetting($settings);
         $completed = $settings->get('setup.completed', '0') === '1';
 
         if (!$completed) {
@@ -129,7 +130,7 @@ final class SetupService
             $this->config->set('telegram.client_secret', '');
             $this->config->set('telegram.bot_token', '');
             $this->config->set('telegram.bootstrap_admin_telegram_ids', []);
-            $this->config->set('telegram.admin_chat_ids', []);
+            $this->config->set('telegram.company_chat_id', '');
             $this->config->set('holiday_api.service_key', '');
         }
 
@@ -153,9 +154,9 @@ final class SetupService
             $this->config->set('telegram.bootstrap_admin_telegram_ids', $managedAdminIds);
         }
 
-        $managedChatsRaw = $settings->get('telegram.admin_chat_ids', null);
-        if ($managedChatsRaw !== null) {
-            $this->config->set('telegram.admin_chat_ids', $settings->lineList('telegram.admin_chat_ids'));
+        $managedCompanyChat = trim((string) $settings->get('telegram.company_chat_id', ''));
+        if ($managedCompanyChat !== '') {
+            $this->config->set('telegram.company_chat_id', $managedCompanyChat);
         }
     }
 
@@ -183,12 +184,13 @@ final class SetupService
         }
 
         $settings = new AppSettingRepository($this->pdo);
+        $this->migrateCompanyChatSetting($settings);
 
         $telegram = trim((string) $settings->get('telegram.client_id', '')) !== ''
             && trim((string) $settings->get('telegram.client_secret', '')) !== ''
             && trim((string) $settings->get('telegram.bot_token', '')) !== '';
 
-        $chat = $settings->lineList('telegram.admin_chat_ids') !== [];
+        $chat = trim((string) $settings->get('telegram.company_chat_id', '')) !== '';
         $admin = $settings->lineList('telegram.bootstrap_admin_telegram_ids') !== [];
         $holiday = trim((string) $settings->get('holiday_api.service_key', '')) !== '';
 
@@ -200,6 +202,43 @@ final class SetupService
             'holiday' => $holiday,
             'completed' => $settings->get('setup.completed', '0') === '1',
         ];
+    }
+
+    private function migrateCompanyChatSetting(AppSettingRepository $settings): void
+    {
+        if (trim((string) $settings->get('telegram.company_chat_id', '')) !== '') {
+            return;
+        }
+
+        $legacy = $settings->lineList('telegram.admin_chat_ids');
+        if ($legacy !== []) {
+            $settings->set('telegram.company_chat_id', $legacy[0], null);
+            $settings->delete('telegram.admin_chat_ids');
+            return;
+        }
+
+        $freshSetupInProgress = $settings->get('setup.started_at', null) !== null
+            && $settings->get('setup.completed', '0') !== '1';
+        if ($freshSetupInProgress) {
+            return;
+        }
+
+        $configured = trim((string) $this->config->get('telegram.company_chat_id', ''));
+        if ($configured !== '') {
+            $settings->set('telegram.company_chat_id', $configured, null);
+            return;
+        }
+
+        $legacyConfigured = $this->config->get('telegram.admin_chat_ids', []);
+        if (is_array($legacyConfigured)) {
+            foreach ($legacyConfigured as $chatId) {
+                $chatId = trim((string) $chatId);
+                if ($chatId !== '') {
+                    $settings->set('telegram.company_chat_id', $chatId, null);
+                    return;
+                }
+            }
+        }
     }
 
     /** @return list<string> */
