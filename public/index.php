@@ -20,6 +20,8 @@ use DKAnnual\Controller\TelegramAuthController;
 use DKAnnual\Controller\ThemeController;
 use DKAnnual\Database;
 use DKAnnual\Error\ErrorHandler;
+use DKAnnual\Export\LeaveExportService;
+use DKAnnual\Export\XlsxWriter;
 use DKAnnual\Holiday\KasiHolidayClient;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
@@ -153,8 +155,9 @@ if (!$setupService->completed()) {
 $notifications = new LeaveNotificationService($config, $telegramBot, $users, $settings);
 $annualLeave = new AnnualLeaveService(new AnnualLeaveCalculator(), $ledger, $settings);
 $leaveReviewer = new LeaveReviewService($pdo);
+$exportService = new LeaveExportService($reports, new XlsxWriter());
 $adminDashboard = new AdminDashboardController($reports, $audit, $view);
-$adminReports = new AdminReportController($reports, $view);
+$adminReports = new AdminReportController($reports, $users, $exportService, $view);
 $adminAudit = new AdminAuditController($audit, $view);
 $adminSettings = new AdminSettingsController(
     $config,
@@ -189,7 +192,7 @@ $adminHolidays = new AdminHolidayController(
     $view,
     $csrf,
 );
-$profile = new ProfileController($auth, $users, $annualLeave, $reports, $audit, $view, $csrf);
+$profile = new ProfileController($auth, $users, $annualLeave, $reports, $exportService, $audit, $view, $csrf);
 $leave = new LeaveController(
     $auth,
     $users,
@@ -225,11 +228,13 @@ $router->post('/leave/cancel', [$leave, 'cancel'], [$requireAuth, $verifyCsrf]);
 $router->post('/leave/cancel-approved', [$leave, 'cancelApproved'], [$requireAuth, $verifyCsrf]);
 
 $router->get('/profile', [$profile, 'index'], [$requireAuth]);
+$router->get('/profile/export', [$profile, 'export'], [$requireAuth]);
 $router->post('/profile/save', [$profile, 'saveProfile'], [$requireAuth, $verifyCsrf]);
 $router->post('/profile/hire-date', [$profile, 'saveProfile'], [$requireAuth, $verifyCsrf]);
 
 $router->get('/admin', [$adminDashboard, 'index'], [$requireAdmin]);
 $router->get('/admin/reports', [$adminReports, 'index'], [$requireAdmin]);
+$router->get('/admin/reports/export', [$adminReports, 'export'], [$requireAdmin]);
 $router->get('/admin/audit', [$adminAudit, 'index'], [$requireAdmin]);
 $router->get('/admin/settings', [$adminSettings, 'index'], [$requireAdmin]);
 $router->post('/admin/settings/appearance', [$adminSettings, 'saveAppearance'], [$requireAdmin, $verifyCsrf]);
