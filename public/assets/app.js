@@ -89,5 +89,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 dialog.close();
             }
         });
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('request') === '1') {
+            dialog.showModal();
+        }
     }
 });
