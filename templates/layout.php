@@ -9,10 +9,7 @@
 /** @var string $currentQuery */
 
 $title = isset($title) && is_string($title) ? $title : $appName;
-$requestShortcut = $currentPath === '/calendar' && str_contains($currentQuery, 'request=1');
-
-$isCalendar = ($currentPath === '/' || $currentPath === '/calendar') && !$requestShortcut;
-$isLeaveRequest = $currentPath === '/leave' || $requestShortcut;
+$isCalendar = ($currentPath === '/' || $currentPath === '/calendar');
 $isLeaveHistory = $currentPath === '/leave/history';
 $isProfile = $currentPath === '/profile';
 $isAdmin = str_starts_with($currentPath, '/admin');
@@ -47,9 +44,6 @@ $appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js')
         <nav class="topnav" aria-label="주 메뉴">
             <a href="/calendar" class="<?= $isCalendar ? 'active' : '' ?>">
                 <i class="bi bi-calendar3"></i><span>달력</span>
-            </a>
-            <a href="/calendar?request=1" class="nav-primary <?= $isLeaveRequest ? 'active' : '' ?>">
-                <i class="bi bi-plus-circle"></i><span>휴가 신청</span>
             </a>
             <a href="/leave/history" class="<?= $isLeaveHistory ? 'active' : '' ?>">
                 <i class="bi bi-list-check"></i><span>신청 내역</span>
