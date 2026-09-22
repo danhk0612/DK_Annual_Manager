@@ -446,7 +446,7 @@
 
 ## T24. 배포 하드닝 · Telegram 바로가기
 
-상태: 구현 완료 / CI 및 실제 외부 연동 검증 진행
+상태: 구현 완료 / CI 통과 / 실제 외부 연동·운영 서버 검증 대기
 
 - [x] 공휴일 API/DB 오류 원문을 관리자 화면에 직접 노출하지 않도록 수정
 - [x] Telegram Bot API 인라인 URL 버튼 지원
@@ -462,6 +462,8 @@
 - [x] 승인 → 연차 차감 → 승인 취소 → 연차 복원 DB 통합 테스트
 - [x] Composer dependency audit CI 추가
 - [x] composer.lock 저장소 고정
-- [ ] PHP 8.2/8.4 + MariaDB CI 최종 통과
+- [x] 전역 오류 로그에서 Bot Token/ServiceKey 등 민감정보 마스킹
+- [x] bin/check.php --production 운영 배포 필수 조건 판정 추가
+- [x] PHP 8.2/8.4 + MariaDB CI 최종 통과
 - [ ] 실제 Telegram에서 관리자/사용자 인라인 버튼 및 로그인 복귀 검증
 - [ ] 실제 운영 서버에서 php bin/migrate.php / php bin/check.php --production 검증
