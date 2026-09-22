@@ -9,14 +9,22 @@
 ## 설치 검증
 
 - [ ] 테스트 환경에서 `php bin/reset-install.php --confirm=RESET-INSTALL` 실행
-- [ ] 초기화 직후 일반 화면 대신 `/setup`으로 안내
+- [ ] 초기화 직후 setup key/URL 출력
+- [ ] setup key 없는 외부 `/setup` 접근 차단
+- [ ] 유효한 setup key 접속 후 URL에서 key 제거
+- [ ] 초기화 직후 일반 화면 대신 보호된 `/setup`으로 안내
 - [ ] Setup Step 1에서 최신 `database/schema.sql` 자동 적용
 - [ ] 별도 migration 없이 신규 설치 완료
+- [ ] Setup Step 2 현재 host 기반 Allowed Origin / Redirect URI 자동 계산
+- [ ] BotFather에서 Bot Token과 Login Widget Client ID/Secret 발급 안내 확인
 - [ ] Setup Step 2 Telegram Bot/OIDC 저장 및 Bot 연결 확인
-- [ ] Setup Step 3 최근 채팅 탐색으로 관리자 그룹/최초 관리자 선택
+- [ ] Setup Step 3A 최초 관리자 private 채팅 자동 탐색
+- [ ] Setup Step 3B 관리자 group/supergroup 자동 탐색
 - [ ] Setup Step 4 최초 관리자 Telegram 로그인 및 자동 admin 활성화
 - [ ] Setup Step 5 공휴일 API 저장 및 현재 연도 동기화
+- [ ] Setup 완료 후 setup key 파일 삭제
 - [ ] Setup 완료 후 `/setup` 일반 접근 차단
+- [ ] 기존 활성 관리자 운영 DB는 setup.completed 자동 이행
 
 - [ ] PHP 8.2+ 환경에서 `composer install` 성공
 - [ ] `php bin/check.php` FAIL 0
@@ -85,6 +93,7 @@
 - [ ] 월간 휴가 집계와 승인 데이터 비교
 - [ ] 주요 변경 Audit Log 기록 확인
 - [ ] 민감 자격 증명이 Audit Log에 남지 않음
+- [ ] Telegram/API 연결 실패 화면에 Secret/Token/ServiceKey 또는 원문 HTTP 오류가 노출되지 않음
 
 ## 브랜딩/설정
 
