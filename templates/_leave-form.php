@@ -18,8 +18,16 @@ $submitLabel = isset($submitLabel) && is_string($submitLabel) && $submitLabel !=
     ? $submitLabel
     : '휴가 신청';
 $adminDirectEntry = isset($adminDirectEntry) ? (bool) $adminDirectEntry : false;
+$subjectHireDate = isset($user) && is_array($user) ? trim((string) ($user['hire_date'] ?? '')) : '';
 ?>
-<form class="form-grid leave-form" method="post" action="/leave/create" data-leave-form>
+<form
+    class="form-grid leave-form"
+    method="post"
+    action="/leave/create"
+    data-leave-form
+    data-today="<?= htmlspecialchars($today, ENT_QUOTES, 'UTF-8') ?>"
+    data-subject-hire-date="<?= htmlspecialchars($subjectHireDate, ENT_QUOTES, 'UTF-8') ?>"
+>
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
     <input type="hidden" name="return_to" value="<?= htmlspecialchars($returnTo, ENT_QUOTES, 'UTF-8') ?>">
 
@@ -28,7 +36,10 @@ $adminDirectEntry = isset($adminDirectEntry) ? (bool) $adminDirectEntry : false;
             직원
             <select name="target_user_id" required>
                 <?php foreach ($targetUsers as $targetUser): ?>
-                    <option value="<?= (int) $targetUser['id'] ?>">
+                    <option
+                        value="<?= (int) $targetUser['id'] ?>"
+                        data-hire-date="<?= htmlspecialchars((string) ($targetUser['hire_date'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                    >
                         <?= htmlspecialchars((string) $targetUser['name'], ENT_QUOTES, 'UTF-8') ?>
                         <?php if (!empty($targetUser['department'])): ?>
                             · <?= htmlspecialchars((string) $targetUser['department'], ENT_QUOTES, 'UTF-8') ?>
@@ -125,7 +136,12 @@ $adminDirectEntry = isset($adminDirectEntry) ? (bool) $adminDirectEntry : false;
     <?php endif; ?>
 
     <div class="form-actions">
-        <button class="button primary" type="submit"><?= htmlspecialchars($submitLabel, ENT_QUOTES, 'UTF-8') ?></button>
+        <button class="button primary" type="submit" data-leave-submit><?= htmlspecialchars($submitLabel, ENT_QUOTES, 'UTF-8') ?></button>
+    </div>
+
+    <div class="notice warning compact-notice span-2" data-hire-date-warning hidden>
+        <i class="bi bi-exclamation-triangle"></i>
+        <span>입사일이 등록되지 않아 휴가를 신청할 수 없습니다. 먼저 입사일을 등록해 주세요.</span>
     </div>
 
     <p class="form-hint span-2">
