@@ -586,11 +586,11 @@
 
 ## T31. v1.3.1 내 정보 카드 간격 핫픽스
 
-상태: 구현 완료 / CI·자동 Release 대기
+상태: 구현 완료 / PR CI 통과 / main·자동 Release 대기
 
 - [x] 내 휴가 엑셀 출력과 계정/근무 정보 사이 전용 간격 추가
 - [x] 프로필 전용 클래스 사용으로 다른 content-grid 레이아웃 영향 방지
 - [x] VERSION 1.3.1 및 릴리스 노트
-- [ ] hotfix PR CI 통과
+- [x] hotfix PR CI 통과
 - [ ] main 병합 및 main CI 통과
 - [ ] v1.3.1 GitHub Release 자동 생성 확인
