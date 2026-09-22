@@ -62,13 +62,14 @@ $weekdayLabels = [7 => '일', 1 => '월', 2 => '화', 3 => '수', 4 => '목', 5 
 $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'), (int) $start->format('n'));
 $selectedCalendarYear = (int) $start->format('Y');
 $selectedCalendarMonth = (int) $start->format('n');
+$calendarMaxYear = (int) date('Y') + 3;
 ?>
 <section class="page-head">
     <div>
         <p class="eyebrow"><?= $isAdmin ? 'Team calendar' : 'My calendar' ?></p>
         <form class="calendar-title-selector" method="get" action="/calendar" data-calendar-period-form aria-label="달력 연도와 월 선택">
             <select name="year" aria-label="연도">
-                <?php for ($calendarYear = 2000; $calendarYear <= 2100; $calendarYear++): ?>
+                <?php for ($calendarYear = 2000; $calendarYear <= $calendarMaxYear; $calendarYear++): ?>
                     <option value="<?= $calendarYear ?>" <?= $calendarYear === $selectedCalendarYear ? 'selected' : '' ?>><?= $calendarYear ?></option>
                 <?php endfor; ?>
             </select>
@@ -119,7 +120,15 @@ $selectedCalendarMonth = (int) $start->format('n');
         <div class="calendar-scroll">
             <div class="calendar-grid weekday-head">
                 <?php foreach ($weekdayLabels as $weekdayNumber => $weekday): ?>
-                    <div class="<?= in_array($weekdayNumber, $workingWeekdays, true) ? '' : 'non-working-weekday' ?>"><?= $weekday ?></div>
+                    <?php
+                    $weekdayClasses = [];
+                    if (!in_array($weekdayNumber, $workingWeekdays, true)) {
+                        $weekdayClasses[] = 'non-working-weekday';
+                        if ($weekdayNumber === 6) { $weekdayClasses[] = 'weekend-saturday'; }
+                        if ($weekdayNumber === 7) { $weekdayClasses[] = 'weekend-sunday'; }
+                    }
+                    ?>
+                    <div class="<?= implode(' ', $weekdayClasses) ?>"><?= $weekday ?></div>
                 <?php endforeach; ?>
             </div>
 
@@ -149,6 +158,12 @@ $selectedCalendarMonth = (int) $start->format('n');
                     $dayClasses = ['calendar-day'];
                     if ($isNonWorkingDay) {
                         $dayClasses[] = 'non-working-day';
+                        if ($weekdayNumber === 6) {
+                            $dayClasses[] = 'weekend-saturday';
+                        }
+                        if ($weekdayNumber === 7) {
+                            $dayClasses[] = 'weekend-sunday';
+                        }
                     }
                     if ($isPublicHoliday) {
                         $dayClasses[] = 'public-holiday';
