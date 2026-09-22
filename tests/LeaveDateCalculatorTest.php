@@ -35,6 +35,19 @@ final class LeaveDateCalculatorTest extends TestCase
         );
     }
 
+    public function testCalendarDatesKeepWeekendsAndHolidaysForAdministratorDirectEntry(): void
+    {
+        $calculator = new LeaveDateCalculator();
+
+        self::assertSame(
+            ['2026-01-01', '2026-01-02', '2026-01-03', '2026-01-04'],
+            $calculator->calendarDates(
+                new DateTimeImmutable('2026-01-01'),
+                new DateTimeImmutable('2026-01-04'),
+            )
+        );
+    }
+
     public function testCustomWorkingWeekdaysAreApplied(): void
     {
         $calculator = new LeaveDateCalculator();
