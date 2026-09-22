@@ -4,6 +4,7 @@
 /** @var string $theme */
 /** @var string $logoPath */
 /** @var list<string> $telegramAdminChats */
+/** @var bool $telegramChatsManaged */
 /** @var array<string, mixed>|null $telegramBotInfo */
 /** @var list<array{id:string,title:string,type:string}> $telegramChats */
 /** @var string|null $telegramProbeError */
@@ -125,7 +126,7 @@
                 관리자 알림 Chat ID
                 <textarea name="admin_chat_ids" rows="5" placeholder="-1001234567890"><?= htmlspecialchars(implode("\n", $telegramAdminChats), ENT_QUOTES, 'UTF-8') ?></textarea>
             </label>
-            <p class="form-hint span-2">한 줄에 하나씩 입력합니다. 그룹/채널 Chat ID는 보통 음수이며, 저장한 값이 config 파일의 알림 대상보다 우선합니다.</p>
+            <p class="form-hint span-2">한 줄에 하나씩 입력합니다. 그룹/채널 Chat ID는 보통 음수입니다. 현재 <?= $telegramChatsManaged ? '관리자 화면에서 저장한 값' : '기존 config 기본값' ?>을 표시하고 있으며, 한 번 저장하면 이후부터 관리자 화면의 값이 사용됩니다.</p>
             <div class="form-actions">
                 <button class="button primary" type="submit"><i class="bi bi-bell-fill"></i> 알림 대상 저장</button>
             </div>
