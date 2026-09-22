@@ -553,7 +553,7 @@
 
 ## T29. v1.2.1 XLSX 스타일 XML · 출력 카드 간격 핫픽스
 
-상태: 구현 완료 / CI·자동 Release 대기
+상태: 구현 완료 / PR CI 통과 / main·자동 Release 대기
 
 - [x] XLSX styles.xml 잘못된 bottom 종료 태그 수정
 - [x] 생성된 XLSX 내부 XML/관계 파일 전체 파싱 테스트 추가
@@ -561,6 +561,6 @@
 - [x] 사용자 Excel 출력 하단 안내문 간격 개선
 - [x] 관리자 휴가 집계 Excel 출력 하단 안내문 간격 개선
 - [x] VERSION 1.2.1 및 릴리스 노트
-- [ ] feature PR CI 통과
+- [x] feature PR CI 통과
 - [ ] main 병합 및 main CI 통과
 - [ ] v1.2.1 GitHub Release 자동 생성 확인
