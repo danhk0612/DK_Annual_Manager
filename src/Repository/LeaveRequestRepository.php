@@ -175,7 +175,8 @@ final class LeaveRequestRepository extends AbstractRepository
             . 'FROM leave_requests r '
             . 'INNER JOIN users u ON u.id = r.user_id '
             . 'INNER JOIN leave_types t ON t.id = r.leave_type_id '
-            . 'WHERE r.start_date <= :end_date AND r.end_date >= :start_date '
+            . 'WHERE EXISTS (SELECT 1 FROM leave_request_days d '
+            . 'WHERE d.leave_request_id = r.id AND d.leave_date BETWEEN :start_date AND :end_date) '
             . "AND r.status IN ('pending', 'approved') ";
 
         $params = [
