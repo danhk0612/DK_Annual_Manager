@@ -18,7 +18,7 @@ final class RequireAdminMiddleware implements MiddlewareInterface
     public function handle(Request $request, callable $next): Response
     {
         if ($this->auth->user() === null) {
-            return Response::redirect('/login');
+            return Response::redirect('/login?return_to=' . rawurlencode($this->returnTo($request)));
         }
 
         if (!$this->auth->isAdmin()) {
@@ -26,5 +26,15 @@ final class RequireAdminMiddleware implements MiddlewareInterface
         }
 
         return $next($request);
+    }
+
+    private function returnTo(Request $request): string
+    {
+        $uri = trim((string) $request->server('REQUEST_URI', $request->path()));
+        if ($uri === '' || !str_starts_with($uri, '/') || str_starts_with($uri, '//')) {
+            return '/admin';
+        }
+
+        return $uri;
     }
 }
