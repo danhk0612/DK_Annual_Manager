@@ -122,6 +122,7 @@ final class SetupService
         }
 
         $settings = new AppSettingRepository($this->pdo);
+        $this->migrateCompanyChatSetting($settings);
         $completed = $settings->get('setup.completed', '0') === '1';
 
         if (!$completed) {
@@ -183,6 +184,7 @@ final class SetupService
         }
 
         $settings = new AppSettingRepository($this->pdo);
+        $this->migrateCompanyChatSetting($settings);
 
         $telegram = trim((string) $settings->get('telegram.client_id', '')) !== ''
             && trim((string) $settings->get('telegram.client_secret', '')) !== ''
@@ -200,6 +202,21 @@ final class SetupService
             'holiday' => $holiday,
             'completed' => $settings->get('setup.completed', '0') === '1',
         ];
+    }
+
+    private function migrateCompanyChatSetting(AppSettingRepository $settings): void
+    {
+        if (trim((string) $settings->get('telegram.company_chat_id', '')) !== '') {
+            return;
+        }
+
+        $legacy = $settings->lineList('telegram.admin_chat_ids');
+        if ($legacy === []) {
+            return;
+        }
+
+        $settings->set('telegram.company_chat_id', $legacy[0], null);
+        $settings->delete('telegram.admin_chat_ids');
     }
 
     /** @return list<string> */
