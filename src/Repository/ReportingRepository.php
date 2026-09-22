@@ -215,6 +215,88 @@ final class ReportingRepository extends AbstractRepository
         return $statement->fetchAll();
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function leaveExportRows(
+        ?int $userId = null,
+        ?string $startDate = null,
+        ?string $endDate = null,
+    ): array {
+        $sql = "SELECT
+                    r.id,
+                    r.user_id,
+                    u.name AS user_name,
+                    u.department,
+                    u.position,
+                    lt.code AS leave_code,
+                    lt.name AS leave_type_name,
+                    r.half_day_period,
+                    r.start_date,
+                    r.end_date,
+                    r.requested_amount,
+                    r.status,
+                    r.reason,
+                    r.created_at,
+                    r.reviewed_at,
+                    r.review_note,
+                    reviewer.name AS reviewed_by_name,
+                    r.cancelled_at,
+                    r.cancellation_source,
+                    r.cancellation_note,
+                    canceller.name AS cancelled_by_name,
+                    COALESCE(SUM(d.amount), 0) AS period_amount
+                FROM leave_requests r
+                INNER JOIN users u ON u.id = r.user_id
+                INNER JOIN leave_types lt ON lt.id = r.leave_type_id
+                INNER JOIN leave_request_days d ON d.leave_request_id = r.id
+                LEFT JOIN users reviewer ON reviewer.id = r.reviewed_by
+                LEFT JOIN users canceller ON canceller.id = r.cancelled_by
+                WHERE 1 = 1";
+
+        $params = [];
+
+        if ($userId !== null) {
+            $sql .= ' AND r.user_id = :user_id';
+            $params['user_id'] = $userId;
+        }
+
+        if ($startDate !== null && $endDate !== null) {
+            $sql .= ' AND d.leave_date BETWEEN :start_date AND :end_date';
+            $params['start_date'] = $startDate;
+            $params['end_date'] = $endDate;
+        }
+
+        $sql .= " GROUP BY
+                    r.id,
+                    r.user_id,
+                    u.name,
+                    u.department,
+                    u.position,
+                    lt.code,
+                    lt.name,
+                    r.half_day_period,
+                    r.start_date,
+                    r.end_date,
+                    r.requested_amount,
+                    r.status,
+                    r.reason,
+                    r.created_at,
+                    r.reviewed_at,
+                    r.review_note,
+                    reviewer.name,
+                    r.cancelled_at,
+                    r.cancellation_source,
+                    r.cancellation_note,
+                    canceller.name
+                  ORDER BY r.start_date ASC, u.name ASC, r.id ASC";
+
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute($params);
+
+        return $statement->fetchAll();
+    }
+
     /** @return list<array<string, mixed>> */
     public function pendingRequestPreview(int $limit = 5): array
     {
