@@ -36,9 +36,19 @@ final class AdminAnnualLeaveController
 
         $entries = [];
         $balance = 0.0;
+        $totalEntitlement = 0.0;
         if ($selectedUser !== null) {
+            if (!empty($selectedUser['hire_date'])) {
+                $actor = $this->auth->user();
+                $this->annualLeave->syncAccruals(
+                    $selectedUser,
+                    new DateTimeImmutable('today'),
+                    $actor !== null ? (int) $actor['id'] : null,
+                );
+            }
             $entries = $this->ledger->entriesForUserYear((int) $selectedUser['id'], $year);
             $balance = $this->ledger->balanceForUserYear((int) $selectedUser['id'], $year);
+            $totalEntitlement = $this->ledger->nonUsageTotalForUserYear((int) $selectedUser['id'], $year);
         }
 
         return Response::html($this->view->render('admin-annual-leave', [
@@ -48,6 +58,7 @@ final class AdminAnnualLeaveController
             'year' => $year,
             'entries' => $entries,
             'balance' => $balance,
+            'totalEntitlement' => $totalEntitlement,
             'csrfToken' => $this->csrf->token(),
             'message' => $request->input('message'),
             'error' => $request->input('error'),
@@ -140,6 +151,57 @@ final class AdminAnnualLeaveController
             '/admin/annual-leave?user_id=' . $userId
             . '&year=' . $year
             . '&message=' . rawurlencode('연차 원장을 조정했습니다.')
+        );
+    }
+
+    public function setTotal(Request $request): Response
+    {
+        $userId = $this->requiredPositiveInt($request->input('user_id'));
+        $year = $this->requiredPositiveInt($request->input('year'));
+        $targetValue = trim((string) $request->input('total_amount', ''));
+        $note = trim((string) $request->input('note', ''));
+
+        if ($userId === null || $year === null || $year < 2000 || $year > 2100) {
+            return $this->redirectError('직원과 연도를 확인해 주세요.');
+        }
+        if (!is_numeric($targetValue) || (float) $targetValue < 0 || (float) $targetValue > 365) {
+            return $this->redirectError('총 연차는 0~365일 범위로 입력해 주세요.', $userId, $year);
+        }
+        if ($this->users->findById($userId) === null) {
+            return $this->redirectError('직원을 찾을 수 없습니다.', $userId, $year);
+        }
+
+        $actor = $this->auth->user();
+        if ($actor === null) {
+            return Response::redirect('/login');
+        }
+
+        $target = round((float) $targetValue, 2);
+        $current = $this->ledger->nonUsageTotalForUserYear($userId, $year);
+        $delta = round($target - $current, 2);
+
+        if (abs($delta) >= 0.01) {
+            $this->ledger->addManual(
+                $userId,
+                $year,
+                'adjustment',
+                $delta,
+                $note !== '' ? $note : sprintf('%d년 총 연차 %.2f일로 수동 설정', $year, $target),
+                (int) $actor['id'],
+            );
+        }
+
+        $this->audit->record((int) $actor['id'], 'annual_leave.total_set', 'user', $userId, [
+            'leave_year' => $year,
+            'previous_total' => $current,
+            'target_total' => $target,
+            'adjustment' => $delta,
+        ], $this->ip($request));
+
+        return Response::redirect(
+            '/admin/annual-leave?user_id=' . $userId
+            . '&year=' . $year
+            . '&message=' . rawurlencode(sprintf('총 연차를 %.1f일로 설정했습니다.', $target))
         );
     }
 
