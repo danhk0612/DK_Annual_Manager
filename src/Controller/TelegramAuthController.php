@@ -36,6 +36,7 @@ final class TelegramAuthController
         return Response::html($this->view->render('login', [
             'title' => '로그인',
             'configured' => $this->isConfigured(),
+            'message' => $request->input('message'),
         ]));
     }
 
