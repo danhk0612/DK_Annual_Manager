@@ -8,6 +8,7 @@
 /** @var float|null $annualBalance */
 /** @var bool|null $allowAdminDateException */
 /** @var string|null $submitLabel */
+/** @var bool|null $adminDirectEntry */
 
 $returnTo = isset($returnTo) && is_string($returnTo) ? $returnTo : '/leave';
 $targetUsers = isset($targetUsers) && is_array($targetUsers) ? $targetUsers : [];
@@ -16,6 +17,7 @@ $allowAdminDateException = isset($allowAdminDateException) ? (bool) $allowAdminD
 $submitLabel = isset($submitLabel) && is_string($submitLabel) && $submitLabel !== ''
     ? $submitLabel
     : '휴가 신청';
+$adminDirectEntry = isset($adminDirectEntry) ? (bool) $adminDirectEntry : false;
 ?>
 <form class="form-grid leave-form" method="post" action="/leave/create" data-leave-form>
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
@@ -95,7 +97,8 @@ $submitLabel = isset($submitLabel) && is_string($submitLabel) && $submitLabel !=
 
     <label>
         사유
-        <select name="reason_category" required>
+        <select name="reason_category" <?= $adminDirectEntry ? '' : 'required' ?>>
+            <?php if ($adminDirectEntry): ?><option value="">선택 안 함</option><?php endif; ?>
             <?php foreach ($reasonCategories as $reasonCategory): ?>
                 <option value="<?= htmlspecialchars($reasonCategory, ENT_QUOTES, 'UTF-8') ?>">
                     <?= htmlspecialchars($reasonCategory, ENT_QUOTES, 'UTF-8') ?>
@@ -109,7 +112,7 @@ $submitLabel = isset($submitLabel) && is_string($submitLabel) && $submitLabel !=
         <input name="reason_detail" maxlength="500" placeholder="필요한 경우 추가 내용을 입력하세요.">
     </label>
 
-    <?php if ($allowAdminDateException): ?>
+    <?php if ($allowAdminDateException && !$adminDirectEntry): ?>
         <label class="span-2 admin-date-exception" data-admin-date-exception-wrap hidden>
             <span class="check-row">
                 <input type="checkbox" name="admin_date_exception" value="1" data-admin-date-exception>
@@ -126,9 +129,13 @@ $submitLabel = isset($submitLabel) && is_string($submitLabel) && $submitLabel !=
     </div>
 
     <p class="form-hint span-2">
-        <?php if ($annualBalance !== null): ?>
-            현재 잔여 연차 <strong><?= number_format($annualBalance, 1) ?>일</strong>.
+        <?php if ($adminDirectEntry): ?>
+            관리자 직접 등록은 선택한 날짜를 그대로 기록하고 즉시 승인합니다. 근무요일·공휴일·중복 일정·잔여 연차 조건은 적용하지 않습니다.
+        <?php else: ?>
+            <?php if ($annualBalance !== null): ?>
+                현재 잔여 연차 <strong><?= number_format($annualBalance, 1) ?>일</strong>.
+            <?php endif; ?>
+            잔여 연차보다 많이 신청해도 접수되며, 부족한 경우 관리자에게 경고가 표시됩니다.
         <?php endif; ?>
-        잔여 연차보다 많이 신청해도 접수되며, 부족한 경우 관리자에게 경고가 표시됩니다.
     </p>
 </form>

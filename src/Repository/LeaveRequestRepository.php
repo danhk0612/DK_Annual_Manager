@@ -218,7 +218,7 @@ final class LeaveRequestRepository extends AbstractRepository
         $sql = 'SELECT d.leave_date, d.amount, r.id AS request_id, r.status, r.half_day_period, '
             . 'r.start_date, r.end_date, r.requested_amount, r.reason, r.review_note, r.created_at, '
             . 'u.id AS user_id, u.name AS user_name, u.department, '
-            . 't.code AS leave_code, t.name AS leave_type_name '
+            . 't.code AS leave_code, t.name AS leave_type_name, t.deducts_annual_leave '
             . 'FROM leave_request_days d '
             . 'INNER JOIN leave_requests r ON r.id = d.leave_request_id '
             . 'INNER JOIN users u ON u.id = r.user_id '
@@ -245,7 +245,8 @@ final class LeaveRequestRepository extends AbstractRepository
     /** @return list<array<string, mixed>> */
     public function calendarRequestList(string $startDate, string $endDate, ?int $userId = null): array
     {
-        $sql = 'SELECT r.*, u.name AS user_name, u.department, t.code AS leave_code, t.name AS leave_type_name '
+        $sql = 'SELECT r.*, u.name AS user_name, u.department, t.code AS leave_code, t.name AS leave_type_name, '
+            . 't.deducts_annual_leave '
             . 'FROM leave_requests r '
             . 'INNER JOIN users u ON u.id = r.user_id '
             . 'INNER JOIN leave_types t ON t.id = r.leave_type_id '

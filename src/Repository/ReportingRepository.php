@@ -88,6 +88,57 @@ final class ReportingRepository extends AbstractRepository
         ];
     }
 
+    /** @return list<array{month_number:int, request_count:int, total_amount:float, deducted_amount:float, non_deducted_amount:float}> */
+    public function userMonthlyLeaveSummary(int $userId, int $year): array
+    {
+        $statement = $this->pdo->prepare(
+            "SELECT
+                MONTH(d.leave_date) AS month_number,
+                COUNT(DISTINCT r.id) AS request_count,
+                COALESCE(SUM(d.amount), 0) AS total_amount,
+                COALESCE(SUM(CASE WHEN lt.deducts_annual_leave = 1 THEN d.amount ELSE 0 END), 0) AS deducted_amount,
+                COALESCE(SUM(CASE WHEN lt.deducts_annual_leave = 0 THEN d.amount ELSE 0 END), 0) AS non_deducted_amount
+             FROM leave_request_days d
+             INNER JOIN leave_requests r ON r.id = d.leave_request_id
+             INNER JOIN leave_types lt ON lt.id = r.leave_type_id
+             WHERE r.user_id = :user_id
+               AND r.status = 'approved'
+               AND d.leave_date BETWEEN :start_date AND :end_date
+             GROUP BY MONTH(d.leave_date)
+             ORDER BY month_number ASC"
+        );
+        $statement->execute([
+            'user_id' => $userId,
+            'start_date' => sprintf('%04d-01-01', $year),
+            'end_date' => sprintf('%04d-12-31', $year),
+        ]);
+
+        $rowsByMonth = [];
+        foreach ($statement->fetchAll() as $row) {
+            $month = (int) $row['month_number'];
+            $rowsByMonth[$month] = [
+                'month_number' => $month,
+                'request_count' => (int) $row['request_count'],
+                'total_amount' => (float) $row['total_amount'],
+                'deducted_amount' => (float) $row['deducted_amount'],
+                'non_deducted_amount' => (float) $row['non_deducted_amount'],
+            ];
+        }
+
+        $result = [];
+        for ($month = 1; $month <= 12; $month++) {
+            $result[] = $rowsByMonth[$month] ?? [
+                'month_number' => $month,
+                'request_count' => 0,
+                'total_amount' => 0.0,
+                'deducted_amount' => 0.0,
+                'non_deducted_amount' => 0.0,
+            ];
+        }
+
+        return $result;
+    }
+
     /** @return list<array<string, mixed>> */
     public function annualUserSummary(int $year): array
     {

@@ -168,10 +168,17 @@ $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'
                             $halfDayPeriod = (string) ($entry['half_day_period'] ?? '');
                             $halfDayLabel = $halfDayPeriod === 'am' ? ' 오전' : ($halfDayPeriod === 'pm' ? ' 오후' : '');
                             $status = (string) $entry['status'];
+                            $deductsAnnual = (int) ($entry['deducts_annual_leave'] ?? 0) === 1;
+                            $deductionClass = $deductsAnnual ? 'annual-deduct' : 'annual-free';
+                            $deductionLabel = $deductsAnnual
+                                ? ($status === 'approved'
+                                    ? '연차 ' . number_format((float) $entry['requested_amount'], 1) . '일 차감'
+                                    : '연차 차감 대상 · 승인 시 ' . number_format((float) $entry['requested_amount'], 1) . '일 차감')
+                                : '연차 미차감';
                             ?>
                             <button
                                 type="button"
-                                class="calendar-event <?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?>"
+                                class="calendar-event <?= htmlspecialchars($status . ' ' . $deductionClass, ENT_QUOTES, 'UTF-8') ?>"
                                 data-open-request-detail
                                 data-request-id="<?= (int) $entry['request_id'] ?>"
                                 data-request-user="<?= htmlspecialchars((string) $entry['user_name'], ENT_QUOTES, 'UTF-8') ?>"
@@ -183,12 +190,16 @@ $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'
                                 data-request-reason="<?= htmlspecialchars((string) ($entry['reason'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                                 data-request-review-note="<?= htmlspecialchars((string) ($entry['review_note'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                                 data-request-created="<?= htmlspecialchars((string) ($entry['created_at'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                                data-request-deduction="<?= htmlspecialchars($deductionLabel, ENT_QUOTES, 'UTF-8') ?>"
                             >
                                 <?php if ($isAdmin): ?>
                                     <strong><?= htmlspecialchars((string) $entry['user_name'], ENT_QUOTES, 'UTF-8') ?></strong>
                                 <?php endif; ?>
                                 <span><?= htmlspecialchars((string) $entry['leave_type_name'], ENT_QUOTES, 'UTF-8') ?><?= $halfDayLabel ?></span>
-                                <small><?= htmlspecialchars($statusLabels[$status] ?? $status, ENT_QUOTES, 'UTF-8') ?></small>
+                                <small class="event-meta-row">
+                                    <span><?= htmlspecialchars($statusLabels[$status] ?? $status, ENT_QUOTES, 'UTF-8') ?></span>
+                                    <span class="deduction-chip <?= $deductionClass ?>"><?= $deductsAnnual ? '연차 차감' : '미차감' ?></span>
+                                </small>
                             </button>
                         <?php endforeach; ?>
                     </div>
@@ -202,6 +213,8 @@ $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'
             <span><i class="legend-dot company"></i> 회사 휴무</span>
             <span><i class="legend-dot approved"></i> 승인</span>
             <span><i class="legend-dot pending"></i> 승인 대기</span>
+            <span><i class="legend-dot annual-deduct"></i> 연차 차감</span>
+            <span><i class="legend-dot annual-free"></i> 연차 미차감</span>
         </div>
     </section>
 
@@ -224,10 +237,17 @@ $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'
                         $halfDayPeriod = (string) ($item['half_day_period'] ?? '');
                         $halfDayLabel = $halfDayPeriod === 'am' ? ' · 오전' : ($halfDayPeriod === 'pm' ? ' · 오후' : '');
                         $status = (string) $item['status'];
+                        $deductsAnnual = (int) ($item['deducts_annual_leave'] ?? 0) === 1;
+                        $deductionClass = $deductsAnnual ? 'annual-deduct' : 'annual-free';
+                        $deductionLabel = $deductsAnnual
+                            ? ($status === 'approved'
+                                ? '연차 ' . number_format((float) $item['requested_amount'], 1) . '일 차감'
+                                : '연차 차감 대상 · 승인 시 ' . number_format((float) $item['requested_amount'], 1) . '일 차감')
+                            : '연차 미차감';
                         ?>
                         <button
                             type="button"
-                            class="month-request-item"
+                            class="month-request-item <?= $deductionClass ?>"
                             data-open-request-detail
                             data-request-id="<?= (int) $item['id'] ?>"
                             data-request-user="<?= htmlspecialchars((string) $item['user_name'], ENT_QUOTES, 'UTF-8') ?>"
@@ -239,6 +259,7 @@ $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'
                             data-request-reason="<?= htmlspecialchars((string) ($item['reason'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                             data-request-review-note="<?= htmlspecialchars((string) ($item['review_note'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                             data-request-created="<?= htmlspecialchars((string) ($item['created_at'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                            data-request-deduction="<?= htmlspecialchars($deductionLabel, ENT_QUOTES, 'UTF-8') ?>"
                         >
                             <span class="month-request-icon <?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?>">
                                 <i class="bi <?= htmlspecialchars($statusIcons[$status] ?? 'bi-circle', ENT_QUOTES, 'UTF-8') ?>"></i>
@@ -248,7 +269,10 @@ $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'
                                     <?php if ($isAdmin): ?><strong><?= htmlspecialchars((string) $item['user_name'], ENT_QUOTES, 'UTF-8') ?></strong> · <?php endif; ?>
                                     <?= htmlspecialchars((string) $item['leave_type_name'], ENT_QUOTES, 'UTF-8') ?><?= $halfDayLabel ?>
                                 </span>
-                                <span class="month-request-meta"><?= htmlspecialchars((string) $item['start_date'], ENT_QUOTES, 'UTF-8') ?> · <?= number_format((float) $item['requested_amount'], 1) ?>일</span>
+                                <span class="month-request-meta">
+                                    <?= htmlspecialchars((string) $item['start_date'], ENT_QUOTES, 'UTF-8') ?> · <?= number_format((float) $item['requested_amount'], 1) ?>일
+                                    <span class="deduction-chip <?= $deductionClass ?>"><?= $deductsAnnual ? '연차 차감' : '미차감' ?></span>
+                                </span>
                             </span>
                             <span class="badge <?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($statusLabels[$status] ?? $status, ENT_QUOTES, 'UTF-8') ?></span>
                         </button>
@@ -293,6 +317,7 @@ $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'
             <div><span>종류</span><strong data-detail-type>-</strong></div>
             <div><span>기간</span><strong data-detail-period>-</strong></div>
             <div><span>일수</span><strong data-detail-amount>-</strong></div>
+            <div><span>연차 차감</span><strong data-detail-deduction>-</strong></div>
             <div class="span-2"><span>사유</span><strong data-detail-reason>-</strong></div>
             <div class="span-2"><span>관리자 메모</span><strong data-detail-review-note>-</strong></div>
             <div class="span-2"><span>신청 시각</span><strong data-detail-created>-</strong></div>

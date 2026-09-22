@@ -2,6 +2,7 @@
 /** @var array<string, mixed>|null $user */
 /** @var int $year */
 /** @var array<string, float> $annualSummary */
+/** @var list<array{month_number:int, request_count:int, total_amount:float, deducted_amount:float, non_deducted_amount:float}> $monthlyLeaveSummary */
 /** @var string $csrfToken */
 /** @var mixed $message */
 /** @var mixed $error */
@@ -34,6 +35,32 @@
     <div class="summary-card">
         <span>잔여</span>
         <strong><?= number_format((float) ($annualSummary['balance'] ?? 0), 1) ?>일</strong>
+    </div>
+</section>
+
+<section class="panel profile-monthly-summary">
+    <div class="section-head">
+        <div>
+            <p class="eyebrow">Monthly summary</p>
+            <h2><i class="bi bi-calendar3"></i><span><?= $year ?>년 월별 휴가 요약</span></h2>
+            <p>승인된 휴가를 기준으로 연차 차감 휴가와 미차감 휴가를 구분합니다.</p>
+        </div>
+    </div>
+    <div class="monthly-leave-grid">
+        <?php foreach ($monthlyLeaveSummary as $monthSummary): ?>
+            <?php $isCurrentMonth = $year === (int) date('Y') && (int) $monthSummary['month_number'] === (int) date('n'); ?>
+            <div class="monthly-leave-card <?= $isCurrentMonth ? 'current' : '' ?>">
+                <div class="monthly-leave-card-head">
+                    <strong><?= (int) $monthSummary['month_number'] ?>월</strong>
+                    <span><?= (int) $monthSummary['request_count'] ?>건</span>
+                </div>
+                <div class="monthly-leave-total"><?= number_format((float) $monthSummary['total_amount'], 1) ?>일</div>
+                <div class="monthly-leave-breakdown">
+                    <span class="deduct"><i></i>연차 차감 <?= number_format((float) $monthSummary['deducted_amount'], 1) ?></span>
+                    <span class="free"><i></i>미차감 <?= number_format((float) $monthSummary['non_deducted_amount'], 1) ?></span>
+                </div>
+            </div>
+        <?php endforeach; ?>
     </div>
 </section>
 
