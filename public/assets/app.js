@@ -7,14 +7,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const endDate = form.querySelector('[data-end-date]');
         const hiddenEndDate = form.querySelector('[data-end-date-hidden]');
         const halfDaySelect = form.querySelector('[data-half-day-select]');
+        const adminDateExceptionWrap = form.querySelector('[data-admin-date-exception-wrap]');
+        const adminDateException = form.querySelector('[data-admin-date-exception]');
 
         if (!typeSelect || !startDate || !endDate || !hiddenEndDate || !halfDaySelect) {
             return;
         }
 
+        const selectedOption = () => typeSelect.options[typeSelect.selectedIndex] || null;
+
         const selectedCode = () => {
-            const option = typeSelect.options[typeSelect.selectedIndex];
+            const option = selectedOption();
             return option ? option.dataset.leaveCode || '' : '';
+        };
+
+        const selectedDeductsAnnual = () => {
+            const option = selectedOption();
+            return option ? option.dataset.deductsAnnual === '1' : false;
+        };
+
+        const syncAdminDateException = () => {
+            if (!adminDateExceptionWrap || !adminDateException) {
+                return;
+            }
+
+            const singleDate = startDate.value !== '' && startDate.value === endDate.value;
+            const available = !selectedDeductsAnnual() && singleDate && selectedCode() !== 'H';
+            adminDateExceptionWrap.hidden = !available;
+            adminDateException.disabled = !available;
+
+            if (!available) {
+                adminDateException.checked = false;
+            }
         };
 
         const syncDates = () => {
@@ -35,6 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 endDate.disabled = false;
                 hiddenEndDate.disabled = true;
             }
+
+            syncAdminDateException();
         };
 
         const syncTypeControls = () => {
