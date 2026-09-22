@@ -97,38 +97,44 @@ final class SetupController
 
         $settings = new AppSettingRepository($this->pdo);
         $clientId = trim((string) $request->input('client_id', ''));
-        $clientSecret = trim((string) $request->input('client_secret', ''));
-        $botToken = trim((string) $request->input('bot_token', ''));
+        $clientSecretInput = trim((string) $request->input('client_secret', ''));
+        $botTokenInput = trim((string) $request->input('bot_token', ''));
         $redirectUri = trim((string) $request->input('redirect_uri', ''));
 
-        if ($clientId === '') {
-            return $this->error('Telegram Client ID를 입력해 주세요.');
-        }
-        if ($clientSecret === '' && trim((string) $settings->get('telegram.client_secret', '')) === '') {
-            return $this->error('Telegram Client Secret을 입력해 주세요.');
-        }
-        if ($botToken === '' && trim((string) $settings->get('telegram.bot_token', '')) === '') {
-            return $this->error('Telegram Bot Token을 입력해 주세요.');
+        $clientSecret = $clientSecretInput !== ''
+            ? $clientSecretInput
+            : trim((string) $settings->get('telegram.client_secret', ''));
+        $botToken = $botTokenInput !== ''
+            ? $botTokenInput
+            : trim((string) $settings->get('telegram.bot_token', ''));
+
+        if ($clientId === '' || $clientSecret === '' || $botToken === '') {
+            return $this->error('Telegram Client ID, Client Secret, Bot Token을 모두 입력해 주세요.');
         }
         if (!str_starts_with($redirectUri, 'https://')) {
             return $this->error('Telegram Redirect URI는 HTTPS 주소여야 합니다.');
         }
 
-        $settings->set('telegram.client_id', $clientId, null);
-        if ($clientSecret !== '') {
-            $settings->set('telegram.client_secret', $clientSecret, null);
-        }
-        if ($botToken !== '') {
-            $settings->set('telegram.bot_token', $botToken, null);
-        }
-        $settings->set('telegram.redirect_uri', $redirectUri, null);
+        $this->config->set('telegram.client_id', $clientId);
+        $this->config->set('telegram.client_secret', $clientSecret);
+        $this->config->set('telegram.bot_token', $botToken);
+        $this->config->set('telegram.redirect_uri', $redirectUri);
 
         try {
-            $this->setup->applyManagedConfig();
             $bot = new TelegramBotClient($this->config);
             $botInfo = $bot->getMe();
         } catch (Throwable $exception) {
-            return $this->error('Telegram Bot 확인 실패: ' . $exception->getMessage());
+            return $this->error('Telegram Bot 확인 실패로 설정을 저장하지 않았습니다: ' . $exception->getMessage());
+        }
+
+        $settings->set('telegram.client_id', $clientId, null);
+        $settings->set('telegram.client_secret', $clientSecret, null);
+        $settings->set('telegram.bot_token', $botToken, null);
+        $settings->set('telegram.redirect_uri', $redirectUri, null);
+
+        $username = trim((string) ($botInfo['username'] ?? ''));
+        if ($username !== '') {
+            $settings->set('telegram.bot_username', $username, null);
         }
 
         return Response::redirect('/setup?probe_telegram=1&message=' . rawurlencode(
@@ -170,22 +176,23 @@ final class SetupController
             return $this->error('공휴일 API ServiceKey를 입력해 주세요.');
         }
 
-        $settings = new AppSettingRepository($this->pdo);
-        $settings->set('holiday_api.service_key', $serviceKey, null);
+        $this->config->set('holiday_api.service_key', $serviceKey);
 
         try {
-            $this->setup->applyManagedConfig();
             $client = new KasiHolidayClient($this->config);
             $holidays = $client->fetchYear((int) date('Y'));
             if ($holidays === []) {
                 return $this->error('공휴일 API 연결은 되었지만 현재 연도 데이터가 비어 있습니다.');
             }
-
-            $repository = new HolidayRepository($this->pdo);
-            $repository->replacePublicApiYear((int) date('Y'), $holidays);
         } catch (Throwable $exception) {
-            return $this->error('공휴일 API 확인 실패: ' . $exception->getMessage());
+            return $this->error('공휴일 API 확인 실패로 키를 저장하지 않았습니다: ' . $exception->getMessage());
         }
+
+        $settings = new AppSettingRepository($this->pdo);
+        $settings->set('holiday_api.service_key', $serviceKey, null);
+
+        $repository = new HolidayRepository($this->pdo);
+        $repository->replacePublicApiYear((int) date('Y'), $holidays);
 
         return $this->message(sprintf('공휴일 API 연결 및 %d년 동기화를 완료했습니다.', (int) date('Y')));
     }
