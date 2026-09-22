@@ -230,3 +230,33 @@
 - [ ] 운영 환경 로고 업로드 권한 확인
 - [ ] PC/모바일 실제 UI 및 다크모드 검증
 - [ ] Telegram 최근 채팅 탐색/테스트 발송 검증
+
+
+## T14. 설치 마법사 · 설정 일원화 · UI 미세 조정
+
+상태: 구현 완료 / CI 및 완전 초기화 설치 검증 대기
+
+- [x] 휴가 신청 메뉴가 비활성 상태에서는 대표색으로 상시 강조되지 않도록 수정
+- [x] 버튼/메뉴/제목의 아이콘과 텍스트 간격 확대
+- [x] 부제(eyebrow)와 제목 사이 여백 개선
+- [x] 업로드 회사 로고를 헤더 높이에 맞춰 꽉 차게 표시
+- [x] 로고 업로드 UI 재구성
+- [x] 관리자 환경 설정에서 Telegram Client ID/Secret/Bot Token 관리
+- [x] 관리자 환경 설정에서 공휴일 API ServiceKey 관리 및 연결 확인
+- [x] 직원용 Telegram Bot 링크 및 서비스 로그인 링크 생성/복사
+- [x] 첫 실행 /setup 순차 설치 마법사
+- [x] Step 1 DB 최신 schema 자동 생성
+- [x] Step 2 Telegram 봇/OIDC 입력 및 Bot 연결 확인
+- [x] Step 3 최근 채팅 자동 탐색으로 관리자 그룹/최초 관리자 선택
+- [x] Step 4 최초 관리자 Telegram 로그인 및 자동 활성화
+- [x] Step 5 공휴일 API 연결 및 현재 연도 자동 동기화
+- [x] 필수 단계 완료 후 setup 잠금
+- [x] DB 서비스 설정은 app_settings로 관리하고 런타임 config에 자동 반영
+- [x] 기존 config의 서비스 자격 증명은 신규 설치 마법사 완료 조건으로 간주하지 않음
+- [x] 테스트용 완전 초기화 CLI 추가: bin/reset-install.php
+- [x] 완전 초기화 후 migration 없이 최신 database/schema.sql만 사용하는 흐름
+- [x] bin/check.php에서 setup 상태와 DB 관리 자격 증명 반영
+- [ ] PHP 8.2/8.4 CI
+- [ ] 실제 NAS에서 완전 초기화 후 /setup 전 과정 검증
+- [ ] 최초 관리자/그룹 자동 탐색 및 Telegram 로그인 검증
+- [ ] 공휴일 API 자동 동기화 검증
