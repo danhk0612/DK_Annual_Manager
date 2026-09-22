@@ -183,21 +183,85 @@ final class LeaveRequestRepository extends AbstractRepository
     }
 
     /** @return list<array<string, mixed>> */
-    public function approvedForAdmin(int $limit = 30): array
+    public function approvedForAdmin(?int $limit = null): array
     {
-        $limit = max(1, min(100, $limit));
-        $statement = $this->pdo->query(
-            'SELECT r.*, u.name AS user_name, u.telegram_user_id, '
+        $sql = 'SELECT r.*, u.name AS user_name, u.telegram_user_id, '
             . 't.code AS leave_code, t.name AS leave_type_name, t.deducts_annual_leave '
             . 'FROM leave_requests r '
             . 'INNER JOIN users u ON u.id = r.user_id '
             . 'INNER JOIN leave_types t ON t.id = r.leave_type_id '
             . "WHERE r.status = 'approved' "
-            . 'ORDER BY r.start_date DESC, r.id DESC '
-            . 'LIMIT ' . $limit
-        );
+            . 'ORDER BY r.start_date DESC, r.id DESC';
 
-        return $statement->fetchAll();
+        if ($limit !== null) {
+            $sql .= ' LIMIT ' . max(1, min(500, $limit));
+        }
+
+        return $this->pdo->query($sql)->fetchAll();
+    }
+
+    public function closedHistoryCount(): int
+    {
+        return (int) $this->pdo->query(
+            "SELECT COUNT(*) FROM leave_requests WHERE status IN ('cancelled', 'rejected')"
+        )->fetchColumn();
+    }
+
+    /**
+     * Permanently removes rejected/cancelled leave history and related traces.
+     *
+     * @return array{requests:int,days:int,ledger:int,audit:int}
+     */
+    public function purgeClosedHistory(): array
+    {
+        $this->pdo->beginTransaction();
+
+        try {
+            $requests = (int) $this->pdo->query(
+                "SELECT COUNT(*) FROM leave_requests WHERE status IN ('cancelled', 'rejected')"
+            )->fetchColumn();
+            $days = (int) $this->pdo->query(
+                "SELECT COUNT(*) FROM leave_request_days d "
+                . "INNER JOIN leave_requests r ON r.id = d.leave_request_id "
+                . "WHERE r.status IN ('cancelled', 'rejected')"
+            )->fetchColumn();
+
+            if ($requests === 0) {
+                $this->pdo->commit();
+                return ['requests' => 0, 'days' => 0, 'ledger' => 0, 'audit' => 0];
+            }
+
+            $ledgerDelete = $this->pdo->exec(
+                "DELETE FROM annual_leave_ledger "
+                . "WHERE reference_request_id IN ("
+                . "SELECT id FROM leave_requests WHERE status IN ('cancelled', 'rejected')"
+                . ")"
+            );
+            $auditDelete = $this->pdo->exec(
+                "DELETE FROM audit_logs "
+                . "WHERE target_type = 'leave_request' "
+                . "AND target_id IN ("
+                . "SELECT id FROM leave_requests WHERE status IN ('cancelled', 'rejected')"
+                . ")"
+            );
+            $requestDelete = $this->pdo->exec(
+                "DELETE FROM leave_requests WHERE status IN ('cancelled', 'rejected')"
+            );
+
+            $this->pdo->commit();
+
+            return [
+                'requests' => (int) $requestDelete,
+                'days' => $days,
+                'ledger' => (int) $ledgerDelete,
+                'audit' => (int) $auditDelete,
+            ];
+        } catch (Throwable $exception) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $exception;
+        }
     }
 
     /** @return array<string, mixed>|null */
