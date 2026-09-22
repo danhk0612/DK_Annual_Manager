@@ -12,7 +12,6 @@ use DKAnnual\Controller\AdminLeaveRequestController;
 use DKAnnual\Controller\AdminReportController;
 use DKAnnual\Controller\AdminUserController;
 use DKAnnual\Controller\CalendarController;
-use DKAnnual\Controller\HomeController;
 use DKAnnual\Controller\LeaveController;
 use DKAnnual\Controller\ProfileController;
 use DKAnnual\Controller\TelegramAuthController;
@@ -69,7 +68,6 @@ $router = new Router();
 
 $notifications = new LeaveNotificationService($config, new TelegramBotClient($config), $users);
 $annualLeave = new AnnualLeaveService(new AnnualLeaveCalculator(), $ledger);
-$home = new HomeController($view, $auth, $reports, $csrf);
 $telegramAuth = new TelegramAuthController(
     $config,
     $session,
