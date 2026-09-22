@@ -2,9 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, task/t24-release-hardening-telegram-links]
   pull_request:
     branches: [main]
+
+permissions:
+  contents: write
 
 jobs:
   php:
@@ -59,6 +62,18 @@ jobs:
 
       - name: PHPUnit
         run: composer test
+
+      - name: Commit resolved composer.lock
+        if: matrix.php == '8.2' && github.event_name == 'push' && github.ref == 'refs/heads/task/t24-release-hardening-telegram-links'
+        run: |
+          if [ -z "$(git status --porcelain -- composer.lock)" ]; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add composer.lock
+          git commit -m "Lock Composer dependencies"
+          git push origin HEAD:${GITHUB_REF_NAME}
 
       - name: Upload resolved composer.lock
         if: matrix.php == '8.2'
