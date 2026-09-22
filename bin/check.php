@@ -13,6 +13,7 @@ if (PHP_SAPI !== 'cli') {
 }
 
 $root = dirname(__DIR__);
+$production = in_array('--production', $argv, true);
 $failures = 0;
 $warnings = 0;
 
@@ -33,6 +34,15 @@ foreach (['curl', 'json', 'pdo', 'pdo_mysql', 'simplexml'] as $extension) {
     extension_loaded($extension)
         ? $pass('PHP extension: ' . $extension)
         : $fail('PHP extension이 없습니다: ' . $extension);
+}
+
+$lockPath = $root . '/composer.lock';
+if (is_file($lockPath)) {
+    $pass('composer.lock 존재');
+} elseif ($production) {
+    $fail('운영 배포에는 composer.lock이 필요합니다.');
+} else {
+    $warn('composer.lock이 없어 의존성 설치 결과가 재현되지 않을 수 있습니다.');
 }
 
 $autoloadPath = $root . '/vendor/autoload.php';
@@ -58,7 +68,8 @@ try {
     $setup = new SetupService($pdo, $config, $root);
     if (!$setup->schemaReady()) {
         $fail('DB schema가 초기화되지 않았습니다. 브라우저에서 /setup 을 열어 DB 초기화를 진행하세요.');
-        printf("\n결과: FAIL %d / WARN %d\n", $failures, $warnings);
+        printf("\n모드: %s\n", $production ? 'production' : 'standard');
+printf("결과: FAIL %d / WARN %d\n", $failures, $warnings);
         exit(1);
     }
     $setup->applyManagedConfig();
@@ -130,13 +141,29 @@ try {
     }
 
     $appUrl = trim((string) $config->get('app.url', ''));
-    str_starts_with($appUrl, 'https://')
-        ? $pass('app.url HTTPS')
-        : $warn('운영 환경의 app.url은 HTTPS 사용을 권장합니다.');
+    if (str_starts_with($appUrl, 'https://')) {
+        $pass('app.url HTTPS');
+    } elseif ($production) {
+        $fail('운영 환경의 app.url은 HTTPS여야 합니다.');
+    } else {
+        $warn('운영 환경의 app.url은 HTTPS 사용을 권장합니다.');
+    }
 
-    (bool) $config->get('app.session_cookie_secure', false)
-        ? $pass('Secure session cookie')
-        : $warn('운영 환경에서는 app.session_cookie_secure=true를 권장합니다.');
+    if ((bool) $config->get('app.session_cookie_secure', false)) {
+        $pass('Secure session cookie');
+    } elseif ($production) {
+        $fail('운영 환경에서는 app.session_cookie_secure=true가 필요합니다.');
+    } else {
+        $warn('운영 환경에서는 app.session_cookie_secure=true를 권장합니다.');
+    }
+
+    if ((bool) $config->get('app.debug', false) === false) {
+        $pass('app.debug=false');
+    } elseif ($production) {
+        $fail('운영 환경에서는 app.debug=false가 필요합니다.');
+    } else {
+        $warn('app.debug=true 상태입니다.');
+    }
 
     trim((string) $config->get('telegram.client_id', '')) !== ''
         ? $pass('Telegram client_id 설정')
