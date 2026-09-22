@@ -149,15 +149,17 @@ final class UserRepository extends AbstractRepository
 
     public function updateOwnProfile(
         int $id,
+        string $name,
         string $hireDate,
         ?string $department,
         ?string $position,
     ): void {
         $statement = $this->pdo->prepare(
-            'UPDATE users SET hire_date = :hire_date, department = :department, position = :position WHERE id = :id'
+            'UPDATE users SET name = :name, hire_date = :hire_date, department = :department, position = :position WHERE id = :id'
         );
         $statement->execute([
             'id' => $id,
+            'name' => $name,
             'hire_date' => $hireDate,
             'department' => $department,
             'position' => $position,
@@ -167,11 +169,10 @@ final class UserRepository extends AbstractRepository
     public function syncTelegramProfile(int $id, string $name, ?string $username): void
     {
         $statement = $this->pdo->prepare(
-            'UPDATE users SET name = :name, telegram_username = :telegram_username WHERE id = :id'
+            'UPDATE users SET telegram_username = :telegram_username WHERE id = :id'
         );
         $statement->execute([
             'id' => $id,
-            'name' => $name,
             'telegram_username' => $username,
         ]);
     }
