@@ -952,6 +952,48 @@ progress::-moz-progress-bar {
     gap: 12px;
 }
 
+.approval-card-actions {
+    margin-top: 14px;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.pagination-controls label,
+.pagination-buttons {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.pagination-controls select {
+    width: auto;
+    min-width: 72px;
+    min-height: 34px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.pagination-buttons {
+    margin-left: auto;
+}
+
+.pagination-page {
+    min-width: 52px;
+    text-align: center;
+    font-weight: 750;
+    color: var(--text);
+}
+
 .approval-card {
     padding: 16px;
     border: 1px solid var(--border);
@@ -1088,6 +1130,17 @@ progress::-moz-progress-bar {
 }
 
 @media (max-width: 560px) {
+    .pagination-controls {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .pagination-buttons {
+        width: 100%;
+        margin-left: 0;
+        justify-content: space-between;
+    }
+
     body { font-size: 14px; }
 
     .panel,
