@@ -160,6 +160,42 @@ final class AdminSettingsController
         return Response::redirect('/admin/settings?probe_telegram=1&message=' . rawurlencode('Telegram 알림 대상을 추가했습니다.'));
     }
 
+    public function testTelegram(Request $request): Response
+    {
+        $actor = $this->requireActor();
+        $targets = $this->settings->get('telegram.admin_chat_ids', null) !== null
+            ? $this->settings->lineList('telegram.admin_chat_ids')
+            : $this->configuredAdminChats();
+
+        if ($targets === []) {
+            return $this->error('테스트할 Telegram 알림 대상이 없습니다.');
+        }
+
+        $sent = 0;
+        foreach ($targets as $chatId) {
+            try {
+                $this->telegramBot->sendMessage(
+                    $chatId,
+                    '[휴가관리 설정 테스트]' . "\n" . '관리자 알림 연결이 정상입니다.',
+                );
+                $sent++;
+            } catch (Throwable) {
+                // Continue testing the remaining targets.
+            }
+        }
+
+        $this->audit->record((int) $actor['id'], 'settings.telegram_tested', 'app_settings', null, [
+            'target_count' => count($targets),
+            'sent_count' => $sent,
+        ], $this->ip($request));
+
+        if ($sent === 0) {
+            return $this->error('Telegram 테스트 메시지를 전송하지 못했습니다. Bot 권한과 Chat ID를 확인해 주세요.');
+        }
+
+        return $this->message(sprintf('Telegram 테스트 메시지 %d/%d건을 전송했습니다.', $sent, count($targets)));
+    }
+
     public function uploadLogo(Request $request): Response
     {
         $actor = $this->requireActor();
