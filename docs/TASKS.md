@@ -402,5 +402,5 @@
 - [x] Audit Log에 source=admin_proxy / automatic=true 기록
 - [x] 잔여 연차 부족 시 자동 승인으로 음수 잔여가 될 수 있음을 별도 경고
 - [x] 관리자 대리 등록 버튼/안내 문구를 '등록 · 즉시 승인'으로 변경
-- [ ] PHP 8.2/8.4 CI
+- [x] PHP 8.2/8.4 CI
 - [ ] 실제 연차/반차/G/S/A 대리 등록 즉시 승인 및 Telegram 검증
