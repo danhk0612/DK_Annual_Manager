@@ -1,50 +1,93 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const form = document.querySelector('[data-leave-form]');
-    if (!form) {
-        return;
-    }
+    const leaveForms = Array.from(document.querySelectorAll('[data-leave-form]'));
 
-    const typeSelect = form.querySelector('[data-leave-type]');
-    const startDate = form.querySelector('[data-start-date]');
-    const endDate = form.querySelector('[data-end-date]');
-    const halfDayField = form.querySelector('[data-half-day-field]');
-    const halfDaySelect = form.querySelector('[data-half-day-select]');
+    const initializeLeaveForm = (form) => {
+        const typeSelect = form.querySelector('[data-leave-type]');
+        const startDate = form.querySelector('[data-start-date]');
+        const endDate = form.querySelector('[data-end-date]');
+        const hiddenEndDate = form.querySelector('[data-end-date-hidden]');
+        const halfDaySelect = form.querySelector('[data-half-day-select]');
 
-    if (!typeSelect || !startDate || !endDate || !halfDayField || !halfDaySelect) {
-        return;
-    }
+        if (!typeSelect || !startDate || !endDate || !hiddenEndDate || !halfDaySelect) {
+            return;
+        }
 
-    const selectedCode = () => {
-        const option = typeSelect.options[typeSelect.selectedIndex];
-        return option ? option.dataset.leaveCode || '' : '';
-    };
+        const selectedCode = () => {
+            const option = typeSelect.options[typeSelect.selectedIndex];
+            return option ? option.dataset.leaveCode || '' : '';
+        };
 
-    const syncDates = () => {
-        if (startDate.value !== '') {
-            endDate.min = startDate.value;
-            if (endDate.value === '' || endDate.value < startDate.value) {
-                endDate.value = startDate.value;
+        const syncDates = () => {
+            if (startDate.value !== '') {
+                endDate.min = startDate.value;
+                if (endDate.value === '' || endDate.value < startDate.value) {
+                    endDate.value = startDate.value;
+                }
             }
-        }
 
-        if (selectedCode() === 'H') {
-            endDate.value = startDate.value;
-            endDate.readOnly = true;
-        } else {
-            endDate.readOnly = false;
-        }
+            const isHalfDay = selectedCode() === 'H';
+            if (isHalfDay) {
+                endDate.value = startDate.value;
+                endDate.disabled = true;
+                hiddenEndDate.value = startDate.value;
+                hiddenEndDate.disabled = false;
+            } else {
+                endDate.disabled = false;
+                hiddenEndDate.disabled = true;
+            }
+        };
+
+        const syncTypeControls = () => {
+            const isHalfDay = selectedCode() === 'H';
+            halfDaySelect.disabled = !isHalfDay;
+            halfDaySelect.required = isHalfDay;
+            syncDates();
+        };
+
+        typeSelect.addEventListener('change', syncTypeControls);
+        startDate.addEventListener('change', syncDates);
+        endDate.addEventListener('change', syncDates);
+
+        form.addEventListener('set-leave-date', (event) => {
+            const date = event.detail && event.detail.date ? event.detail.date : '';
+            if (date !== '') {
+                startDate.value = date;
+                if (selectedCode() !== 'H') {
+                    endDate.value = date;
+                }
+                syncDates();
+            }
+        });
+
+        syncTypeControls();
     };
 
-    const syncHalfDay = () => {
-        const isHalfDay = selectedCode() === 'H';
-        halfDayField.hidden = !isHalfDay;
-        halfDaySelect.required = isHalfDay;
-        syncDates();
-    };
+    leaveForms.forEach(initializeLeaveForm);
 
-    typeSelect.addEventListener('change', syncHalfDay);
-    startDate.addEventListener('change', syncDates);
-    endDate.addEventListener('change', syncDates);
+    const dialog = document.querySelector('[data-leave-dialog]');
+    if (dialog instanceof HTMLDialogElement) {
+        const dialogForm = dialog.querySelector('[data-leave-form]');
 
-    syncHalfDay();
+        document.querySelectorAll('[data-open-leave-dialog]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const date = button.dataset.leaveDate || '';
+                if (dialogForm && date !== '') {
+                    dialogForm.dispatchEvent(new CustomEvent('set-leave-date', {
+                        detail: { date },
+                    }));
+                }
+                dialog.showModal();
+            });
+        });
+
+        dialog.querySelectorAll('[data-close-dialog]').forEach((button) => {
+            button.addEventListener('click', () => dialog.close());
+        });
+
+        dialog.addEventListener('click', (event) => {
+            if (event.target === dialog) {
+                dialog.close();
+            }
+        });
+    }
 });
