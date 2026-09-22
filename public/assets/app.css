@@ -3068,3 +3068,15 @@ html[data-theme="dark"] .calendar-day.non-working-day:not(.public-holiday):not(.
         width: 100%;
     }
 }
+
+
+@media (max-width: 1100px) {
+    .settings-page-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-page-grid > .settings-card:nth-child(3),
+    .danger-zone-card {
+        grid-column: auto;
+    }
+}
