@@ -6,12 +6,14 @@ namespace DKAnnual\Leave;
 
 use DateTimeImmutable;
 use DKAnnual\Repository\AnnualLeaveLedgerRepository;
+use DKAnnual\Repository\AppSettingRepository;
 
 final class AnnualLeaveService
 {
     public function __construct(
         private readonly AnnualLeaveCalculator $calculator,
         private readonly AnnualLeaveLedgerRepository $ledger,
+        private readonly AppSettingRepository $settings,
     ) {
     }
 
@@ -59,6 +61,49 @@ final class AnnualLeaveService
             }
         }
 
+        foreach ($this->settings->annualLeaveOverridesForUser($userId) as $year => $amount) {
+            if ($year <= (int) $asOf->format('Y')) {
+                $this->enforceOverride($userId, $year, $amount, $createdBy);
+            }
+        }
+
         return $inserted;
+    }
+
+    public function setOverride(int $userId, int $year, float $amount, int $updatedBy): float
+    {
+        $this->settings->setAnnualLeaveOverride($userId, $year, $amount, $updatedBy);
+        return $this->enforceOverride($userId, $year, $amount, $updatedBy);
+    }
+
+    public function clearOverride(int $userId, int $year): void
+    {
+        $this->settings->clearAnnualLeaveOverride($userId, $year);
+        $this->ledger->deleteOverrideAdjustment($userId, $year);
+    }
+
+    public function overrideAmount(int $userId, int $year): ?float
+    {
+        return $this->settings->annualLeaveOverride($userId, $year);
+    }
+
+    public function enforceOverride(
+        int $userId,
+        int $year,
+        float $target,
+        ?int $createdBy,
+    ): float {
+        $baseTotal = $this->ledger->nonUsageTotalExcludingOverride($userId, $year);
+        $delta = round($target - $baseTotal, 2);
+
+        $this->ledger->setOverrideAdjustment(
+            $userId,
+            $year,
+            $delta,
+            sprintf('%d년 총 연차 %.2f일 고정', $year, $target),
+            $createdBy,
+        );
+
+        return $delta;
     }
 }
