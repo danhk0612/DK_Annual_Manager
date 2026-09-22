@@ -135,46 +135,54 @@ final class AdminSettingsController
     {
         $actor = $this->requireActor();
         $clientId = trim((string) $request->input('client_id', ''));
-        $clientSecret = trim((string) $request->input('client_secret', ''));
-        $botToken = trim((string) $request->input('bot_token', ''));
+        $clientSecretInput = trim((string) $request->input('client_secret', ''));
+        $botTokenInput = trim((string) $request->input('bot_token', ''));
         $redirectUri = trim((string) $request->input('redirect_uri', ''));
 
-        if ($clientId === '') {
-            return $this->error('Telegram Client ID를 입력해 주세요.');
+        $clientSecret = $clientSecretInput !== ''
+            ? $clientSecretInput
+            : trim((string) $this->config->get('telegram.client_secret', ''));
+        $botToken = $botTokenInput !== ''
+            ? $botTokenInput
+            : trim((string) $this->config->get('telegram.bot_token', ''));
+
+        if ($clientId === '' || $clientSecret === '' || $botToken === '') {
+            return $this->error('Client ID, Client Secret, Bot Token을 모두 설정해 주세요.');
         }
         if (!str_starts_with($redirectUri, 'https://')) {
             return $this->error('Redirect URI는 HTTPS 주소여야 합니다.');
         }
 
-        $this->settings->set('telegram.client_id', $clientId, (int) $actor['id']);
-        $this->settings->set('telegram.redirect_uri', $redirectUri, (int) $actor['id']);
         $this->config->set('telegram.client_id', $clientId);
+        $this->config->set('telegram.client_secret', $clientSecret);
+        $this->config->set('telegram.bot_token', $botToken);
         $this->config->set('telegram.redirect_uri', $redirectUri);
-
-        if ($clientSecret !== '') {
-            $this->settings->set('telegram.client_secret', $clientSecret, (int) $actor['id']);
-            $this->config->set('telegram.client_secret', $clientSecret);
-        }
-        if ($botToken !== '') {
-            $this->settings->set('telegram.bot_token', $botToken, (int) $actor['id']);
-            $this->config->set('telegram.bot_token', $botToken);
-        }
 
         try {
             $bot = new TelegramBotClient($this->config);
             $botInfo = $bot->getMe();
-            $username = trim((string) ($botInfo['username'] ?? ''));
-            if ($username !== '') {
-                $this->settings->set('telegram.bot_username', $username, (int) $actor['id']);
-            }
         } catch (Throwable $exception) {
-            return $this->error('Telegram 설정은 저장했지만 Bot 연결 확인에 실패했습니다: ' . $exception->getMessage());
+            return $this->error('Bot 연결 확인에 실패해 설정을 저장하지 않았습니다: ' . $exception->getMessage());
+        }
+
+        $this->settings->set('telegram.client_id', $clientId, (int) $actor['id']);
+        $this->settings->set('telegram.redirect_uri', $redirectUri, (int) $actor['id']);
+        if ($clientSecretInput !== '' || $this->settings->get('telegram.client_secret', null) === null) {
+            $this->settings->set('telegram.client_secret', $clientSecret, (int) $actor['id']);
+        }
+        if ($botTokenInput !== '' || $this->settings->get('telegram.bot_token', null) === null) {
+            $this->settings->set('telegram.bot_token', $botToken, (int) $actor['id']);
+        }
+
+        $username = trim((string) ($botInfo['username'] ?? ''));
+        if ($username !== '') {
+            $this->settings->set('telegram.bot_username', $username, (int) $actor['id']);
         }
 
         $this->audit->record((int) $actor['id'], 'settings.telegram_credentials_updated', 'app_settings', null, [
             'client_id_changed' => true,
-            'client_secret_changed' => $clientSecret !== '',
-            'bot_token_changed' => $botToken !== '',
+            'client_secret_changed' => $clientSecretInput !== '',
+            'bot_token_changed' => $botTokenInput !== '',
             'redirect_uri' => $redirectUri,
         ], $this->ip($request));
 
@@ -219,15 +227,16 @@ final class AdminSettingsController
             return $this->error('공휴일 API ServiceKey를 입력해 주세요.');
         }
 
-        $this->settings->set('holiday_api.service_key', $serviceKey, (int) $actor['id']);
         $this->config->set('holiday_api.service_key', $serviceKey);
 
         try {
             $client = new KasiHolidayClient($this->config);
             $count = count($client->fetchYear((int) date('Y')));
         } catch (Throwable $exception) {
-            return $this->error('공휴일 API 키는 저장했지만 연결 확인에 실패했습니다: ' . $exception->getMessage());
+            return $this->error('공휴일 API 연결 확인에 실패해 키를 저장하지 않았습니다: ' . $exception->getMessage());
         }
+
+        $this->settings->set('holiday_api.service_key', $serviceKey, (int) $actor['id']);
 
         $this->audit->record((int) $actor['id'], 'settings.holiday_api_updated', 'app_settings', null, [
             'verified_year' => (int) date('Y'),
