@@ -71,9 +71,15 @@ final class LeaveController
             return Response::redirect('/login');
         }
 
+        $isAdmin = ($user['role'] ?? null) === 'admin';
+
         return Response::html($this->view->render('leave-history', [
-            'title' => '휴가 신청 내역',
-            'requests' => $this->requests->forUser((int) $user['id']),
+            'title' => $isAdmin ? '전체 휴가 신청 내역' : '휴가 신청 내역',
+            'requests' => $isAdmin
+                ? $this->requests->allForAdmin()
+                : $this->requests->forUser((int) $user['id']),
+            'isAdmin' => $isAdmin,
+            'currentUserId' => (int) $user['id'],
             'csrfToken' => $this->csrf->token(),
             'message' => $request->input('message'),
             'error' => $request->input('error'),
