@@ -529,7 +529,7 @@
 
 ## T28. v1.2.0 Excel 출력 · 달력 탐색 개선
 
-상태: 구현 완료 / CI·자동 Release 대기
+상태: 구현 완료 / PR CI 통과 / main·자동 Release 대기
 
 - [x] 사용자 내 정보 연간/월간/전체 Excel(.xlsx) 출력
 - [x] 관리자 휴가 집계 전체/특정 사용자 Excel 출력
@@ -547,6 +547,6 @@
 - [x] 취소/반려 휴가 상세 취소 액션 강제 숨김
 - [x] README/요구사항/아키텍처/집계 문서 갱신
 - [x] VERSION 1.2.0 및 릴리스 노트
-- [ ] feature PR CI 통과
+- [x] feature PR CI 통과
 - [ ] main 병합 및 main CI 통과
 - [ ] v1.2.0 GitHub Release 자동 생성 확인
