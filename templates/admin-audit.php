@@ -34,7 +34,7 @@ $actionLabels = [
     <div>
         <p class="eyebrow">Audit Log</p>
         <h1><i class="bi bi-clock-history"></i><span>변경 이력</span></h1>
-        <p>주요 데이터 변경 작업을 검색하고 최근 200건까지 확인합니다.</p>
+        <p>주요 데이터 변경 작업을 검색하고 전체 변경 이력을 검색하고 페이지 단위로 확인합니다.</p>
     </div>
     <a class="button" href="/admin"><i class="bi bi-speedometer2"></i><span>관리자 홈</span></a>
 </section>
@@ -73,7 +73,7 @@ $actionLabels = [
     </div>
 
     <div class="table-wrap">
-        <table class="data-table">
+        <table class="data-table" data-paginate data-page-size="20">
             <thead>
             <tr><th>일시</th><th>작업자</th><th>작업</th><th>대상</th><th>내용</th><th>IP</th></tr>
             </thead>
