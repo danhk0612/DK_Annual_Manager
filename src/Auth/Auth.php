@@ -34,7 +34,17 @@ final class Auth
 
         $user = $this->users->findById((int) $userId);
         if ($user === null || ($user['status'] ?? null) !== 'active') {
-            $this->session->remove('user_id');
+            $this->clearIdentity();
+            return null;
+        }
+
+        $sessionRole = $this->session->get('auth_role');
+        $sessionStatus = $this->session->get('auth_status');
+        if ($sessionRole === null || $sessionStatus === null) {
+            $this->session->set('auth_role', (string) $user['role']);
+            $this->session->set('auth_status', (string) $user['status']);
+        } elseif ($sessionRole !== (string) $user['role'] || $sessionStatus !== (string) $user['status']) {
+            $this->clearIdentity();
             return null;
         }
 
@@ -44,8 +54,15 @@ final class Auth
 
     public function login(int $userId): void
     {
+        $user = $this->users->findById($userId);
+        if ($user === null) {
+            return;
+        }
+
         $this->session->regenerate();
         $this->session->set('user_id', $userId);
+        $this->session->set('auth_role', (string) $user['role']);
+        $this->session->set('auth_status', (string) $user['status']);
         $this->resolved = false;
         $this->resolvedUser = null;
     }
@@ -60,5 +77,14 @@ final class Auth
     public function isAdmin(): bool
     {
         return ($this->user()['role'] ?? null) === 'admin';
+    }
+
+    private function clearIdentity(): void
+    {
+        $this->session->remove('user_id');
+        $this->session->remove('auth_role');
+        $this->session->remove('auth_status');
+        $this->resolved = true;
+        $this->resolvedUser = null;
     }
 }
