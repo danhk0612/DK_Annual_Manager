@@ -271,6 +271,7 @@ $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'
             </div>
             <button class="icon-button" type="button" data-close-dialog aria-label="닫기"><i class="bi bi-x-lg"></i></button>
         </div>
+        <?php $allowAdminDateException = $isAdmin; ?>
         <?php require __DIR__ . '/_leave-form.php'; ?>
     </div>
 </dialog>
