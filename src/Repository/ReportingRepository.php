@@ -316,6 +316,28 @@ final class ReportingRepository extends AbstractRepository
     }
 
     /** @return list<array<string, mixed>> */
+    public function approvedLeavesOnDate(string $date, int $limit = 12): array
+    {
+        $limit = max(1, min(30, $limit));
+        $statement = $this->pdo->prepare(
+            "SELECT r.id, r.start_date, r.end_date, r.requested_amount, r.half_day_period,
+                    d.amount AS today_amount,
+                    u.name AS user_name, u.department, lt.name AS leave_type_name
+             FROM leave_requests r
+             INNER JOIN leave_request_days d ON d.leave_request_id = r.id
+             INNER JOIN users u ON u.id = r.user_id
+             INNER JOIN leave_types lt ON lt.id = r.leave_type_id
+             WHERE r.status = 'approved'
+               AND d.leave_date = :leave_date
+             ORDER BY u.name ASC, r.start_date ASC, r.id ASC
+             LIMIT " . $limit
+        );
+        $statement->execute(['leave_date' => $date]);
+
+        return $statement->fetchAll();
+    }
+
+    /** @return list<array<string, mixed>> */
     public function upcomingApprovedLeaves(string $fromDate, string $toDate, int $limit = 8): array
     {
         $limit = max(1, min(30, $limit));
