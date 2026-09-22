@@ -156,16 +156,13 @@ $maxMonthly = max(1.0, ...array_values($monthlyMap));
         </div>
         <a class="button small" href="/admin/reports">상세 집계</a>
     </div>
-    <div class="bar-chart compact-chart">
+    <div class="progress-chart compact-chart">
         <?php for ($month = 1; $month <= 12; $month++): ?>
-            <?php
-            $amount = $monthlyMap[$month];
-            $height = max(2.0, ($amount / $maxMonthly) * 100);
-            ?>
-            <div class="bar-column">
-                <div class="bar-value"><?= number_format($amount, 1) ?></div>
-                <div class="bar-track"><div class="bar-fill" style="height: <?= number_format($height, 2, '.', '') ?>%"></div></div>
-                <div class="bar-label"><?= $month ?>월</div>
+            <?php $amount = (float) $monthlyMap[$month]; ?>
+            <div class="progress-chart-row">
+                <span><?= $month ?>월</span>
+                <progress max="<?= htmlspecialchars((string) $maxMonthly, ENT_QUOTES, 'UTF-8') ?>" value="<?= htmlspecialchars((string) $amount, ENT_QUOTES, 'UTF-8') ?>"></progress>
+                <strong><?= number_format($amount, 1) ?>일</strong>
             </div>
         <?php endfor; ?>
     </div>
