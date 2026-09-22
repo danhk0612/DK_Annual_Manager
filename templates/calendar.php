@@ -256,7 +256,7 @@ $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'
                 </div>
             <?php endif; ?>
 
-            <a class="text-link" href="<?= $isAdmin ? '/admin/requests' : '/leave/history' ?>"><i class="bi bi-arrow-right-circle"></i> <?= $isAdmin ? '전체 신청 내역 보기' : '내 전체 신청 내역 보기' ?></a>
+            <a class="text-link" href="/leave/history"><i class="bi bi-arrow-right-circle"></i> <?= $isAdmin ? '전체 신청 내역 보기' : '내 전체 신청 내역 보기' ?></a>
         </section>
     </aside>
 </div>
