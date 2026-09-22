@@ -88,10 +88,10 @@ final class LeaveNotificationService
     private function adminTargets(): array
     {
         $targets = [];
-        $managed = $this->settings->lineList('telegram.admin_chat_ids');
+        $managedRaw = $this->settings->get('telegram.admin_chat_ids', null);
 
-        if ($managed !== []) {
-            foreach ($managed as $chatId) {
+        if ($managedRaw !== null) {
+            foreach ($this->settings->lineList('telegram.admin_chat_ids') as $chatId) {
                 $targets[] = $chatId;
             }
         } else {
