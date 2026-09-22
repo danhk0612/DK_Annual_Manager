@@ -176,6 +176,10 @@ final class TelegramAuthController
 
     private function isBootstrapAdmin(int $telegramUserId): bool
     {
+        if ($this->setup !== null && $this->setup->completed()) {
+            return false;
+        }
+
         $ids = $this->config->get('telegram.bootstrap_admin_telegram_ids', []);
         if (!is_array($ids)) {
             return false;
