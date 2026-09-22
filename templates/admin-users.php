@@ -99,7 +99,7 @@ $formatLeaveDays = static function (float $value): string {
                             class="button small"
                             href="/admin/users?leave_user_id=<?= (int) $user['id'] ?>&year=<?= $year ?>&manage_leave=1"
                             title="<?= $year ?>년 연차 관리"
-                        ><span><?= $formatLeaveDays((float) $annualLeave['used']) ?> / <?= $formatLeaveDays((float) $annualLeave['total']) ?></span></a>
+                        ><span><?= $formatLeaveDays((float) $annualLeave['used']) ?>/<?= $formatLeaveDays((float) $annualLeave['total']) ?></span></a>
                     </td>
                     <td>
                         <?= htmlspecialchars($telegramLabel, ENT_QUOTES, 'UTF-8') ?>
