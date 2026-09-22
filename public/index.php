@@ -109,7 +109,7 @@ if ($managedAppName === '') {
 }
 ErrorHandler::setAppName($managedAppName);
 
-$view = new View($root . '/templates', $settings, $config);
+$view = new View($root . '/templates', $settings, $config, $auth);
 $router = new Router($managedAppName);
 $telegramBot = new TelegramBotClient($config);
 $telegramAuth = new TelegramAuthController(
