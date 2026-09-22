@@ -567,7 +567,7 @@
 
 ## T30. v1.3.0 관리자 대시보드 현재 휴가
 
-상태: 구현 완료 / PR CI 통과 / main·자동 Release 대기
+상태: 완료
 
 - [x] 관리자 대시보드에 현재 휴가 중 영역 추가
 - [x] 오늘 실제 leave_request_days가 존재하는 approved 휴가만 조회
@@ -581,5 +581,16 @@
 - [x] README/요구사항/집계 문서 갱신
 - [x] VERSION 1.3.0 및 릴리스 노트
 - [x] feature PR CI 통과
+- [x] main 병합 및 main CI 통과
+- [x] v1.3.0 GitHub Release 자동 생성 확인
+
+## T31. v1.3.1 내 정보 카드 간격 핫픽스
+
+상태: 구현 완료 / CI·자동 Release 대기
+
+- [x] 내 휴가 엑셀 출력과 계정/근무 정보 사이 전용 간격 추가
+- [x] 프로필 전용 클래스 사용으로 다른 content-grid 레이아웃 영향 방지
+- [x] VERSION 1.3.1 및 릴리스 노트
+- [ ] hotfix PR CI 통과
 - [ ] main 병합 및 main CI 통과
-- [ ] v1.3.0 GitHub Release 자동 생성 확인
+- [ ] v1.3.1 GitHub Release 자동 생성 확인
