@@ -75,6 +75,7 @@ PHP);
             '20260917_001_users_hire_date_nullable.sql',
             '20260917_002_annual_leave_ledger_key.sql',
             '20260922_003_leave_usability.sql',
+            '20260922_004_leave_cancellation_metadata.sql',
         ], $executed);
         self::assertSame([], $runner->pending());
 
@@ -82,6 +83,10 @@ PHP);
             ['users', 'department'],
             ['users', 'position'],
             ['leave_requests', 'half_day_period'],
+            ['leave_requests', 'cancelled_by'],
+            ['leave_requests', 'cancelled_at'],
+            ['leave_requests', 'cancellation_source'],
+            ['leave_requests', 'cancellation_note'],
             ['annual_leave_ledger', 'ledger_key'],
         ] as [$table, $column]) {
             $statement = $this->pdo->prepare(
@@ -161,6 +166,103 @@ PHP);
         @rmdir($testRoot);
     }
 
+    public function testPendingUserCancellationDeletesRequestAndDays(): void
+    {
+        $this->pdo->exec(
+            "INSERT INTO users (name, role, status) VALUES ('직원', 'user', 'active')"
+        );
+        $userId = (int) $this->pdo->query("SELECT id FROM users WHERE name = '직원'")->fetchColumn();
+        $leaveTypeId = (int) $this->pdo->query("SELECT id FROM leave_types WHERE code = 'V'")->fetchColumn();
+
+        $requests = new LeaveRequestRepository($this->pdo);
+        $requestId = $requests->create(
+            $userId,
+            $leaveTypeId,
+            '2026-09-28',
+            '2026-09-29',
+            2.0,
+            null,
+            '대기 취소 테스트',
+            ['2026-09-28', '2026-09-29'],
+            1.0,
+        );
+
+        self::assertSame(1, (int) $this->pdo->query(
+            'SELECT COUNT(*) FROM leave_requests WHERE id = ' . $requestId
+        )->fetchColumn());
+        self::assertSame(2, (int) $this->pdo->query(
+            'SELECT COUNT(*) FROM leave_request_days WHERE leave_request_id = ' . $requestId
+        )->fetchColumn());
+
+        $deleted = $requests->deletePending($requestId, $userId);
+
+        self::assertNotNull($deleted);
+        self::assertSame('pending', $deleted['status']);
+        self::assertSame(0, (int) $this->pdo->query(
+            'SELECT COUNT(*) FROM leave_requests WHERE id = ' . $requestId
+        )->fetchColumn());
+        self::assertSame(0, (int) $this->pdo->query(
+            'SELECT COUNT(*) FROM leave_request_days WHERE leave_request_id = ' . $requestId
+        )->fetchColumn());
+    }
+
+    public function testUserCanCancelOnlyOwnApprovedLeaveAndApprovalMetadataIsPreserved(): void
+    {
+        $this->pdo->exec(
+            "INSERT INTO users (name, role, status) VALUES "
+            . "('관리자', 'admin', 'active'), ('직원', 'user', 'active'), ('다른직원', 'user', 'active')"
+        );
+        $adminId = (int) $this->pdo->query("SELECT id FROM users WHERE name = '관리자'")->fetchColumn();
+        $userId = (int) $this->pdo->query("SELECT id FROM users WHERE name = '직원'")->fetchColumn();
+        $otherUserId = (int) $this->pdo->query("SELECT id FROM users WHERE name = '다른직원'")->fetchColumn();
+        $leaveTypeId = (int) $this->pdo->query("SELECT id FROM leave_types WHERE code = 'V'")->fetchColumn();
+
+        $requests = new LeaveRequestRepository($this->pdo);
+        $requestId = $requests->create(
+            $userId,
+            $leaveTypeId,
+            '2026-09-30',
+            '2026-09-30',
+            1.0,
+            null,
+            '사용자 승인 취소 테스트',
+            ['2026-09-30'],
+            1.0,
+        );
+
+        $reviewer = new LeaveReviewService($this->pdo);
+        $approved = $reviewer->review($requestId, 'approve', $adminId, '승인 메모 유지');
+
+        self::assertTrue($approved['changed']);
+        self::assertFalse($reviewer->cancelApprovedByUser($requestId, $otherUserId, '권한 없음')['changed']);
+
+        $cancelled = $reviewer->cancelApprovedByUser($requestId, $userId, '개인 일정 변경');
+
+        self::assertTrue($cancelled['changed']);
+        self::assertSame('cancelled', $cancelled['request']['status']);
+        self::assertSame('user', $cancelled['request']['cancellation_source']);
+        self::assertSame('개인 일정 변경', $cancelled['request']['cancellation_note']);
+        self::assertSame(
+            0.0,
+            (float) $this->pdo->query(
+                'SELECT COALESCE(SUM(amount), 0) FROM annual_leave_ledger WHERE reference_request_id = ' . $requestId
+            )->fetchColumn(),
+        );
+
+        $stored = $this->pdo->query(
+            'SELECT status, reviewed_by, review_note, cancelled_by, cancellation_source, cancellation_note '
+            . 'FROM leave_requests WHERE id = ' . $requestId
+        )->fetch();
+
+        self::assertIsArray($stored);
+        self::assertSame('cancelled', $stored['status']);
+        self::assertSame($adminId, (int) $stored['reviewed_by']);
+        self::assertSame('승인 메모 유지', $stored['review_note']);
+        self::assertSame($userId, (int) $stored['cancelled_by']);
+        self::assertSame('user', $stored['cancellation_source']);
+        self::assertSame('개인 일정 변경', $stored['cancellation_note']);
+    }
+
     public function testApprovalAndCancellationUpdateAnnualLeaveLedgerAtomically(): void
     {
         $this->pdo->exec(
@@ -185,7 +287,7 @@ PHP);
         );
 
         $reviewer = new LeaveReviewService($this->pdo);
-        $approved = $reviewer->review($requestId, 'approve', $adminId, null);
+        $approved = $reviewer->review($requestId, 'approve', $adminId, '기존 승인 메모');
 
         self::assertTrue($approved['changed']);
         self::assertSame('approved', $approved['request']['status']);
@@ -206,6 +308,17 @@ PHP);
                 'SELECT COALESCE(SUM(amount), 0) FROM annual_leave_ledger WHERE reference_request_id = ' . $requestId
             )->fetchColumn(),
         );
+
+        $stored = $this->pdo->query(
+            'SELECT reviewed_by, review_note, cancelled_by, cancellation_source, cancellation_note '
+            . 'FROM leave_requests WHERE id = ' . $requestId
+        )->fetch();
+        self::assertIsArray($stored);
+        self::assertSame($adminId, (int) $stored['reviewed_by']);
+        self::assertSame('기존 승인 메모', $stored['review_note']);
+        self::assertSame($adminId, (int) $stored['cancelled_by']);
+        self::assertSame('admin', $stored['cancellation_source']);
+        self::assertSame('통합 테스트 취소', $stored['cancellation_note']);
     }
 
     private function resetSchema(): void
