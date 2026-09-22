@@ -45,6 +45,11 @@ final class AdminSettingsController
             }
         }
 
+        $managedTelegramRaw = $this->settings->get('telegram.admin_chat_ids', null);
+        $telegramAdminChats = $managedTelegramRaw !== null
+            ? $this->settings->lineList('telegram.admin_chat_ids')
+            : $this->configuredAdminChats();
+
         return Response::html($this->view->render('admin-settings', [
             'title' => '환경 설정',
             'appName' => (string) $this->settings->get(
@@ -54,7 +59,8 @@ final class AdminSettingsController
             'primaryColor' => (string) $this->settings->get('ui.primary_color', '#315efb'),
             'theme' => (string) $this->settings->get('ui.theme', 'system'),
             'logoPath' => (string) $this->settings->get('ui.logo_path', ''),
-            'telegramAdminChats' => $this->settings->lineList('telegram.admin_chat_ids'),
+            'telegramAdminChats' => $telegramAdminChats,
+            'telegramChatsManaged' => $managedTelegramRaw !== null,
             'telegramBotInfo' => $telegramBotInfo,
             'telegramChats' => $telegramChats,
             'telegramProbeError' => $telegramProbeError,
@@ -218,6 +224,25 @@ final class AdminSettingsController
         $this->audit->record((int) $actor['id'], 'settings.logo_removed', 'app_settings', null, [], $this->ip($request));
 
         return $this->message('회사 로고를 기본 아이콘으로 되돌렸습니다.');
+    }
+
+    /** @return list<string> */
+    private function configuredAdminChats(): array
+    {
+        $configured = $this->config->get('telegram.admin_chat_ids', []);
+        if (!is_array($configured)) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($configured as $chatId) {
+            $value = trim((string) $chatId);
+            if ($value !== '') {
+                $result[$value] = $value;
+            }
+        }
+
+        return array_values($result);
     }
 
     /** @return array<string, mixed> */
