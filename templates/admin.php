@@ -84,7 +84,7 @@ $maxMonthly = max(1.0, ...array_values($monthlyMap));
                         <span><?= htmlspecialchars((string) $item['leave_type_name'], ENT_QUOTES, 'UTF-8') ?><?= $halfLabel ?></span>
                     </div>
                     <div class="list-meta">
-                        <span><?= htmlspecialchars((string) $item['start_date'], ENT_QUOTES, 'UTF-8') ?></span>
+                        <span><?= htmlspecialchars((string) ($item['first_leave_date'] ?? $item['start_date']), ENT_QUOTES, 'UTF-8') ?></span>
                         <strong><?= number_format((float) $item['requested_amount'], 1) ?>일</strong>
                     </div>
                 </a>
