@@ -204,7 +204,9 @@ final class LeaveController
                 $balance = $this->ledger->balanceForUserYear((int) $subject['id'], (int) $year);
                 if ($amount > $balance) {
                     $warnings[] = sprintf(
-                        '%d년 잔여 연차 %.1f일보다 신청 %.1f일이 많습니다. 신청은 접수되며 관리자가 최종 판단합니다.',
+                        $isAdminProxy
+                            ? '%d년 잔여 연차 %.1f일보다 등록 %.1f일이 많습니다. 관리자 대리 등록이므로 즉시 승인되어 잔여 연차가 음수가 될 수 있습니다.'
+                            : '%d년 잔여 연차 %.1f일보다 신청 %.1f일이 많습니다. 신청은 접수되며 관리자가 최종 판단합니다.',
                         $year,
                         $balance,
                         $amount,
