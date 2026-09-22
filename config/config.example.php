@@ -22,6 +22,8 @@ return [
         'charset' => 'utf8mb4',
     ],
 
+    // Telegram/OIDC 값은 /setup 또는 관리자 환경설정에서 DB 관리값으로 저장할 수 있습니다.
+    // 아래 값은 레거시/비상 기본값으로 둘 수 있으며 신규 설치 마법사는 DB 관리값을 우선합니다.
     'telegram' => [
         'client_id' => '',
         'client_secret' => '',
@@ -37,6 +39,7 @@ return [
         'admin_chat_ids' => [],
     ],
 
+    // ServiceKey는 /setup 또는 관리자 환경설정에서 입력할 수 있습니다.
     'holiday_api' => [
         'service_key' => '',
         'base_url' => 'https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService',

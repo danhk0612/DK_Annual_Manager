@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use DKAnnual\Config;
 use DKAnnual\Database;
+use DKAnnual\Setup\SetupService;
 
 if (PHP_SAPI !== 'cli') {
     fwrite(STDERR, "CLI에서만 실행할 수 있습니다.\n");
@@ -52,6 +53,17 @@ try {
     $pdo = Database::connect($config);
     $pdo->query('SELECT 1')->fetchColumn();
     $pass('MariaDB 연결');
+
+    $setup = new SetupService($pdo, $config, $root);
+    if (!$setup->schemaReady()) {
+        $fail('DB schema가 초기화되지 않았습니다. 브라우저에서 /setup 을 열어 DB 초기화를 진행하세요.');
+        printf("\n결과: FAIL %d / WARN %d\n", $failures, $warnings);
+        exit(1);
+    }
+    $setup->applyManagedConfig();
+    $setup->completed()
+        ? $pass('초기 서비스 설정 완료')
+        : $warn('초기 서비스 설정이 완료되지 않았습니다. /setup 에서 진행하세요.');
 
     $requiredTables = [
         'users', 'leave_types', 'leave_requests', 'leave_request_days',

@@ -6,6 +6,7 @@ namespace DKAnnual\Controller;
 
 use DKAnnual\Auth\Auth;
 use DKAnnual\Config;
+use DKAnnual\Holiday\KasiHolidayClient;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Repository\AppSettingRepository;
@@ -40,6 +41,10 @@ final class AdminSettingsController
             try {
                 $telegramBotInfo = $this->telegramBot->getMe();
                 $telegramChats = $this->telegramBot->recentChats();
+                $username = trim((string) ($telegramBotInfo['username'] ?? ''));
+                if ($username !== '') {
+                    $this->settings->set('telegram.bot_username', $username, null);
+                }
             } catch (Throwable $exception) {
                 $telegramProbeError = $exception->getMessage();
             }
@@ -49,6 +54,17 @@ final class AdminSettingsController
         $telegramAdminChats = $managedTelegramRaw !== null
             ? $this->settings->lineList('telegram.admin_chat_ids')
             : $this->configuredAdminChats();
+
+        $botUsername = trim((string) $this->settings->get('telegram.bot_username', ''));
+        if ($telegramBotInfo !== null && !empty($telegramBotInfo['username'])) {
+            $botUsername = (string) $telegramBotInfo['username'];
+        }
+
+        $appUrl = rtrim((string) $this->config->get('app.url', ''), '/');
+        $redirectUri = (string) $this->settings->get(
+            'telegram.redirect_uri',
+            (string) $this->config->get('telegram.redirect_uri', $appUrl !== '' ? $appUrl . '/auth/telegram/callback' : ''),
+        );
 
         return Response::html($this->view->render('admin-settings', [
             'title' => '환경 설정',
@@ -64,12 +80,19 @@ final class AdminSettingsController
             'telegramBotInfo' => $telegramBotInfo,
             'telegramChats' => $telegramChats,
             'telegramProbeError' => $telegramProbeError,
+            'telegramClientId' => (string) $this->settings->get(
+                'telegram.client_id',
+                (string) $this->config->get('telegram.client_id', ''),
+            ),
+            'telegramRedirectUri' => $redirectUri,
             'credentialStatus' => [
                 'client_id' => trim((string) $this->config->get('telegram.client_id', '')) !== '',
                 'client_secret' => trim((string) $this->config->get('telegram.client_secret', '')) !== '',
                 'bot_token' => trim((string) $this->config->get('telegram.bot_token', '')) !== '',
                 'holiday_key' => trim((string) $this->config->get('holiday_api.service_key', '')) !== '',
             ],
+            'employeeBotLink' => $botUsername !== '' ? 'https://t.me/' . rawurlencode($botUsername) . '?start=employee' : null,
+            'employeeLoginLink' => $appUrl !== '' ? $appUrl . '/login' : null,
             'csrfToken' => $this->csrf->token(),
             'message' => $request->input('message'),
             'error' => $request->input('error'),
@@ -79,7 +102,6 @@ final class AdminSettingsController
     public function saveAppearance(Request $request): Response
     {
         $actor = $this->requireActor();
-
         $appName = trim((string) $request->input('app_name', ''));
         $primaryColor = strtolower(trim((string) $request->input('primary_color', '#315efb')));
         $theme = (string) $request->input('theme', 'system');
@@ -109,6 +131,64 @@ final class AdminSettingsController
         return $this->message('화면 설정을 저장했습니다.');
     }
 
+    public function saveTelegramCredentials(Request $request): Response
+    {
+        $actor = $this->requireActor();
+        $clientId = trim((string) $request->input('client_id', ''));
+        $clientSecretInput = trim((string) $request->input('client_secret', ''));
+        $botTokenInput = trim((string) $request->input('bot_token', ''));
+        $redirectUri = trim((string) $request->input('redirect_uri', ''));
+
+        $clientSecret = $clientSecretInput !== ''
+            ? $clientSecretInput
+            : trim((string) $this->config->get('telegram.client_secret', ''));
+        $botToken = $botTokenInput !== ''
+            ? $botTokenInput
+            : trim((string) $this->config->get('telegram.bot_token', ''));
+
+        if ($clientId === '' || $clientSecret === '' || $botToken === '') {
+            return $this->error('Client ID, Client Secret, Bot Token을 모두 설정해 주세요.');
+        }
+        if (!str_starts_with($redirectUri, 'https://')) {
+            return $this->error('Redirect URI는 HTTPS 주소여야 합니다.');
+        }
+
+        $this->config->set('telegram.client_id', $clientId);
+        $this->config->set('telegram.client_secret', $clientSecret);
+        $this->config->set('telegram.bot_token', $botToken);
+        $this->config->set('telegram.redirect_uri', $redirectUri);
+
+        try {
+            $bot = new TelegramBotClient($this->config);
+            $botInfo = $bot->getMe();
+        } catch (Throwable $exception) {
+            return $this->error('Bot 연결 확인에 실패해 설정을 저장하지 않았습니다: ' . $exception->getMessage());
+        }
+
+        $this->settings->set('telegram.client_id', $clientId, (int) $actor['id']);
+        $this->settings->set('telegram.redirect_uri', $redirectUri, (int) $actor['id']);
+        if ($clientSecretInput !== '' || $this->settings->get('telegram.client_secret', null) === null) {
+            $this->settings->set('telegram.client_secret', $clientSecret, (int) $actor['id']);
+        }
+        if ($botTokenInput !== '' || $this->settings->get('telegram.bot_token', null) === null) {
+            $this->settings->set('telegram.bot_token', $botToken, (int) $actor['id']);
+        }
+
+        $username = trim((string) ($botInfo['username'] ?? ''));
+        if ($username !== '') {
+            $this->settings->set('telegram.bot_username', $username, (int) $actor['id']);
+        }
+
+        $this->audit->record((int) $actor['id'], 'settings.telegram_credentials_updated', 'app_settings', null, [
+            'client_id_changed' => true,
+            'client_secret_changed' => $clientSecretInput !== '',
+            'bot_token_changed' => $botTokenInput !== '',
+            'redirect_uri' => $redirectUri,
+        ], $this->ip($request));
+
+        return Response::redirect('/admin/settings?probe_telegram=1&message=' . rawurlencode('Telegram 연결 정보를 저장하고 Bot 연결을 확인했습니다.'));
+    }
+
     public function saveTelegram(Request $request): Response
     {
         $actor = $this->requireActor();
@@ -129,12 +209,41 @@ final class AdminSettingsController
 
         $value = implode("\n", array_values($normalized));
         $this->settings->set('telegram.admin_chat_ids', $value, (int) $actor['id']);
+        $this->config->set('telegram.admin_chat_ids', array_values($normalized));
 
         $this->audit->record((int) $actor['id'], 'settings.telegram_chats_updated', 'app_settings', null, [
             'chat_ids' => array_values($normalized),
         ], $this->ip($request));
 
         return $this->message('Telegram 알림 대상을 저장했습니다.');
+    }
+
+    public function saveHolidayApi(Request $request): Response
+    {
+        $actor = $this->requireActor();
+        $serviceKey = trim((string) $request->input('service_key', ''));
+
+        if ($serviceKey === '') {
+            return $this->error('공휴일 API ServiceKey를 입력해 주세요.');
+        }
+
+        $this->config->set('holiday_api.service_key', $serviceKey);
+
+        try {
+            $client = new KasiHolidayClient($this->config);
+            $count = count($client->fetchYear((int) date('Y')));
+        } catch (Throwable $exception) {
+            return $this->error('공휴일 API 연결 확인에 실패해 키를 저장하지 않았습니다: ' . $exception->getMessage());
+        }
+
+        $this->settings->set('holiday_api.service_key', $serviceKey, (int) $actor['id']);
+
+        $this->audit->record((int) $actor['id'], 'settings.holiday_api_updated', 'app_settings', null, [
+            'verified_year' => (int) date('Y'),
+            'verified_count' => $count,
+        ], $this->ip($request));
+
+        return $this->message(sprintf('공휴일 API 키를 저장하고 현재 연도 %d건을 확인했습니다.', $count));
     }
 
     public function addTelegramChat(Request $request): Response
@@ -152,6 +261,7 @@ final class AdminSettingsController
         $ids[] = $chatId;
         $ids = array_values(array_unique($ids));
         $this->settings->set('telegram.admin_chat_ids', implode("\n", $ids), (int) $actor['id']);
+        $this->config->set('telegram.admin_chat_ids', $ids);
 
         $this->audit->record((int) $actor['id'], 'settings.telegram_chat_added', 'app_settings', null, [
             'chat_id' => $chatId,
@@ -180,7 +290,7 @@ final class AdminSettingsController
                 );
                 $sent++;
             } catch (Throwable) {
-                // Continue testing the remaining targets.
+                // Continue testing remaining targets.
             }
         }
 

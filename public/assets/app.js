@@ -134,6 +134,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    document.querySelectorAll('[data-copy-text]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const value = button.dataset.copyText || '';
+            if (value === '') {
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(value);
+                const original = button.innerHTML;
+                button.innerHTML = '<i class="bi bi-check2"></i><span>복사됨</span>';
+                setTimeout(() => {
+                    button.innerHTML = original;
+                }, 1400);
+            } catch (error) {
+                window.prompt('아래 값을 복사하세요.', value);
+            }
+        });
+    });
+
     document.querySelectorAll('input[type="color"]').forEach((input) => {
         const row = input.closest('.color-input-row');
         const code = row ? row.querySelector('code') : null;

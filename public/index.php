@@ -15,6 +15,7 @@ use DKAnnual\Controller\AdminUserController;
 use DKAnnual\Controller\CalendarController;
 use DKAnnual\Controller\LeaveController;
 use DKAnnual\Controller\ProfileController;
+use DKAnnual\Controller\SetupController;
 use DKAnnual\Controller\TelegramAuthController;
 use DKAnnual\Controller\ThemeController;
 use DKAnnual\Database;
@@ -40,6 +41,7 @@ use DKAnnual\Repository\ReportingRepository;
 use DKAnnual\Repository\UserRepository;
 use DKAnnual\Security\Csrf;
 use DKAnnual\Session\Session;
+use DKAnnual\Setup\SetupService;
 use DKAnnual\Telegram\LeaveNotificationService;
 use DKAnnual\Telegram\TelegramBotClient;
 use DKAnnual\Telegram\TelegramOidcClient;
@@ -49,14 +51,42 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 
 ErrorHandler::register();
 
-$config = new Config(dirname(__DIR__) . '/config/config.php');
+$root = dirname(__DIR__);
+$config = new Config($root . '/config/config.php');
 ErrorHandler::setDebug((bool) $config->get('app.debug', false));
 date_default_timezone_set((string) $config->get('app.timezone', 'Asia/Seoul'));
 
 $session = new Session();
 $session->start($config);
+$csrf = new Csrf($session);
+$verifyCsrf = new VerifyCsrfMiddleware($csrf);
+$request = Request::fromGlobals();
 
 $pdo = Database::connect($config);
+$setupService = new SetupService($pdo, $config, $root);
+$setupController = new SetupController(
+    $config,
+    $pdo,
+    $setupService,
+    $csrf,
+    $root . '/templates',
+);
+
+if (!$setupService->schemaReady()) {
+    $router = new Router((string) $config->get('app.name', 'DK Annual Manager'));
+    $router->get('/', static fn (Request $request): Response => Response::redirect('/setup'));
+    $router->get('/setup', [$setupController, 'index']);
+    $router->post('/setup/database', [$setupController, 'initializeDatabase'], [$verifyCsrf]);
+    $router->get('/health', static function (Request $request) use ($pdo): Response {
+        $pdo->query('SELECT 1')->fetchColumn();
+        return Response::json(['status' => 'setup_required', 'database' => 'connected']);
+    });
+    $router->dispatch($request)->send();
+    return;
+}
+
+$setupService->applyManagedConfig();
+
 $users = new UserRepository($pdo);
 $ledger = new AnnualLeaveLedgerRepository($pdo);
 $leaveTypes = new LeaveTypeRepository($pdo);
@@ -66,7 +96,7 @@ $audit = new AuditLogRepository($pdo);
 $settings = new AppSettingRepository($pdo);
 $reports = new ReportingRepository($pdo);
 $auth = new Auth($session, $users);
-$csrf = new Csrf($session);
+
 $managedAppName = trim((string) $settings->get(
     'ui.app_name',
     (string) $config->get('app.name', 'DK Annual Manager'),
@@ -76,12 +106,9 @@ if ($managedAppName === '') {
 }
 ErrorHandler::setAppName($managedAppName);
 
-$view = new View(dirname(__DIR__) . '/templates', $settings, $config);
+$view = new View($root . '/templates', $settings, $config);
 $router = new Router($managedAppName);
-
 $telegramBot = new TelegramBotClient($config);
-$notifications = new LeaveNotificationService($config, $telegramBot, $users, $settings);
-$annualLeave = new AnnualLeaveService(new AnnualLeaveCalculator(), $ledger, $settings);
 $telegramAuth = new TelegramAuthController(
     $config,
     $session,
@@ -89,7 +116,38 @@ $telegramAuth = new TelegramAuthController(
     $users,
     $auth,
     $view,
+    $setupService,
 );
+$theme = new ThemeController($settings);
+
+$router->get('/theme.css', [$theme, 'css']);
+$router->get('/health', static function (Request $request) use ($pdo, $setupService): Response {
+    $pdo->query('SELECT 1')->fetchColumn();
+    return Response::json([
+        'status' => $setupService->completed() ? 'ok' : 'setup_required',
+        'database' => 'connected',
+    ]);
+});
+
+if (!$setupService->completed()) {
+    $router->get('/', static fn (Request $request): Response => Response::redirect('/setup'));
+    $router->get('/setup', [$setupController, 'index']);
+    $router->post('/setup/database', [$setupController, 'initializeDatabase'], [$verifyCsrf]);
+    $router->post('/setup/telegram', [$setupController, 'saveTelegram'], [$verifyCsrf]);
+    $router->post('/setup/telegram-targets', [$setupController, 'saveTelegramTargets'], [$verifyCsrf]);
+    $router->post('/setup/holiday', [$setupController, 'saveHoliday'], [$verifyCsrf]);
+    $router->post('/setup/finish', [$setupController, 'finish'], [$verifyCsrf]);
+
+    $router->get('/login', [$telegramAuth, 'loginPage']);
+    $router->get('/auth/telegram/start', [$telegramAuth, 'start']);
+    $router->get('/auth/telegram/callback', [$telegramAuth, 'callback']);
+
+    $router->dispatch($request)->send();
+    return;
+}
+
+$notifications = new LeaveNotificationService($config, $telegramBot, $users, $settings);
+$annualLeave = new AnnualLeaveService(new AnnualLeaveCalculator(), $ledger, $settings);
 $adminDashboard = new AdminDashboardController($reports, $audit, $view);
 $adminReports = new AdminReportController($reports, $view);
 $adminAudit = new AdminAuditController($audit, $view);
@@ -101,9 +159,8 @@ $adminSettings = new AdminSettingsController(
     $audit,
     $view,
     $csrf,
-    dirname(__DIR__) . '/public',
+    $root . '/public',
 );
-$theme = new ThemeController($settings);
 $adminUsers = new AdminUserController($users, $annualLeave, $auth, $audit, $view, $csrf);
 $adminAnnualLeave = new AdminAnnualLeaveController($users, $ledger, $annualLeave, $auth, $audit, $view, $csrf);
 $adminRequests = new AdminLeaveRequestController(
@@ -142,7 +199,6 @@ $leave = new LeaveController(
 );
 $calendar = new CalendarController($auth, $leaveRequests, $holidays, $leaveTypes, $ledger, $annualLeave, $view, $csrf);
 
-$verifyCsrf = new VerifyCsrfMiddleware($csrf);
 $requireAuth = new RequireAuthMiddleware($auth);
 $requireAdmin = new RequireAdminMiddleware($auth);
 
@@ -150,11 +206,7 @@ $router->get('/', [$calendar, 'index'], [$requireAuth]);
 $router->get('/login', [$telegramAuth, 'loginPage']);
 $router->get('/auth/telegram/start', [$telegramAuth, 'start']);
 $router->get('/auth/telegram/callback', [$telegramAuth, 'callback']);
-$router->get('/theme.css', [$theme, 'css']);
-$router->get('/health', static function (Request $request) use ($pdo): Response {
-    $pdo->query('SELECT 1')->fetchColumn();
-    return Response::json(['status' => 'ok']);
-});
+$router->get('/setup', static fn (Request $request): Response => Response::redirect('/admin/settings'), [$requireAdmin]);
 
 $router->get('/calendar', [$calendar, 'index'], [$requireAuth]);
 $router->get('/leave', [$leave, 'index'], [$requireAuth]);
@@ -171,7 +223,9 @@ $router->get('/admin/reports', [$adminReports, 'index'], [$requireAdmin]);
 $router->get('/admin/audit', [$adminAudit, 'index'], [$requireAdmin]);
 $router->get('/admin/settings', [$adminSettings, 'index'], [$requireAdmin]);
 $router->post('/admin/settings/appearance', [$adminSettings, 'saveAppearance'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/settings/telegram-credentials', [$adminSettings, 'saveTelegramCredentials'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/telegram', [$adminSettings, 'saveTelegram'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/settings/holiday-api', [$adminSettings, 'saveHolidayApi'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/telegram/add-chat', [$adminSettings, 'addTelegramChat'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/telegram/test', [$adminSettings, 'testTelegram'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/logo', [$adminSettings, 'uploadLogo'], [$requireAdmin, $verifyCsrf]);
@@ -196,4 +250,4 @@ $router->post('/logout', static function (Request $request) use ($auth): Respons
     return Response::redirect('/');
 }, [$verifyCsrf]);
 
-$router->dispatch(Request::fromGlobals())->send();
+$router->dispatch($request)->send();

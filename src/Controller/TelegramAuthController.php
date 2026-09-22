@@ -10,6 +10,7 @@ use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Repository\UserRepository;
 use DKAnnual\Session\Session;
+use DKAnnual\Setup\SetupService;
 use DKAnnual\Telegram\TelegramOidcClient;
 use DKAnnual\View\View;
 use Throwable;
@@ -26,6 +27,7 @@ final class TelegramAuthController
         private readonly UserRepository $users,
         private readonly Auth $auth,
         private readonly View $view,
+        private readonly ?SetupService $setup = null,
     ) {
     }
 
@@ -127,6 +129,10 @@ final class TelegramAuthController
             }
 
             $this->auth->login((int) $user['id']);
+            if ($this->setup !== null && !$this->setup->completed()) {
+                return Response::redirect('/setup?message=' . rawurlencode('최초 관리자 Telegram 로그인을 완료했습니다.'));
+            }
+
             return Response::redirect('/');
         } catch (Throwable $exception) {
             return $this->statusResponse('로그인 검증 실패', 'Telegram 로그인 정보를 검증하지 못했습니다.', 400);

@@ -130,3 +130,29 @@ php bin/check.php
 4. 새 migration이 있으면 파일명 순서대로 적용
 5. `php bin/check.php`
 6. `/health`와 핵심 업무 흐름 확인
+
+
+## 신규 설치 마법사
+
+DB 접속이 가능한 최소 `config/config.php`와 Composer 의존성 설치가 끝나면 브라우저에서 `/setup`을 연다. 신규 설치에서는 별도 migration을 적용하지 않고 최신 `database/schema.sql`을 사용한다.
+
+설치 마법사는 다음 순서로 진행한다.
+
+1. DB schema 생성
+2. Telegram Bot/OIDC 연결
+3. 최근 Telegram 채팅에서 관리자 그룹과 최초 관리자 계정 선택
+4. 최초 관리자 Telegram 로그인
+5. 공휴일 API ServiceKey 연결 및 현재 연도 동기화
+6. 초기 설정 완료
+
+Telegram Client Secret, Bot Token, 공휴일 API ServiceKey 등 서비스 연결 정보는 설치 완료 후 **관리자 → 환경 설정**에서 변경할 수 있다. 기존 값 자체는 화면에 다시 표시하지 않는다.
+
+### 테스트 환경 완전 초기화
+
+아래 명령은 휴가관리 DB의 모든 테이블과 업로드한 회사 로고를 삭제한다. `config/config.php`, Composer 파일, 소스코드는 유지된다.
+
+```bash
+php84 bin/reset-install.php --confirm=RESET-INSTALL
+```
+
+초기화 후 브라우저에서 `/setup`을 열어 신규 설치 흐름을 처음부터 검증한다. 운영 데이터가 있는 환경에서는 이 명령을 사용하지 않는다.

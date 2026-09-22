@@ -8,6 +8,16 @@
 
 ## 설치 검증
 
+- [ ] 테스트 환경에서 `php bin/reset-install.php --confirm=RESET-INSTALL` 실행
+- [ ] 초기화 직후 일반 화면 대신 `/setup`으로 안내
+- [ ] Setup Step 1에서 최신 `database/schema.sql` 자동 적용
+- [ ] 별도 migration 없이 신규 설치 완료
+- [ ] Setup Step 2 Telegram Bot/OIDC 저장 및 Bot 연결 확인
+- [ ] Setup Step 3 최근 채팅 탐색으로 관리자 그룹/최초 관리자 선택
+- [ ] Setup Step 4 최초 관리자 Telegram 로그인 및 자동 admin 활성화
+- [ ] Setup Step 5 공휴일 API 저장 및 현재 연도 동기화
+- [ ] Setup 완료 후 `/setup` 일반 접근 차단
+
 - [ ] PHP 8.2+ 환경에서 `composer install` 성공
 - [ ] `php bin/check.php` FAIL 0
 - [ ] 신규 MariaDB에 `database/schema.sql` 적용 성공
@@ -84,7 +94,10 @@
 - [ ] 라이트/다크/시스템 테마 확인
 - [ ] 현재 메뉴 활성 상태 강조
 - [ ] Bootstrap Icons 정상 로드
-- [ ] Telegram 관리자 알림 Chat ID 저장 및 config 기본값 승계
+- [ ] Telegram Client ID/Secret/Bot Token을 관리자 환경설정에서 변경
+- [ ] Telegram 관리자 알림 Chat ID를 관리자 환경설정에서 변경
+- [ ] 직원용 Telegram Bot/서비스 로그인 초대 링크 복사
+- [ ] 공휴일 API ServiceKey를 관리자 환경설정에서 변경 및 연결 확인
 - [ ] Telegram Bot 자동 확인 및 최근 채팅 탐색
 - [ ] Telegram 테스트 메시지 발송
 - [ ] 관리자 설정 화면에서 비밀 자격 증명 값이 노출되지 않음
