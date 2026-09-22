@@ -53,13 +53,18 @@ final class LeaveNotificationService
             return false;
         }
 
-        $approved = ($request['status'] ?? null) === 'approved';
+        $status = (string) ($request['status'] ?? '');
+        $statusLabel = match ($status) {
+            'approved' => '승인',
+            'cancelled' => '승인 취소',
+            default => '반려',
+        };
         $reviewNote = trim((string) ($request['review_note'] ?? ''));
         $halfDayPeriod = (string) ($request['half_day_period'] ?? '');
         $halfDayLabel = $halfDayPeriod === 'am' ? '오전 반차' : ($halfDayPeriod === 'pm' ? '오후 반차' : '');
         $text = sprintf(
             "[휴가 %s]\n신청번호: #%d\n종류: %s%s\n기간: %s ~ %s\n일수: %.1f일%s",
-            $approved ? '승인' : '반려',
+            $statusLabel,
             (int) $request['id'],
             (string) $request['leave_type_name'],
             $halfDayLabel !== '' ? ' (' . $halfDayLabel . ')' : '',

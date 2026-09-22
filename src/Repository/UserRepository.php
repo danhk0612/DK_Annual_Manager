@@ -42,6 +42,16 @@ final class UserRepository extends AbstractRepository
         return $statement->fetchAll();
     }
 
+    /** @return list<array<string, mixed>> */
+    public function active(): array
+    {
+        $statement = $this->pdo->query(
+            "SELECT * FROM users WHERE status = 'active' ORDER BY name ASC, id ASC"
+        );
+
+        return $statement->fetchAll();
+    }
+
     /** @return list<int> */
     public function activeAdminTelegramIds(): array
     {

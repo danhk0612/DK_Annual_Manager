@@ -37,6 +37,7 @@ final class AdminAnnualLeaveController
         $entries = [];
         $balance = 0.0;
         $totalEntitlement = 0.0;
+        $overrideAmount = null;
         if ($selectedUser !== null) {
             if (!empty($selectedUser['hire_date'])) {
                 $actor = $this->auth->user();
@@ -49,6 +50,7 @@ final class AdminAnnualLeaveController
             $entries = $this->ledger->entriesForUserYear((int) $selectedUser['id'], $year);
             $balance = $this->ledger->balanceForUserYear((int) $selectedUser['id'], $year);
             $totalEntitlement = $this->ledger->nonUsageTotalForUserYear((int) $selectedUser['id'], $year);
+            $overrideAmount = $this->annualLeave->overrideAmount((int) $selectedUser['id'], $year);
         }
 
         return Response::html($this->view->render('admin-annual-leave', [
@@ -59,6 +61,7 @@ final class AdminAnnualLeaveController
             'entries' => $entries,
             'balance' => $balance,
             'totalEntitlement' => $totalEntitlement,
+            'overrideAmount' => $overrideAmount,
             'csrfToken' => $this->csrf->token(),
             'message' => $request->input('message'),
             'error' => $request->input('error'),
@@ -177,31 +180,49 @@ final class AdminAnnualLeaveController
         }
 
         $target = round((float) $targetValue, 2);
-        $current = $this->ledger->nonUsageTotalForUserYear($userId, $year);
-        $delta = round($target - $current, 2);
+        $previousOverride = $this->annualLeave->overrideAmount($userId, $year);
+        $delta = $this->annualLeave->setOverride($userId, $year, $target, (int) $actor['id']);
 
-        if (abs($delta) >= 0.01) {
-            $this->ledger->addManual(
-                $userId,
-                $year,
-                'adjustment',
-                $delta,
-                $note !== '' ? $note : sprintf('%d년 총 연차 %.2f일로 수동 설정', $year, $target),
-                (int) $actor['id'],
-            );
-        }
-
-        $this->audit->record((int) $actor['id'], 'annual_leave.total_set', 'user', $userId, [
+        $this->audit->record((int) $actor['id'], 'annual_leave.total_override_set', 'user', $userId, [
             'leave_year' => $year,
-            'previous_total' => $current,
+            'previous_override' => $previousOverride,
             'target_total' => $target,
-            'adjustment' => $delta,
+            'override_adjustment' => $delta,
+            'note' => $note !== '' ? $note : null,
         ], $this->ip($request));
 
         return Response::redirect(
             '/admin/annual-leave?user_id=' . $userId
             . '&year=' . $year
             . '&message=' . rawurlencode(sprintf('총 연차를 %.1f일로 설정했습니다.', $target))
+        );
+    }
+
+    public function clearTotalOverride(Request $request): Response
+    {
+        $userId = $this->requiredPositiveInt($request->input('user_id'));
+        $year = $this->requiredPositiveInt($request->input('year'));
+        if ($userId === null || $year === null || $year < 2000 || $year > 2100) {
+            return $this->redirectError('직원과 연도를 확인해 주세요.');
+        }
+
+        $actor = $this->auth->user();
+        if ($actor === null) {
+            return Response::redirect('/login');
+        }
+
+        $previous = $this->annualLeave->overrideAmount($userId, $year);
+        $this->annualLeave->clearOverride($userId, $year);
+
+        $this->audit->record((int) $actor['id'], 'annual_leave.total_override_cleared', 'user', $userId, [
+            'leave_year' => $year,
+            'previous_override' => $previous,
+        ], $this->ip($request));
+
+        return Response::redirect(
+            '/admin/annual-leave?user_id=' . $userId
+            . '&year=' . $year
+            . '&message=' . rawurlencode('총 연차 고정을 해제하고 자동 계산값으로 복귀했습니다.')
         );
     }
 

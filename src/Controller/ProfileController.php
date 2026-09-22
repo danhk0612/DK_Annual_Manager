@@ -10,6 +10,7 @@ use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Leave\AnnualLeaveService;
 use DKAnnual\Repository\AuditLogRepository;
+use DKAnnual\Repository\ReportingRepository;
 use DKAnnual\Repository\UserRepository;
 use DKAnnual\Security\Csrf;
 use DKAnnual\View\View;
@@ -20,6 +21,7 @@ final class ProfileController
         private readonly Auth $auth,
         private readonly UserRepository $users,
         private readonly AnnualLeaveService $annualLeave,
+        private readonly ReportingRepository $reports,
         private readonly AuditLogRepository $audit,
         private readonly View $view,
         private readonly Csrf $csrf,
@@ -28,9 +30,19 @@ final class ProfileController
 
     public function index(Request $request): Response
     {
+        $user = $this->auth->user();
+        if ($user === null) {
+            return Response::redirect('/login');
+        }
+
+        $this->annualLeave->syncAccruals($user, new DateTimeImmutable('today'), null);
+        $year = (int) date('Y');
+
         return Response::html($this->view->render('profile', [
             'title' => '내 정보',
-            'user' => $this->auth->user(),
+            'user' => $this->users->findById((int) $user['id']),
+            'year' => $year,
+            'annualSummary' => $this->reports->userAnnualSummary((int) $user['id'], $year),
             'csrfToken' => $this->csrf->token(),
             'message' => $request->input('message'),
             'error' => $request->input('error'),

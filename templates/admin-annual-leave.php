@@ -5,6 +5,7 @@
 /** @var list<array<string, mixed>> $entries */
 /** @var float $balance */
 /** @var float $totalEntitlement */
+/** @var float|null $overrideAmount */
 /** @var string $csrfToken */
 /** @var mixed $message */
 /** @var mixed $error */
@@ -53,9 +54,10 @@
         <span>직원</span>
         <strong><?= htmlspecialchars((string) $selectedUser['name'], ENT_QUOTES, 'UTF-8') ?></strong>
     </div>
-    <div class="summary-card">
+    <div class="summary-card <?= $overrideAmount !== null ? 'emphasis' : '' ?>">
         <span><?= $year ?>년 총 연차</span>
         <strong><?= number_format($totalEntitlement, 1) ?>일</strong>
+        <small><?= $overrideAmount !== null ? '관리자 고정값 적용 중' : '자동 계산 + 이월/조정' ?></small>
     </div>
     <div class="summary-card">
         <span><?= $year ?>년 잔여 연차</span>
@@ -74,24 +76,38 @@
 </section>
 
 <section class="panel">
-    <h2>연간 총 연차 수동 설정</h2>
-    <p>이미 사용한 연차는 유지하고, 해당 연도의 총 연차가 입력값이 되도록 자동으로 조정 원장을 추가합니다.</p>
+    <div class="section-head">
+        <div>
+            <p class="eyebrow">Override</p>
+            <h2>연간 총 연차 고정</h2>
+        </div>
+        <?php if ($overrideAmount !== null): ?><span class="badge approved">고정 중</span><?php endif; ?>
+    </div>
+    <p>입력한 총 연차를 해당 연도의 고정값으로 유지합니다. 이후 자동 발생분이 추가되어도 총량은 이 값으로 유지됩니다.</p>
     <form class="form-grid" method="post" action="/admin/annual-leave/set-total">
         <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
         <input type="hidden" name="user_id" value="<?= (int) $selectedUser['id'] ?>">
         <input type="hidden" name="year" value="<?= $year ?>">
         <label>
             총 연차
-            <input type="number" name="total_amount" min="0" max="365" step="0.5" required value="<?= number_format($totalEntitlement, 1, '.', '') ?>">
+            <input type="number" name="total_amount" min="0" max="365" step="0.5" required value="<?= number_format($overrideAmount ?? $totalEntitlement, 1, '.', '') ?>">
         </label>
         <label>
             메모
             <input name="note" maxlength="255" placeholder="예: 회사 정책에 따른 조정">
         </label>
         <div class="form-actions">
-            <button class="button primary" type="submit">총 연차 설정</button>
+            <button class="button primary" type="submit">총 연차 고정</button>
         </div>
     </form>
+    <?php if ($overrideAmount !== null): ?>
+        <form method="post" action="/admin/annual-leave/clear-total" class="secondary-action-form">
+            <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+            <input type="hidden" name="user_id" value="<?= (int) $selectedUser['id'] ?>">
+            <input type="hidden" name="year" value="<?= $year ?>">
+            <button class="button danger-ghost" type="submit">고정 해제 · 자동 계산으로 복귀</button>
+        </form>
+    <?php endif; ?>
 </section>
 
 <section class="panel">

@@ -15,6 +15,7 @@ use DKAnnual\Repository\AuditLogRepository;
 use DKAnnual\Repository\HolidayRepository;
 use DKAnnual\Repository\LeaveRequestRepository;
 use DKAnnual\Repository\LeaveTypeRepository;
+use DKAnnual\Repository\UserRepository;
 use DKAnnual\Security\Csrf;
 use DKAnnual\Telegram\LeaveNotificationService;
 use DKAnnual\View\View;
@@ -23,6 +24,7 @@ final class LeaveController
 {
     public function __construct(
         private readonly Auth $auth,
+        private readonly UserRepository $users,
         private readonly LeaveTypeRepository $leaveTypes,
         private readonly HolidayRepository $holidays,
         private readonly LeaveRequestRepository $requests,
@@ -78,12 +80,28 @@ final class LeaveController
 
     public function create(Request $request): Response
     {
-        $user = $this->auth->user();
-        if ($user === null) {
+        $actor = $this->auth->user();
+        if ($actor === null) {
             return Response::redirect('/login');
         }
 
-        $this->annualLeave->syncAccruals($user, new DateTimeImmutable('today'), null);
+        $returnTo = $this->safeReturnTo((string) $request->input('return_to', '/leave'));
+        $subject = $actor;
+        $targetUserId = $this->positiveInt($request->input('target_user_id'));
+
+        if ($targetUserId !== null) {
+            if (($actor['role'] ?? null) !== 'admin') {
+                return $this->redirectError('다른 직원의 휴가는 관리자만 등록할 수 있습니다.', $returnTo);
+            }
+
+            $target = $this->users->findById($targetUserId);
+            if ($target === null || ($target['status'] ?? null) !== 'active') {
+                return $this->redirectError('대리 신청할 활성 직원을 찾을 수 없습니다.', $returnTo);
+            }
+            $subject = $target;
+        }
+
+        $this->annualLeave->syncAccruals($subject, new DateTimeImmutable('today'), (int) $actor['id']);
 
         $leaveTypeId = $this->positiveInt($request->input('leave_type_id'));
         $leaveType = $leaveTypeId !== null ? $this->leaveTypes->findById($leaveTypeId) : null;
@@ -94,19 +112,19 @@ final class LeaveController
         $halfDayPeriod = trim((string) $request->input('half_day_period', ''));
 
         if ($leaveType === null || $start === null || $end === null || $end < $start) {
-            return $this->redirectError('휴가 종류와 신청 기간을 확인해 주세요.');
+            return $this->redirectError('휴가 종류와 신청 기간을 확인해 주세요.', $returnTo);
         }
         if (!in_array($reasonCategory, $this->reasonCategories(), true)) {
-            return $this->redirectError('신청 사유를 선택해 주세요.');
+            return $this->redirectError('신청 사유를 선택해 주세요.', $returnTo);
         }
 
         $leaveCode = (string) $leaveType['code'];
         if ($leaveCode === 'H') {
             if ($start->format('Y-m-d') !== $end->format('Y-m-d')) {
-                return $this->redirectError('반차는 하루만 신청할 수 있습니다.');
+                return $this->redirectError('반차는 하루만 신청할 수 있습니다.', $returnTo);
             }
             if (!in_array($halfDayPeriod, ['am', 'pm'], true)) {
-                return $this->redirectError('오전/오후 반차를 선택해 주세요.');
+                return $this->redirectError('오전/오후 반차를 선택해 주세요.', $returnTo);
             }
         } else {
             $halfDayPeriod = '';
@@ -119,11 +137,11 @@ final class LeaveController
         $leaveDates = $this->dates->workingDates($start, $end, $holidayDates);
 
         if ($leaveDates === []) {
-            return $this->redirectError('신청 기간에 휴가로 계산할 평일이 없습니다.');
+            return $this->redirectError('신청 기간에 휴가로 계산할 평일이 없습니다.', $returnTo);
         }
 
-        if ($this->requests->hasOpenDays((int) $user['id'], $leaveDates)) {
-            return $this->redirectError('이미 신청 중이거나 승인된 날짜가 포함되어 있습니다.');
+        if ($this->requests->hasOpenDays((int) $subject['id'], $leaveDates)) {
+            return $this->redirectError('이미 신청 중이거나 승인된 날짜가 포함되어 있습니다.', $returnTo);
         }
 
         $dailyAmount = (float) $leaveType['default_amount'];
@@ -139,7 +157,7 @@ final class LeaveController
             }
 
             foreach ($amountByYear as $year => $amount) {
-                $balance = $this->ledger->balanceForUserYear((int) $user['id'], (int) $year);
+                $balance = $this->ledger->balanceForUserYear((int) $subject['id'], (int) $year);
                 if ($amount > $balance) {
                     $warnings[] = sprintf(
                         '%d년 잔여 연차 %.1f일보다 신청 %.1f일이 많습니다. 신청은 접수되며 관리자가 최종 판단합니다.',
@@ -153,7 +171,7 @@ final class LeaveController
         $balanceWarning = $warnings !== [] ? implode(' ', $warnings) : null;
 
         $requestId = $this->requests->create(
-            (int) $user['id'],
+            (int) $subject['id'],
             (int) $leaveType['id'],
             $start->format('Y-m-d'),
             $end->format('Y-m-d'),
@@ -164,7 +182,9 @@ final class LeaveController
             $dailyAmount,
         );
 
-        $this->audit->record((int) $user['id'], 'leave.request_created', 'leave_request', $requestId, [
+        $this->audit->record((int) $actor['id'], 'leave.request_created', 'leave_request', $requestId, [
+            'user_id' => (int) $subject['id'],
+            'created_for_other_user' => (int) $actor['id'] !== (int) $subject['id'],
             'leave_type' => $leaveCode,
             'start_date' => $start->format('Y-m-d'),
             'end_date' => $end->format('Y-m-d'),
@@ -175,7 +195,7 @@ final class LeaveController
 
         $this->notifications->notifyAdminsOfRequest([
             'id' => $requestId,
-            'user_name' => (string) $user['name'],
+            'user_name' => (string) $subject['name'],
             'leave_type_name' => (string) $leaveType['name'],
             'start_date' => $start->format('Y-m-d'),
             'end_date' => $end->format('Y-m-d'),
@@ -185,14 +205,16 @@ final class LeaveController
             'balance_warning' => $balanceWarning,
         ]);
 
-        $query = [
-            'message' => sprintf('%s %.1f일을 신청했습니다.', (string) $leaveType['name'], $requestedAmount),
-        ];
+        $message = (int) $actor['id'] === (int) $subject['id']
+            ? sprintf('%s %.1f일을 신청했습니다.', (string) $leaveType['name'], $requestedAmount)
+            : sprintf('%s님의 %s %.1f일을 대리 신청했습니다.', (string) $subject['name'], (string) $leaveType['name'], $requestedAmount);
+
+        $query = ['message' => $message];
         if ($balanceWarning !== null) {
             $query['warning'] = $balanceWarning;
         }
 
-        return Response::redirect('/leave?' . http_build_query($query));
+        return Response::redirect($this->appendQuery($returnTo, $query));
     }
 
     public function cancel(Request $request): Response
@@ -232,9 +254,32 @@ final class LeaveController
         return ctype_digit($value) && (int) $value > 0 ? (int) $value : null;
     }
 
-    private function redirectError(string $message): Response
+    private function safeReturnTo(string $value): string
     {
-        return Response::redirect('/leave?error=' . rawurlencode($message));
+        $value = trim($value);
+        $parts = parse_url($value);
+        if (!is_array($parts) || isset($parts['scheme']) || isset($parts['host'])) {
+            return '/leave';
+        }
+
+        $path = (string) ($parts['path'] ?? '');
+        if (!in_array($path, ['/leave', '/calendar', '/admin/requests'], true)) {
+            return '/leave';
+        }
+
+        $query = isset($parts['query']) && $parts['query'] !== '' ? '?' . $parts['query'] : '';
+        return $path . $query;
+    }
+
+    /** @param array<string, string> $query */
+    private function appendQuery(string $url, array $query): string
+    {
+        return $url . (str_contains($url, '?') ? '&' : '?') . http_build_query($query);
+    }
+
+    private function redirectError(string $message, string $returnTo): Response
+    {
+        return Response::redirect($this->appendQuery($returnTo, ['error' => $message]));
     }
 
     private function ip(Request $request): ?string
