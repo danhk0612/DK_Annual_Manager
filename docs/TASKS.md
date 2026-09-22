@@ -467,3 +467,21 @@
 - [x] PHP 8.2/8.4 + MariaDB CI 최종 통과
 - [ ] 실제 Telegram에서 관리자/사용자 인라인 버튼 및 로그인 복귀 검증
 - [ ] 실제 운영 서버에서 php bin/migrate.php / php bin/check.php --production 검증
+
+## T25. v1.0.0 정식 배포
+
+상태: 구현 완료 / CI·자동 Release 대기
+
+- [x] VERSION 1.0.0
+- [x] README를 설치·사용·운영 중심으로 전면 정리
+- [x] MIT LICENSE 추가
+- [x] v1.0.0 릴리스 노트 추가
+- [x] main CI 성공 후 v1.0.0 태그/Release 자동 생성 workflow 추가
+- [x] 운영 서버 composer lock 설치 및 security audit 확인
+- [x] 운영 서버 migration 최신 상태 확인
+- [x] 운영 preflight FAIL 0 / WARN 0 확인
+- [x] 실제 서비스 핵심 흐름 동작 확인
+- [ ] release/v1.0.0 PR CI 통과
+- [ ] main 병합
+- [ ] main CI 통과
+- [ ] v1.0.0 GitHub Release 자동 생성 확인
