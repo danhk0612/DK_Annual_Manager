@@ -2,7 +2,7 @@
 
 ## T01. 프로젝트 기반 및 기준 문서
 
-상태: 진행 중
+상태: 완료
 
 - [x] 저장소 초기화
 - [x] Excel 업무 구조 분석
@@ -12,10 +12,9 @@
 - [x] 초기 MariaDB schema 작성
 - [x] PHP/Composer 최소 골격 작성
 - [x] PHP 구문 검사
-- [ ] Composer validate / install 검증
-- [ ] MariaDB schema 실제 적용 검증
+- [x] Composer validate / install 검증
+- [x] MariaDB schema 실제 적용 검증
 
-현재 작업 환경에는 Composer 및 MariaDB 서버가 없어 마지막 두 항목은 실제 실행 환경에서 검증한다.
 
 ## T02. 애플리케이션 공통 기반
 
@@ -31,7 +30,7 @@
 
 ## T03. Telegram 로그인
 
-상태: 구현 완료 / 실제 자격 증명 검증 대기
+상태: 운영 로그인 검증 완료
 
 - [x] OIDC Authorization Code + PKCE
 - [x] callback
@@ -42,7 +41,7 @@
 - [x] bootstrap 관리자 활성화
 - [x] pending/active/inactive 처리
 - [x] 로그아웃
-- [ ] 실제 BotFather Client ID/Secret으로 로그인 검증
+- [x] 실제 BotFather Client ID/Secret으로 로그인 검증
 
 ## T04. 직원/권한 관리
 
@@ -137,7 +136,7 @@
 
 ## T10. 배포 준비
 
-상태: 릴리스 후보 준비 완료 / 실제 환경 검증 대기
+상태: 릴리스 후보 준비 완료 / 실사용 검증 진행
 
 - [x] 설치 및 운영 문서
 - [x] 읽기 전용 환경 점검 CLI (`php bin/check.php`)
@@ -146,8 +145,8 @@
 - [x] 기본 HTTP 보안 헤더
 - [x] 릴리스 체크리스트
 - [x] `0.1.0-rc1` 버전 표기
-- [ ] 운영 환경 Composer install / PHPUnit 실행
-- [ ] MariaDB 신규 설치 및 통합 흐름 검증
+- [x] 운영 환경 Composer install / PHPUnit 실행
+- [x] MariaDB 설치 및 환경 점검 검증
 - [ ] Telegram 실제 로그인/알림 검증
 - [ ] 공휴일 실제 ServiceKey 호출 검증
 - [ ] 모든 체크 통과 후 `0.1.0` 정식 GitHub Release
@@ -197,3 +196,37 @@
 - [ ] 운영 DB에서 T11 migration 적용 여부 확인
 - [ ] 실제 휴가 신청/승인/승인취소/대리신청/Telegram 통합 검증
 - [ ] 모바일 브라우저에서 달력 팝업·테이블·관리화면 실사용 검증
+
+
+## T13. 달력 정보밀도 · 브랜딩 · 운영 설정
+
+상태: 구현 완료 / CI 및 운영 UI 검증 대기
+
+- [x] 대화면 달력을 좌측 중심 영역으로 제한하고 우측 정보 패널 배치
+- [x] 좁은 화면에서 달력/정보 패널 자동 상하 배치
+- [x] 현재 조회 월의 신청 내역을 달력 화면에서 즉시 확인
+- [x] 승인/대기/반려/취소 상태를 월별 내역에 함께 표시
+- [x] 달력 휴가 항목 클릭 시 상세 팝업
+- [x] 공휴일/회사 휴무일/오늘 날짜 배경 강조 및 범례
+- [x] 내 정보에서 사용자 표시 이름 수정
+- [x] Telegram 재로그인 시 사용자가 수정한 표시 이름 보존
+- [x] 관리자 대시보드 3열 균형 배치 및 주요 정보 아이콘화
+- [x] Bootstrap Icons 적용
+- [x] 기본 앱 아이콘 및 SVG favicon 추가
+- [x] 현재 상단 메뉴 활성 상태 강조
+- [x] 관리자 환경 설정 페이지 추가
+- [x] 회사/프로그램 이름 설정 및 화면 전역 반영
+- [x] 회사 로고 업로드 및 기본 아이콘 복원
+- [x] 대표색 설정
+- [x] 라이트/다크/시스템 테마
+- [x] Telegram 관리자 알림 Chat ID를 DB 설정으로 관리
+- [x] 기존 config Chat ID를 최초 기본값으로 자동 승계
+- [x] Telegram Bot 상태/최근 채팅 자동 탐색 및 알림 대상 추가
+- [x] Telegram 테스트 메시지 발송
+- [x] BotFather/공공데이터포털 바로가기
+- [x] 비밀 자격 증명은 서버 설정에 유지하고 관리자 화면에는 설정 여부만 노출
+- [x] 브랜딩 업로드 디렉터리와 환경 점검 추가
+- [ ] PHP 8.2/8.4 CI
+- [ ] 운영 환경 로고 업로드 권한 확인
+- [ ] PC/모바일 실제 UI 및 다크모드 검증
+- [ ] Telegram 최근 채팅 탐색/테스트 발송 검증
