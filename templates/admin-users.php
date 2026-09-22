@@ -10,7 +10,7 @@ $editing = is_array($editUser);
     <div>
         <p class="eyebrow">Administration</p>
         <h1>직원 관리</h1>
-        <p>직원 정보, 입사일, Telegram 연결, 권한과 계정 상태를 관리합니다.</p>
+        <p>직원 정보, 부서·직책, 입사일, Telegram 연결, 권한과 계정 상태를 관리합니다.</p>
     </div>
     <a class="button" href="/admin">관리자 홈</a>
 </section>
@@ -31,6 +31,14 @@ $editing = is_array($editUser);
         <label>
             이름
             <input name="name" required maxlength="100" value="<?= $editing ? htmlspecialchars((string) $editUser['name'], ENT_QUOTES, 'UTF-8') : '' ?>">
+        </label>
+        <label>
+            부서
+            <input name="department" maxlength="100" value="<?= $editing ? htmlspecialchars((string) ($editUser['department'] ?? ''), ENT_QUOTES, 'UTF-8') : '' ?>">
+        </label>
+        <label>
+            직책
+            <input name="position" maxlength="100" value="<?= $editing ? htmlspecialchars((string) ($editUser['position'] ?? ''), ENT_QUOTES, 'UTF-8') : '' ?>">
         </label>
         <label>
             입사일
@@ -75,6 +83,8 @@ $editing = is_array($editUser);
             <thead>
             <tr>
                 <th>이름</th>
+                <th>부서</th>
+                <th>직책</th>
                 <th>입사일</th>
                 <th>Telegram</th>
                 <th>권한</th>
@@ -86,6 +96,8 @@ $editing = is_array($editUser);
             <?php foreach ($users as $user): ?>
                 <tr>
                     <td><?= htmlspecialchars((string) $user['name'], ENT_QUOTES, 'UTF-8') ?></td>
+                    <td><?= htmlspecialchars((string) ($user['department'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                    <td><?= htmlspecialchars((string) ($user['position'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars((string) ($user['hire_date'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                     <td>
                         <?php if ($user['telegram_user_id'] !== null): ?>
