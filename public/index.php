@@ -152,6 +152,7 @@ if (!$setupService->completed()) {
 
 $notifications = new LeaveNotificationService($config, $telegramBot, $users, $settings);
 $annualLeave = new AnnualLeaveService(new AnnualLeaveCalculator(), $ledger, $settings);
+$leaveReviewer = new LeaveReviewService($pdo);
 $adminDashboard = new AdminDashboardController($reports, $audit, $view);
 $adminReports = new AdminReportController($reports, $view);
 $adminAudit = new AdminAuditController($audit, $view);
@@ -173,7 +174,7 @@ $adminRequests = new AdminLeaveRequestController(
     $leaveRequests,
     $users,
     $leaveTypes,
-    new LeaveReviewService($pdo),
+    $leaveReviewer,
     $notifications,
     $auth,
     $audit,
@@ -200,6 +201,7 @@ $leave = new LeaveController(
     $settings,
     new LeaveDateCalculator(),
     $notifications,
+    $leaveReviewer,
     $audit,
     $view,
     $csrf,

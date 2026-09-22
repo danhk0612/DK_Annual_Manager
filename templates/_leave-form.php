@@ -7,11 +7,15 @@
 /** @var list<array<string, mixed>>|null $targetUsers */
 /** @var float|null $annualBalance */
 /** @var bool|null $allowAdminDateException */
+/** @var string|null $submitLabel */
 
 $returnTo = isset($returnTo) && is_string($returnTo) ? $returnTo : '/leave';
 $targetUsers = isset($targetUsers) && is_array($targetUsers) ? $targetUsers : [];
 $annualBalance = isset($annualBalance) ? (float) $annualBalance : null;
 $allowAdminDateException = isset($allowAdminDateException) ? (bool) $allowAdminDateException : false;
+$submitLabel = isset($submitLabel) && is_string($submitLabel) && $submitLabel !== ''
+    ? $submitLabel
+    : '휴가 신청';
 ?>
 <form class="form-grid leave-form" method="post" action="/leave/create" data-leave-form>
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
@@ -118,7 +122,7 @@ $allowAdminDateException = isset($allowAdminDateException) ? (bool) $allowAdminD
     <?php endif; ?>
 
     <div class="form-actions">
-        <button class="button primary" type="submit">휴가 신청</button>
+        <button class="button primary" type="submit"><?= htmlspecialchars($submitLabel, ENT_QUOTES, 'UTF-8') ?></button>
     </div>
 
     <p class="form-hint span-2">
