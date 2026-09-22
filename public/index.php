@@ -30,6 +30,7 @@ use DKAnnual\Leave\LeaveDateCalculator;
 use DKAnnual\Leave\LeaveReviewService;
 use DKAnnual\Middleware\RequireAdminMiddleware;
 use DKAnnual\Middleware\RequireAuthMiddleware;
+use DKAnnual\Middleware\SetupAccessMiddleware;
 use DKAnnual\Middleware\VerifyCsrfMiddleware;
 use DKAnnual\Repository\AnnualLeaveLedgerRepository;
 use DKAnnual\Repository\AuditLogRepository;
@@ -71,12 +72,13 @@ $setupController = new SetupController(
     $csrf,
     $root . '/templates',
 );
+$setupAccess = new SetupAccessMiddleware($session, $root . '/storage/setup.key');
 
 if (!$setupService->schemaReady()) {
     $router = new Router((string) $config->get('app.name', 'DK Annual Manager'));
     $router->get('/', static fn (Request $request): Response => Response::redirect('/setup'));
-    $router->get('/setup', [$setupController, 'index']);
-    $router->post('/setup/database', [$setupController, 'initializeDatabase'], [$verifyCsrf]);
+    $router->get('/setup', [$setupController, 'index'], [$setupAccess]);
+    $router->post('/setup/database', [$setupController, 'initializeDatabase'], [$setupAccess, $verifyCsrf]);
     $router->get('/health', static function (Request $request) use ($pdo): Response {
         $pdo->query('SELECT 1')->fetchColumn();
         return Response::json(['status' => 'setup_required', 'database' => 'connected']);
@@ -85,6 +87,7 @@ if (!$setupService->schemaReady()) {
     return;
 }
 
+$setupService->migrateLegacyInstallation();
 $setupService->applyManagedConfig();
 
 $users = new UserRepository($pdo);
@@ -131,16 +134,16 @@ $router->get('/health', static function (Request $request) use ($pdo, $setupServ
 
 if (!$setupService->completed()) {
     $router->get('/', static fn (Request $request): Response => Response::redirect('/setup'));
-    $router->get('/setup', [$setupController, 'index']);
-    $router->post('/setup/database', [$setupController, 'initializeDatabase'], [$verifyCsrf]);
-    $router->post('/setup/telegram', [$setupController, 'saveTelegram'], [$verifyCsrf]);
-    $router->post('/setup/telegram-targets', [$setupController, 'saveTelegramTargets'], [$verifyCsrf]);
-    $router->post('/setup/holiday', [$setupController, 'saveHoliday'], [$verifyCsrf]);
-    $router->post('/setup/finish', [$setupController, 'finish'], [$verifyCsrf]);
+    $router->get('/setup', [$setupController, 'index'], [$setupAccess]);
+    $router->post('/setup/database', [$setupController, 'initializeDatabase'], [$setupAccess, $verifyCsrf]);
+    $router->post('/setup/telegram', [$setupController, 'saveTelegram'], [$setupAccess, $verifyCsrf]);
+    $router->post('/setup/telegram-targets', [$setupController, 'saveTelegramTargets'], [$setupAccess, $verifyCsrf]);
+    $router->post('/setup/holiday', [$setupController, 'saveHoliday'], [$setupAccess, $verifyCsrf]);
+    $router->post('/setup/finish', [$setupController, 'finish'], [$setupAccess, $verifyCsrf]);
 
-    $router->get('/login', [$telegramAuth, 'loginPage']);
-    $router->get('/auth/telegram/start', [$telegramAuth, 'start']);
-    $router->get('/auth/telegram/callback', [$telegramAuth, 'callback']);
+    $router->get('/login', [$telegramAuth, 'loginPage'], [$setupAccess]);
+    $router->get('/auth/telegram/start', [$telegramAuth, 'start'], [$setupAccess]);
+    $router->get('/auth/telegram/callback', [$telegramAuth, 'callback'], [$setupAccess]);
 
     $router->dispatch($request)->send();
     return;
