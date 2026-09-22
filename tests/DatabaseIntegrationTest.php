@@ -314,6 +314,78 @@ PHP);
         self::assertCount(2, $allUsersSeptember);
     }
 
+    public function testCurrentAndUpcomingDashboardLeavesDoNotOverlap(): void
+    {
+        $this->pdo->exec(
+            "INSERT INTO users (name, role, status) VALUES "
+            . "('관리자', 'admin', 'active'), "
+            . "('현재휴가', 'user', 'active'), "
+            . "('예정휴가', 'user', 'active'), "
+            . "('대기휴가', 'user', 'active')"
+        );
+
+        $adminId = (int) $this->pdo->query("SELECT id FROM users WHERE name = '관리자'")->fetchColumn();
+        $currentUserId = (int) $this->pdo->query("SELECT id FROM users WHERE name = '현재휴가'")->fetchColumn();
+        $futureUserId = (int) $this->pdo->query("SELECT id FROM users WHERE name = '예정휴가'")->fetchColumn();
+        $pendingUserId = (int) $this->pdo->query("SELECT id FROM users WHERE name = '대기휴가'")->fetchColumn();
+        $leaveTypeId = (int) $this->pdo->query("SELECT id FROM leave_types WHERE code = 'V'")->fetchColumn();
+
+        $requests = new LeaveRequestRepository($this->pdo);
+        $reviewer = new LeaveReviewService($this->pdo);
+
+        $currentRequestId = $requests->create(
+            $currentUserId,
+            $leaveTypeId,
+            '2026-09-21',
+            '2026-09-23',
+            3.0,
+            null,
+            '현재 진행 중',
+            ['2026-09-21', '2026-09-22', '2026-09-23'],
+            1.0,
+        );
+        self::assertTrue($reviewer->review($currentRequestId, 'approve', $adminId, null)['changed']);
+
+        $futureRequestId = $requests->create(
+            $futureUserId,
+            $leaveTypeId,
+            '2026-09-24',
+            '2026-09-24',
+            1.0,
+            null,
+            '다가오는 휴가',
+            ['2026-09-24'],
+            1.0,
+        );
+        self::assertTrue($reviewer->review($futureRequestId, 'approve', $adminId, null)['changed']);
+
+        $requests->create(
+            $pendingUserId,
+            $leaveTypeId,
+            '2026-09-22',
+            '2026-09-22',
+            1.0,
+            null,
+            '승인 대기',
+            ['2026-09-22'],
+            1.0,
+        );
+
+        $reports = new ReportingRepository($this->pdo);
+
+        $current = $reports->approvedLeavesOnDate('2026-09-22');
+        self::assertCount(1, $current);
+        self::assertSame($currentRequestId, (int) $current[0]['id']);
+        self::assertSame('현재휴가', $current[0]['user_name']);
+        self::assertSame(1.0, (float) $current[0]['today_amount']);
+
+        $upcoming = $reports->upcomingApprovedLeaves('2026-09-23', '2026-10-06', 8);
+        self::assertCount(1, $upcoming);
+        self::assertSame($futureRequestId, (int) $upcoming[0]['id']);
+        self::assertSame('예정휴가', $upcoming[0]['user_name']);
+        self::assertSame('2026-09-24', $upcoming[0]['first_leave_date']);
+    }
+
     public function testApprovalAndCancellationUpdateAnnualLeaveLedgerAtomically(): void
     {
         $this->pdo->exec(
