@@ -173,6 +173,7 @@ $router->get('/admin/settings', [$adminSettings, 'index'], [$requireAdmin]);
 $router->post('/admin/settings/appearance', [$adminSettings, 'saveAppearance'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/telegram', [$adminSettings, 'saveTelegram'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/telegram/add-chat', [$adminSettings, 'addTelegramChat'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/settings/telegram/test', [$adminSettings, 'testTelegram'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/logo', [$adminSettings, 'uploadLogo'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/logo/remove', [$adminSettings, 'removeLogo'], [$requireAdmin, $verifyCsrf]);
 $router->get('/admin/requests', [$adminRequests, 'index'], [$requireAdmin]);
