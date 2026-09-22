@@ -146,7 +146,7 @@ $subjectHireDate = isset($user) && is_array($user) ? trim((string) ($user['hire_
 
     <p class="form-hint span-2">
         <?php if ($adminDirectEntry): ?>
-            관리자 직접 등록은 선택한 날짜를 그대로 기록하고 즉시 승인합니다. 근무요일·공휴일·중복 일정·잔여 연차 조건은 적용하지 않습니다.
+            관리자 직접 등록은 선택한 날짜를 그대로 기록하고 즉시 승인합니다. 근무요일·공휴일·중복 일정·잔여 연차 조건은 적용하지 않으며 Telegram 알림도 전송하지 않습니다.
         <?php else: ?>
             <?php if ($annualBalance !== null): ?>
                 현재 잔여 연차 <strong><?= number_format($annualBalance, 1) ?>일</strong>.
