@@ -36,6 +36,10 @@ final class SetupAccessMiddleware implements MiddlewareInterface
             $this->session->set('setup_authorized', true);
             $this->session->regenerate();
 
+            if ($request->method() === 'GET' && $request->path() === '/setup') {
+                return Response::redirect('/setup');
+            }
+
             return $next($request);
         }
 
