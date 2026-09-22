@@ -86,6 +86,55 @@ final class SetupController
         ]);
     }
 
+    public function telegramProbe(Request $request): Response
+    {
+        $status = $this->setup->status();
+        if (!$status['schema'] || !$status['telegram']) {
+            return Response::json([
+                'ok' => false,
+                'message' => 'Telegram 설정을 먼저 완료해 주세요.',
+                'chats' => [],
+            ], 400);
+        }
+
+        try {
+            $this->setup->applyManagedConfig();
+            $bot = new TelegramBotClient($this->config);
+            $botInfo = $bot->getMe();
+            $chats = $bot->recentChats();
+
+            $privateCount = 0;
+            $groupCount = 0;
+            foreach ($chats as $chat) {
+                if (($chat['type'] ?? '') === 'private') {
+                    $privateCount++;
+                } elseif (in_array(($chat['type'] ?? ''), ['group', 'supergroup', 'channel'], true)) {
+                    $groupCount++;
+                }
+            }
+
+            return Response::json([
+                'ok' => true,
+                'message' => $chats === []
+                    ? '최근 Telegram 채팅을 찾지 못했습니다. 봇 개인 채팅에서 /start를 보내거나 관리자 그룹에서 메시지를 보낸 뒤 다시 확인하세요.'
+                    : sprintf('최근 채팅 %d개를 찾았습니다. 개인 채팅 %d개, 그룹/채널 %d개입니다.', count($chats), $privateCount, $groupCount),
+                'bot' => [
+                    'name' => (string) ($botInfo['first_name'] ?? ''),
+                    'username' => (string) ($botInfo['username'] ?? ''),
+                ],
+                'chats' => $chats,
+            ]);
+        } catch (Throwable $exception) {
+            error_log('[DK Annual Setup] Telegram chat probe failed: ' . $exception::class);
+
+            return Response::json([
+                'ok' => false,
+                'message' => '최근 채팅을 확인하지 못했습니다. Bot Token, Bot 권한 또는 Telegram webhook 설정을 확인해 주세요.',
+                'chats' => [],
+            ], 502);
+        }
+    }
+
     public function initializeDatabase(Request $request): Response
     {
         try {
