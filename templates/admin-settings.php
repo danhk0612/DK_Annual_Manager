@@ -14,6 +14,7 @@
 /** @var string|null $employeeBotLink */
 /** @var string|null $employeeLoginLink */
 /** @var list<int> $workingWeekdays */
+/** @var int $closedLeaveHistoryCount */
 /** @var string $csrfToken */
 /** @var mixed $message */
 /** @var mixed $error */
@@ -299,6 +300,22 @@
             </div>
         </form>
     </section>
+    <section class="panel settings-card">
+        <div class="section-head">
+            <div>
+                <p class="eyebrow">Data cleanup</p>
+                <h2><i class="bi bi-eraser"></i><span>종료된 휴가 기록 정리</span></h2>
+            </div>
+            <span class="count-badge"><?= (int) $closedLeaveHistoryCount ?>건</span>
+        </div>
+        <p>승인 대기와 승인 상태는 그대로 보존하고, 취소·반려된 휴가 기록과 연결된 휴가일·원장·해당 신청 감사로그를 영구 제거합니다.</p>
+        <div class="form-actions settings-subsection">
+            <button class="button danger-ghost" type="button" data-open-closed-history-dialog <?= $closedLeaveHistoryCount < 1 ? 'disabled' : '' ?>>
+                <i class="bi bi-trash3"></i><span>취소·반려 기록 정리</span>
+            </button>
+        </div>
+    </section>
+
     <section class="panel settings-card danger-zone-card">
         <div class="section-head">
             <div>
@@ -325,5 +342,29 @@
         </form>
     </section>
 </div>
+
+<dialog class="modal-dialog" data-closed-history-dialog>
+    <div class="modal-card">
+        <div class="section-head modal-head">
+            <div>
+                <p class="eyebrow">Permanent cleanup</p>
+                <h2><i class="bi bi-exclamation-triangle"></i><span>취소·반려 기록 영구 삭제</span></h2>
+                <p>현재 <?= (int) $closedLeaveHistoryCount ?>건이 정리 대상입니다. 이 작업은 되돌릴 수 없습니다.</p>
+            </div>
+            <button class="icon-button" type="button" data-close-closed-history-dialog aria-label="닫기"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="notice warning">
+            <i class="bi bi-info-circle"></i>
+            <span><strong>pending / approved는 삭제하지 않습니다.</strong> cancelled / rejected 상태만 제거합니다.</span>
+        </div>
+        <form method="post" action="/admin/settings/purge-closed-leave-history">
+            <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+            <div class="form-actions">
+                <button class="button danger" type="submit"><i class="bi bi-trash3"></i><span>영구 삭제 실행</span></button>
+                <button class="button" type="button" data-close-closed-history-dialog>취소</button>
+            </div>
+        </form>
+    </div>
+</dialog>
 
 <p class="settings-security-note"><i class="bi bi-shield-lock"></i><span>Secret/Token/API Key는 관리자 화면에서 변경할 수 있지만 기존 값은 다시 표시하지 않으며 감사 로그에도 실제 값은 기록하지 않습니다.</span></p>
