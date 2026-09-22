@@ -152,7 +152,12 @@ final class AdminUserController
             return null;
         }
 
-        return mb_substr($value, 0, $maxLength);
+        $characters = preg_split('//u', $value, -1, PREG_SPLIT_NO_EMPTY);
+        if (is_array($characters) && count($characters) > $maxLength) {
+            return implode('', array_slice($characters, 0, $maxLength));
+        }
+
+        return $value;
     }
 
     private function optionalId(mixed $value): ?int
