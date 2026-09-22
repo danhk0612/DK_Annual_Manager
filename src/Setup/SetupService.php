@@ -217,6 +217,12 @@ final class SetupService
             return;
         }
 
+        $freshSetupInProgress = $settings->get('setup.started_at', null) !== null
+            && $settings->get('setup.completed', '0') !== '1';
+        if ($freshSetupInProgress) {
+            return;
+        }
+
         $configured = trim((string) $this->config->get('telegram.company_chat_id', ''));
         if ($configured !== '') {
             $settings->set('telegram.company_chat_id', $configured, null);
