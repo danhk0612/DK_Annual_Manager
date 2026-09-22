@@ -52,6 +52,22 @@ final class UserRepository extends AbstractRepository
         return $statement->fetchAll();
     }
 
+    public function activeAdminCount(?int $excludeUserId = null): int
+    {
+        $sql = "SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'active'";
+        $params = [];
+
+        if ($excludeUserId !== null) {
+            $sql .= ' AND id <> :exclude_user_id';
+            $params['exclude_user_id'] = $excludeUserId;
+        }
+
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute($params);
+
+        return (int) $statement->fetchColumn();
+    }
+
     /** @return list<int> */
     public function activeAdminTelegramIds(): array
     {
