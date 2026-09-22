@@ -2405,3 +2405,105 @@ h3 > .bi {
         grid-template-columns: 1fr;
     }
 }
+
+
+.telegram-probe-status {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 14px;
+    padding: 11px 12px;
+    border: 1px solid color-mix(in srgb, var(--success) 30%, var(--border));
+    border-radius: 10px;
+    background: var(--success-soft);
+    color: var(--success);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.telegram-probe-status.error {
+    border-color: color-mix(in srgb, var(--danger) 30%, var(--border));
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.telegram-probe-status.loading {
+    border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.telegram-probe-status.loading .bi {
+    animation: telegram-probe-spin .9s linear infinite;
+}
+
+@keyframes telegram-probe-spin {
+    to { transform: rotate(360deg); }
+}
+
+.telegram-detected-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.telegram-detected-chat {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+    padding: 10px 11px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-soft);
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+}
+
+.telegram-detected-chat:hover {
+    border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+    background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+}
+
+.telegram-detected-icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.telegram-detected-main {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.telegram-detected-main strong,
+.telegram-detected-main small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.telegram-detected-main small {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.telegram-detected-action {
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+@media (max-width: 760px) {
+    .telegram-detected-grid {
+        grid-template-columns: 1fr;
+    }
+}
