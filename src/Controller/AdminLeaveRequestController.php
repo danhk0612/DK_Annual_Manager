@@ -101,7 +101,7 @@ final class AdminLeaveRequestController
         }
 
         $requestId = $this->positiveInt($request->input('request_id'));
-        $note = trim((string) $request->input('review_note', ''));
+        $note = trim((string) $request->input('cancellation_note', ''));
 
         if ($requestId === null) {
             return Response::redirect('/admin/requests?error=' . rawurlencode('취소할 승인 내역을 확인해 주세요.'));
