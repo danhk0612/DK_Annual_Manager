@@ -52,7 +52,7 @@ $submitLabel = '휴가 등록 · 즉시 승인';
 
         <div class="approval-list">
         <?php foreach ($requests as $item): ?>
-            <article class="approval-card">
+            <article class="approval-card" id="request-<?= (int) $item['id'] ?>">
                 <div class="approval-summary">
                     <div>
                         <span class="muted">#<?= (int) $item['id'] ?></span>
@@ -137,7 +137,7 @@ $submitLabel = '휴가 등록 · 즉시 승인';
                 $halfDayPeriod = (string) ($item['half_day_period'] ?? '');
                 $halfDayLabel = $halfDayPeriod === 'am' ? ' · 오전' : ($halfDayPeriod === 'pm' ? ' · 오후' : '');
                 ?>
-                <tr>
+                <tr id="request-<?= (int) $item['id'] ?>">
                     <td><strong><?= htmlspecialchars((string) $item['user_name'], ENT_QUOTES, 'UTF-8') ?></strong></td>
                     <td><?= htmlspecialchars((string) $item['leave_type_name'], ENT_QUOTES, 'UTF-8') ?><?= $halfDayLabel ?></td>
                     <td><?= htmlspecialchars((string) $item['start_date'], ENT_QUOTES, 'UTF-8') ?> ~ <?= htmlspecialchars((string) $item['end_date'], ENT_QUOTES, 'UTF-8') ?></td>
