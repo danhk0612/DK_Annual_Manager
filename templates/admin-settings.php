@@ -189,9 +189,9 @@
 
         <?php if ($telegramChats !== []): ?>
             <div class="detected-chat-list settings-subsection">
-                <h3>최근 확인된 그룹/채널</h3>
+                <h3>최근 확인된 그룹</h3>
                 <?php foreach ($telegramChats as $chat): ?>
-                    <?php if (!in_array($chat['type'], ['group', 'supergroup', 'channel'], true)) { continue; } ?>
+                    <?php if (!in_array($chat['type'], ['group', 'supergroup'], true)) { continue; } ?>
                     <div class="detected-chat">
                         <div>
                             <strong><?= htmlspecialchars($chat['title'], ENT_QUOTES, 'UTF-8') ?></strong>
