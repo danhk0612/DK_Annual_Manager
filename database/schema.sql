@@ -3,7 +3,7 @@
 
 SET NAMES utf8mb4;
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     telegram_user_id BIGINT UNSIGNED NULL,
@@ -21,7 +21,7 @@ CREATE TABLE users (
     KEY idx_users_hire_date (hire_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE leave_types (
+CREATE TABLE IF NOT EXISTS leave_types (
     id SMALLINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(10) NOT NULL,
     name VARCHAR(50) NOT NULL,
@@ -34,14 +34,14 @@ CREATE TABLE leave_types (
     UNIQUE KEY uq_leave_types_code (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO leave_types (code, name, default_amount, deducts_annual_leave, sort_order) VALUES
+INSERT IGNORE INTO leave_types (code, name, default_amount, deducts_annual_leave, sort_order) VALUES
     ('V', '연차', 1.00, 1, 10),
     ('H', '반차', 0.50, 1, 20),
     ('G', '공가', 1.00, 0, 30),
     ('S', '병가', 1.00, 0, 40),
     ('A', '대체휴가', 1.00, 0, 50);
 
-CREATE TABLE leave_requests (
+CREATE TABLE IF NOT EXISTS leave_requests (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL,
     leave_type_id SMALLINT UNSIGNED NOT NULL,
@@ -64,7 +64,7 @@ CREATE TABLE leave_requests (
     KEY idx_leave_requests_status_created (status, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE leave_request_days (
+CREATE TABLE IF NOT EXISTS leave_request_days (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     leave_request_id BIGINT UNSIGNED NOT NULL,
     leave_date DATE NOT NULL,
@@ -76,7 +76,7 @@ CREATE TABLE leave_request_days (
     KEY idx_leave_request_days_date (leave_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE annual_leave_ledger (
+CREATE TABLE IF NOT EXISTS annual_leave_ledger (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NOT NULL,
     leave_year SMALLINT UNSIGNED NOT NULL,
@@ -95,7 +95,7 @@ CREATE TABLE annual_leave_ledger (
     KEY idx_annual_leave_ledger_request (reference_request_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE holidays (
+CREATE TABLE IF NOT EXISTS holidays (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     holiday_date DATE NOT NULL,
     name VARCHAR(120) NOT NULL,
@@ -108,7 +108,7 @@ CREATE TABLE holidays (
     KEY idx_holidays_date (holiday_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE app_settings (
+CREATE TABLE IF NOT EXISTS app_settings (
     setting_key VARCHAR(100) PRIMARY KEY,
     setting_value TEXT NULL,
     updated_by BIGINT UNSIGNED NULL,
@@ -116,7 +116,7 @@ CREATE TABLE app_settings (
     CONSTRAINT fk_app_settings_updated_by FOREIGN KEY (updated_by) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     actor_user_id BIGINT UNSIGNED NULL,
     action VARCHAR(100) NOT NULL,
