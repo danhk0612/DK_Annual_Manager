@@ -116,26 +116,47 @@ final class ReportingRepository extends AbstractRepository
     }
 
     /** @return list<array<string, mixed>> */
-    public function monthlyApprovedLeaveSummary(int $year): array
-    {
-        $statement = $this->pdo->prepare(
-            "SELECT
-                MONTH(d.leave_date) AS month_number,
-                lt.code,
-                lt.name,
-                SUM(d.amount) AS amount
-             FROM leave_request_days d
-             INNER JOIN leave_requests r ON r.id = d.leave_request_id
-             INNER JOIN leave_types lt ON lt.id = r.leave_type_id
-             WHERE r.status = 'approved'
-               AND d.leave_date BETWEEN :start_date AND :end_date
-             GROUP BY MONTH(d.leave_date), lt.id, lt.code, lt.name
-             ORDER BY month_number ASC, lt.sort_order ASC, lt.id ASC"
-        );
-        $statement->execute([
+    public function monthlyApprovedLeaveSummary(
+        int $year,
+        string $query = '',
+        string $status = '',
+        string $department = '',
+    ): array {
+        $sql = "SELECT
+                    MONTH(d.leave_date) AS month_number,
+                    lt.code,
+                    lt.name,
+                    SUM(d.amount) AS amount
+                FROM leave_request_days d
+                INNER JOIN leave_requests r ON r.id = d.leave_request_id
+                INNER JOIN leave_types lt ON lt.id = r.leave_type_id
+                INNER JOIN users u ON u.id = r.user_id
+                WHERE r.status = 'approved'
+                  AND d.leave_date BETWEEN :start_date AND :end_date";
+
+        $params = [
             'start_date' => sprintf('%04d-01-01', $year),
             'end_date' => sprintf('%04d-12-31', $year),
-        ]);
+        ];
+
+        if ($query !== '') {
+            $sql .= " AND (u.name LIKE :query OR u.department LIKE :query OR u.position LIKE :query)";
+            $params['query'] = '%' . $query . '%';
+        }
+        if ($status !== '') {
+            $sql .= ' AND u.status = :user_status';
+            $params['user_status'] = $status;
+        }
+        if ($department !== '') {
+            $sql .= ' AND u.department = :department';
+            $params['department'] = $department;
+        }
+
+        $sql .= ' GROUP BY MONTH(d.leave_date), lt.id, lt.code, lt.name'
+            . ' ORDER BY month_number ASC, lt.sort_order ASC, lt.id ASC';
+
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute($params);
 
         return $statement->fetchAll();
     }
