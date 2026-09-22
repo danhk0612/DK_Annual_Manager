@@ -69,13 +69,17 @@ try {
     if (!$setup->schemaReady()) {
         $fail('DB schema가 초기화되지 않았습니다. 브라우저에서 /setup 을 열어 DB 초기화를 진행하세요.');
         printf("\n모드: %s\n", $production ? 'production' : 'standard');
-printf("결과: FAIL %d / WARN %d\n", $failures, $warnings);
+        printf("결과: FAIL %d / WARN %d\n", $failures, $warnings);
         exit(1);
     }
     $setup->applyManagedConfig();
-    $setup->completed()
-        ? $pass('초기 서비스 설정 완료')
-        : $warn('초기 서비스 설정이 완료되지 않았습니다. /setup 에서 진행하세요.');
+    if ($setup->completed()) {
+        $pass('초기 서비스 설정 완료');
+    } elseif ($production) {
+        $fail('운영 배포 전에 /setup 초기 서비스 설정을 완료해야 합니다.');
+    } else {
+        $warn('초기 서비스 설정이 완료되지 않았습니다. /setup 에서 진행하세요.');
+    }
 
     $requiredTables = [
         'users', 'leave_types', 'leave_requests', 'leave_request_days',
@@ -165,18 +169,20 @@ printf("결과: FAIL %d / WARN %d\n", $failures, $warnings);
         $warn('app.debug=true 상태입니다.');
     }
 
-    trim((string) $config->get('telegram.client_id', '')) !== ''
-        ? $pass('Telegram client_id 설정')
-        : $warn('Telegram client_id가 비어 있습니다.');
-    trim((string) $config->get('telegram.client_secret', '')) !== ''
-        ? $pass('Telegram client_secret 설정')
-        : $warn('Telegram client_secret이 비어 있습니다.');
-    trim((string) $config->get('telegram.bot_token', '')) !== ''
-        ? $pass('Telegram bot_token 설정')
-        : $warn('Telegram bot_token이 비어 있어 알림을 보낼 수 없습니다.');
-    trim((string) $config->get('holiday_api.service_key', '')) !== ''
-        ? $pass('공휴일 API 서비스키 설정')
-        : $warn('공휴일 API 서비스키가 비어 있습니다.');
+    foreach ([
+        'Telegram client_id 설정' => ['telegram.client_id', 'Telegram client_id가 비어 있습니다.'],
+        'Telegram client_secret 설정' => ['telegram.client_secret', 'Telegram client_secret이 비어 있습니다.'],
+        'Telegram bot_token 설정' => ['telegram.bot_token', 'Telegram bot_token이 비어 있어 알림을 보낼 수 없습니다.'],
+        '공휴일 API 서비스키 설정' => ['holiday_api.service_key', '공휴일 API 서비스키가 비어 있습니다.'],
+    ] as $label => [$key, $missingMessage]) {
+        if (trim((string) $config->get($key, '')) !== '') {
+            $pass($label);
+        } elseif ($production) {
+            $fail($missingMessage);
+        } else {
+            $warn($missingMessage);
+        }
+    }
 
     $brandingUploadDir = $root . '/public/uploads/branding';
     if (!is_dir($brandingUploadDir)) {
@@ -196,6 +202,8 @@ printf("결과: FAIL %d / WARN %d\n", $failures, $warnings);
         $pass('Telegram 회사 공용 그룹: 관리자 설정 사용');
     } elseif (trim((string) $config->get('telegram.company_chat_id', '')) !== '') {
         $pass('Telegram 회사 공용 그룹: config 기본값 사용');
+    } elseif ($production) {
+        $fail('Telegram 회사 공용 그룹이 비어 있습니다.');
     } else {
         $warn('Telegram 회사 공용 그룹이 비어 있습니다.');
     }
@@ -203,9 +211,13 @@ printf("결과: FAIL %d / WARN %d\n", $failures, $warnings);
     $adminTelegramCount = (int) $pdo->query(
         "SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'active' AND telegram_user_id IS NOT NULL"
     )->fetchColumn();
-    $adminTelegramCount > 0
-        ? $pass(sprintf('Telegram 관리자 개인 알림 대상: %d명', $adminTelegramCount))
-        : $warn('Telegram 개인 알림을 받을 활성 관리자가 없습니다.');
+    if ($adminTelegramCount > 0) {
+        $pass(sprintf('Telegram 관리자 개인 알림 대상: %d명', $adminTelegramCount));
+    } elseif ($production) {
+        $fail('Telegram 개인 알림을 받을 활성 관리자가 없습니다.');
+    } else {
+        $warn('Telegram 개인 알림을 받을 활성 관리자가 없습니다.');
+    }
 
     $activeAdminCount = (int) $pdo->query(
         "SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'active'"
@@ -217,8 +229,9 @@ printf("결과: FAIL %d / WARN %d\n", $failures, $warnings);
     $workweek = (new \DKAnnual\Repository\AppSettingRepository($pdo))->workingWeekdays();
     $pass('주 근무 요일: ' . implode(',', $workweek));
 } catch (\Throwable $exception) {
-    $fail('환경 확인 중 오류: ' . $exception->getMessage());
+    $fail('환경 확인 중 오류: ' . $exception::class);
 }
 
-printf("\n결과: FAIL %d / WARN %d\n", $failures, $warnings);
+printf("\n모드: %s\n", $production ? 'production' : 'standard');
+printf("결과: FAIL %d / WARN %d\n", $failures, $warnings);
 exit($failures > 0 ? 1 : 0);
