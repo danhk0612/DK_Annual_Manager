@@ -218,6 +218,18 @@ final class SetupController
             return $this->error('최초 관리자 Telegram User ID를 확인해 주세요.');
         }
 
+        try {
+            $this->setup->applyManagedConfig();
+            $bot = new TelegramBotClient($this->config);
+            $companyChat = $bot->getChat($groupChatId);
+            if (!in_array((string) ($companyChat['type'] ?? ''), ['group', 'supergroup'], true)) {
+                return $this->error('회사 공용 Telegram 그룹은 group 또는 supergroup이어야 합니다.');
+            }
+        } catch (Throwable $exception) {
+            error_log('[DK Annual Setup] Company Telegram group validation failed: ' . $exception::class);
+            return $this->error('회사 공용 Telegram 그룹을 확인하지 못했습니다. Bot이 그룹에 참여 중인지 확인해 주세요.');
+        }
+
         $settings = new AppSettingRepository($this->pdo);
         $settings->set('telegram.company_chat_id', $groupChatId, null);
         $settings->delete('telegram.admin_chat_ids');
