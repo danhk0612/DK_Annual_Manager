@@ -256,7 +256,7 @@
 - [x] 테스트용 완전 초기화 CLI 추가: bin/reset-install.php
 - [x] 완전 초기화 후 migration 없이 최신 database/schema.sql만 사용하는 흐름
 - [x] bin/check.php에서 setup 상태와 DB 관리 자격 증명 반영
-- [ ] PHP 8.2/8.4 CI
+- [x] PHP 8.2/8.4 CI
 - [ ] 실제 NAS에서 완전 초기화 후 /setup 전 과정 검증
 - [ ] 최초 관리자/그룹 자동 탐색 및 Telegram 로그인 검증
 - [ ] 공휴일 API 자동 동기화 검증
