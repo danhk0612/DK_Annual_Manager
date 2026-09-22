@@ -30,8 +30,12 @@ final class AdminDashboardController
             'year' => $year,
             'metrics' => $this->reports->dashboardMetrics($year),
             'pendingPreview' => $this->reports->pendingRequestPreview(6),
-            'upcomingLeaves' => $this->reports->upcomingApprovedLeaves(
+            'currentLeaves' => $this->reports->approvedLeavesOnDate(
                 $today->format('Y-m-d'),
+                12,
+            ),
+            'upcomingLeaves' => $this->reports->upcomingApprovedLeaves(
+                $today->modify('+1 day')->format('Y-m-d'),
                 $today->modify('+14 days')->format('Y-m-d'),
                 8,
             ),
