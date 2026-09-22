@@ -187,6 +187,8 @@ $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'
                                 data-request-period="<?= htmlspecialchars((string) $entry['start_date'] . ' ~ ' . (string) $entry['end_date'], ENT_QUOTES, 'UTF-8') ?>"
                                 data-request-amount="<?= htmlspecialchars(number_format((float) $entry['requested_amount'], 1) . '일', ENT_QUOTES, 'UTF-8') ?>"
                                 data-request-status="<?= htmlspecialchars($statusLabels[$status] ?? $status, ENT_QUOTES, 'UTF-8') ?>"
+                                data-request-status-code="<?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?>"
+                                data-request-owned="<?= (int) $entry['user_id'] === (int) $user['id'] ? '1' : '0' ?>"
                                 data-request-reason="<?= htmlspecialchars((string) ($entry['reason'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                                 data-request-review-note="<?= htmlspecialchars((string) ($entry['review_note'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                                 data-request-created="<?= htmlspecialchars((string) ($entry['created_at'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
@@ -257,8 +259,13 @@ $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'
                             data-request-period="<?= htmlspecialchars((string) $item['start_date'] . ' ~ ' . (string) $item['end_date'], ENT_QUOTES, 'UTF-8') ?>"
                             data-request-amount="<?= htmlspecialchars(number_format((float) $item['requested_amount'], 1) . '일', ENT_QUOTES, 'UTF-8') ?>"
                             data-request-status="<?= htmlspecialchars($statusLabels[$status] ?? $status, ENT_QUOTES, 'UTF-8') ?>"
+                            data-request-status-code="<?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?>"
+                            data-request-owned="<?= (int) $item['user_id'] === (int) $user['id'] ? '1' : '0' ?>"
                             data-request-reason="<?= htmlspecialchars((string) ($item['reason'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                             data-request-review-note="<?= htmlspecialchars((string) ($item['review_note'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                            data-request-cancellation-source="<?= htmlspecialchars((string) ($item['cancellation_source'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                            data-request-cancellation-note="<?= htmlspecialchars((string) ($item['cancellation_note'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                            data-request-cancelled-at="<?= htmlspecialchars((string) ($item['cancelled_at'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                             data-request-created="<?= htmlspecialchars((string) ($item['created_at'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                             data-request-deduction="<?= htmlspecialchars($deductionLabel, ENT_QUOTES, 'UTF-8') ?>"
                         >
@@ -321,7 +328,25 @@ $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'
             <div><span>연차 차감</span><strong data-detail-deduction>-</strong></div>
             <div class="span-2"><span>사유</span><strong data-detail-reason>-</strong></div>
             <div class="span-2"><span>관리자 메모</span><strong data-detail-review-note>-</strong></div>
+            <div class="span-2" data-detail-cancellation-wrap hidden><span>취소 정보</span><strong data-detail-cancellation>-</strong></div>
             <div class="span-2"><span>신청 시각</span><strong data-detail-created>-</strong></div>
+        </div>
+
+        <div class="request-detail-actions">
+            <form method="post" action="/leave/cancel" data-detail-pending-cancel hidden data-confirm-message="승인 전 신청을 취소하면 신청 내역에서 완전히 삭제됩니다. 계속하시겠습니까?">
+                <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                <input type="hidden" name="request_id" value="" data-detail-pending-cancel-id>
+                <input type="hidden" name="return_to" value="<?= htmlspecialchars($returnTo, ENT_QUOTES, 'UTF-8') ?>">
+                <button class="button danger-ghost" type="submit"><i class="bi bi-trash3"></i><span>신청 취소 · 삭제</span></button>
+            </form>
+
+            <form class="detail-approved-cancel-form" method="post" action="/leave/cancel-approved" data-detail-approved-cancel hidden data-confirm-message="승인된 휴가를 취소하시겠습니까? 차감된 연차는 자동 복원되고 관리자에게 알림이 전송됩니다.">
+                <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                <input type="hidden" name="request_id" value="" data-detail-approved-cancel-id>
+                <input type="hidden" name="return_to" value="<?= htmlspecialchars($returnTo, ENT_QUOTES, 'UTF-8') ?>">
+                <input name="cancellation_note" maxlength="1000" placeholder="취소 사유 (선택)">
+                <button class="button danger-ghost" type="submit"><i class="bi bi-calendar-x"></i><span>승인 휴가 취소</span></button>
+            </form>
         </div>
     </div>
 </dialog>

@@ -136,13 +136,15 @@ final class LeaveRequestRepository extends AbstractRepository
         $query = trim($query);
         if ($query !== '') {
             $sql .= 'AND (u.name LIKE :q_user OR u.department LIKE :q_department '
-                . 'OR t.name LIKE :q_type OR r.reason LIKE :q_reason OR r.review_note LIKE :q_review) ';
+                . 'OR t.name LIKE :q_type OR r.reason LIKE :q_reason OR r.review_note LIKE :q_review '
+                . 'OR r.cancellation_note LIKE :q_cancel) ';
             $like = '%' . $query . '%';
             $params['q_user'] = $like;
             $params['q_department'] = $like;
             $params['q_type'] = $like;
             $params['q_reason'] = $like;
             $params['q_review'] = $like;
+            $params['q_cancel'] = $like;
         }
 
         if (in_array($status, ['pending', 'approved', 'rejected', 'cancelled'], true)) {
@@ -198,18 +200,52 @@ final class LeaveRequestRepository extends AbstractRepository
         return $statement->fetchAll();
     }
 
-    public function cancelPending(int $requestId, int $userId): bool
+    /** @return array<string, mixed>|null */
+    public function deletePending(int $requestId, int $userId): ?array
     {
-        $statement = $this->pdo->prepare(
-            "UPDATE leave_requests SET status = 'cancelled' "
-            . "WHERE id = :id AND user_id = :user_id AND status = 'pending'"
-        );
-        $statement->execute([
-            'id' => $requestId,
-            'user_id' => $userId,
-        ]);
+        $this->pdo->beginTransaction();
 
-        return $statement->rowCount() === 1;
+        try {
+            $select = $this->pdo->prepare(
+                'SELECT r.*, t.code AS leave_code, t.name AS leave_type_name '
+                . 'FROM leave_requests r '
+                . 'INNER JOIN leave_types t ON t.id = r.leave_type_id '
+                . "WHERE r.id = :id AND r.user_id = :user_id AND r.status = 'pending' "
+                . 'FOR UPDATE'
+            );
+            $select->execute([
+                'id' => $requestId,
+                'user_id' => $userId,
+            ]);
+            $request = $select->fetch();
+
+            if (!is_array($request)) {
+                $this->pdo->rollBack();
+                return null;
+            }
+
+            $delete = $this->pdo->prepare(
+                "DELETE FROM leave_requests "
+                . "WHERE id = :id AND user_id = :user_id AND status = 'pending'"
+            );
+            $delete->execute([
+                'id' => $requestId,
+                'user_id' => $userId,
+            ]);
+
+            if ($delete->rowCount() !== 1) {
+                $this->pdo->rollBack();
+                return null;
+            }
+
+            $this->pdo->commit();
+            return $request;
+        } catch (Throwable $exception) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $exception;
+        }
     }
 
     /** @return list<array<string, mixed>> */

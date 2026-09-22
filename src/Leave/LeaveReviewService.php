@@ -68,19 +68,52 @@ final class LeaveReviewService
     }
 
     /**
-     * Cancels an already approved request and restores any annual-leave usage
-     * through reversal ledger entries. Changing an approved request is modeled
-     * as cancel + new request so the original approval remains auditable.
+     * Administrator cancellation of an approved request.
      *
      * @return array{changed:bool, request:array<string, mixed>|null}
      */
-    public function cancelApproved(int $requestId, int $reviewerId, ?string $reviewNote): array
+    public function cancelApproved(int $requestId, int $actorId, ?string $cancellationNote): array
     {
+        return $this->cancelApprovedInternal($requestId, $actorId, 'admin', $cancellationNote, null);
+    }
+
+    /**
+     * User cancellation of their own approved request.
+     *
+     * @return array{changed:bool, request:array<string, mixed>|null}
+     */
+    public function cancelApprovedByUser(int $requestId, int $userId, ?string $cancellationNote): array
+    {
+        return $this->cancelApprovedInternal($requestId, $userId, 'user', $cancellationNote, $userId);
+    }
+
+    /**
+     * Cancels an approved request and restores annual-leave usage through
+     * reversal ledger entries. Original approval metadata is intentionally
+     * preserved; cancellation metadata is stored separately.
+     *
+     * @return array{changed:bool, request:array<string, mixed>|null}
+     */
+    private function cancelApprovedInternal(
+        int $requestId,
+        int $actorId,
+        string $source,
+        ?string $cancellationNote,
+        ?int $requiredOwnerId,
+    ): array {
+        if (!in_array($source, ['user', 'admin'], true)) {
+            return ['changed' => false, 'request' => null];
+        }
+
         $this->pdo->beginTransaction();
 
         try {
             $request = $this->lockedRequest($requestId);
-            if ($request === null || $request['status'] !== 'approved') {
+            if (
+                $request === null
+                || $request['status'] !== 'approved'
+                || ($requiredOwnerId !== null && (int) $request['user_id'] !== $requiredOwnerId)
+            ) {
                 $this->pdo->rollBack();
                 return ['changed' => false, 'request' => $request];
             }
@@ -109,20 +142,28 @@ final class LeaveReviewService
                         'amount' => $amount,
                         'ledger_key' => sprintf('request:%d:reversal:%d', $requestId, $leaveYear),
                         'reference_request_id' => $requestId,
-                        'note' => sprintf('%s 승인 취소 복원', (string) $request['leave_type_name']),
-                        'created_by' => $reviewerId,
+                        'note' => sprintf(
+                            '%s %s 취소 복원',
+                            (string) $request['leave_type_name'],
+                            $source === 'user' ? '사용자' : '관리자',
+                        ),
+                        'created_by' => $actorId,
                     ]);
                 }
             }
 
+            $cancelledAt = date('Y-m-d H:i:s');
             $update = $this->pdo->prepare(
-                "UPDATE leave_requests SET status = 'cancelled', reviewed_by = :reviewed_by, "
-                . 'reviewed_at = CURRENT_TIMESTAMP, review_note = :review_note '
+                "UPDATE leave_requests SET status = 'cancelled', "
+                . 'cancelled_by = :cancelled_by, cancelled_at = :cancelled_at, '
+                . 'cancellation_source = :cancellation_source, cancellation_note = :cancellation_note '
                 . "WHERE id = :id AND status = 'approved'"
             );
             $update->execute([
-                'reviewed_by' => $reviewerId,
-                'review_note' => $reviewNote,
+                'cancelled_by' => $actorId,
+                'cancelled_at' => $cancelledAt,
+                'cancellation_source' => $source,
+                'cancellation_note' => $cancellationNote,
                 'id' => $requestId,
             ]);
 
@@ -133,7 +174,10 @@ final class LeaveReviewService
 
             $this->pdo->commit();
             $request['status'] = 'cancelled';
-            $request['review_note'] = $reviewNote;
+            $request['cancelled_by'] = $actorId;
+            $request['cancelled_at'] = $cancelledAt;
+            $request['cancellation_source'] = $source;
+            $request['cancellation_note'] = $cancellationNote;
 
             return ['changed' => true, 'request' => $request];
         } catch (Throwable $exception) {

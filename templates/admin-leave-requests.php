@@ -147,7 +147,7 @@ $submitLabel = '휴가 등록 · 즉시 승인';
                         <form class="cancel-approved-form" method="post" action="/admin/requests/cancel-approved">
                             <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                             <input type="hidden" name="request_id" value="<?= (int) $item['id'] ?>">
-                            <input name="review_note" maxlength="1000" placeholder="취소 사유">
+                            <input name="cancellation_note" maxlength="1000" placeholder="취소 사유">
                             <button class="button small danger-ghost" type="submit">승인 취소</button>
                         </form>
                     </td>

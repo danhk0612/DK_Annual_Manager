@@ -59,6 +59,10 @@ CREATE TABLE IF NOT EXISTS leave_requests (
     reviewed_by BIGINT UNSIGNED NULL,
     reviewed_at DATETIME NULL,
     review_note TEXT NULL,
+    cancelled_by BIGINT UNSIGNED NULL,
+    cancelled_at DATETIME NULL,
+    cancellation_source ENUM('user', 'admin') NULL,
+    cancellation_note TEXT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_leave_requests_user FOREIGN KEY (user_id) REFERENCES users(id),
@@ -66,7 +70,8 @@ CREATE TABLE IF NOT EXISTS leave_requests (
     CONSTRAINT fk_leave_requests_reviewer FOREIGN KEY (reviewed_by) REFERENCES users(id),
     KEY idx_leave_requests_user_status (user_id, status),
     KEY idx_leave_requests_dates (start_date, end_date),
-    KEY idx_leave_requests_status_created (status, created_at)
+    KEY idx_leave_requests_status_created (status, created_at),
+    KEY idx_leave_requests_cancelled_by (cancelled_by)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS leave_request_days (
@@ -138,4 +143,5 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 INSERT IGNORE INTO schema_migrations (migration_name) VALUES
     ('20260917_001_users_hire_date_nullable.sql'),
     ('20260917_002_annual_leave_ledger_key.sql'),
-    ('20260922_003_leave_usability.sql');
+    ('20260922_003_leave_usability.sql'),
+    ('20260922_004_leave_cancellation_metadata.sql');

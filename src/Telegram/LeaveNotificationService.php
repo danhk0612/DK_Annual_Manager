@@ -54,6 +54,38 @@ final class LeaveNotificationService
     }
 
     /** @param array<string, mixed> $request */
+    public function notifyAdminsOfApprovedCancellation(array $request): int
+    {
+        $targets = $this->adminTargets();
+        if ($targets === []) {
+            return 0;
+        }
+
+        $halfDayPeriod = (string) ($request['half_day_period'] ?? '');
+        $halfDayLabel = $halfDayPeriod === 'am' ? '오전 반차' : ($halfDayPeriod === 'pm' ? '오후 반차' : '');
+        $cancellationNote = trim((string) ($request['cancellation_note'] ?? ''));
+        $text = sprintf(
+            "[승인 휴가 사용자 취소]\n신청번호: #%d\n직원: %s\n종류: %s%s\n기간: %s ~ %s\n일수: %.1f일%s",
+            (int) $request['id'],
+            (string) ($request['user_name'] ?? ''),
+            (string) ($request['leave_type_name'] ?? ''),
+            $halfDayLabel !== '' ? ' (' . $halfDayLabel . ')' : '',
+            (string) ($request['start_date'] ?? ''),
+            (string) ($request['end_date'] ?? ''),
+            (float) ($request['requested_amount'] ?? 0),
+            $cancellationNote !== '' ? "\n취소 사유: " . $cancellationNote : '',
+        );
+
+        $buttons = [];
+        $url = $this->webUrl('/leave/history?status=cancelled&focus_request=' . (int) $request['id'] . '#request-' . (int) $request['id']);
+        if ($url !== null) {
+            $buttons[] = ['text' => '취소 내역 보기', 'url' => $url];
+        }
+
+        return $this->sendToMany($targets, $text, $buttons);
+    }
+
+    /** @param array<string, mixed> $request */
     public function notifyUserOfDecision(array $request): bool
     {
         $telegramUserId = $request['telegram_user_id'] ?? null;
@@ -64,10 +96,12 @@ final class LeaveNotificationService
         $status = (string) ($request['status'] ?? '');
         $statusLabel = match ($status) {
             'approved' => '승인',
-            'cancelled' => '승인 취소',
+            'cancelled' => (($request['cancellation_source'] ?? '') === 'user' ? '취소 완료' : '승인 취소'),
             default => '반려',
         };
-        $reviewNote = trim((string) ($request['review_note'] ?? ''));
+        $messageNote = $status === 'cancelled'
+            ? trim((string) ($request['cancellation_note'] ?? ''))
+            : trim((string) ($request['review_note'] ?? ''));
         $halfDayPeriod = (string) ($request['half_day_period'] ?? '');
         $halfDayLabel = $halfDayPeriod === 'am' ? '오전 반차' : ($halfDayPeriod === 'pm' ? '오후 반차' : '');
         $text = sprintf(
@@ -79,7 +113,7 @@ final class LeaveNotificationService
             (string) $request['start_date'],
             (string) $request['end_date'],
             (float) $request['requested_amount'],
-            $reviewNote !== '' ? "\n관리자 메모: " . $reviewNote : '',
+            $messageNote !== '' ? ($status === 'cancelled' ? "\n취소 사유: " : "\n관리자 메모: ") . $messageNote : '',
         );
 
         $buttons = [];

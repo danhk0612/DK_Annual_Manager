@@ -101,7 +101,7 @@ final class AdminLeaveRequestController
         }
 
         $requestId = $this->positiveInt($request->input('request_id'));
-        $note = trim((string) $request->input('review_note', ''));
+        $note = trim((string) $request->input('cancellation_note', ''));
 
         if ($requestId === null) {
             return Response::redirect('/admin/requests?error=' . rawurlencode('취소할 승인 내역을 확인해 주세요.'));
@@ -122,7 +122,11 @@ final class AdminLeaveRequestController
             'leave.request_approval_cancelled',
             'leave_request',
             $requestId,
-            ['status' => 'cancelled', 'note' => $note !== '' ? $note : null],
+            [
+                'status' => 'cancelled',
+                'cancellation_source' => 'admin',
+                'cancellation_note' => $note !== '' ? $note : '관리자 승인 취소',
+            ],
             $this->ip($request),
         );
 

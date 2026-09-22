@@ -222,6 +222,7 @@ $router->get('/leave', [$leave, 'index'], [$requireAuth]);
 $router->get('/leave/history', [$leave, 'history'], [$requireAuth]);
 $router->post('/leave/create', [$leave, 'create'], [$requireAuth, $verifyCsrf]);
 $router->post('/leave/cancel', [$leave, 'cancel'], [$requireAuth, $verifyCsrf]);
+$router->post('/leave/cancel-approved', [$leave, 'cancelApproved'], [$requireAuth, $verifyCsrf]);
 
 $router->get('/profile', [$profile, 'index'], [$requireAuth]);
 $router->post('/profile/save', [$profile, 'saveProfile'], [$requireAuth, $verifyCsrf]);

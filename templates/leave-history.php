@@ -15,6 +15,18 @@ $statusLabels = [
     'rejected' => '반려',
     'cancelled' => '취소',
 ];
+
+$returnQuery = [];
+if ($query !== '') {
+    $returnQuery['q'] = $query;
+}
+if ($selectedStatus !== '') {
+    $returnQuery['status'] = $selectedStatus;
+}
+if ($selectedYear !== null) {
+    $returnQuery['year'] = $selectedYear;
+}
+$historyReturnTo = '/leave/history' . ($returnQuery !== [] ? '?' . http_build_query($returnQuery) : '');
 ?>
 <section class="page-head">
     <div>
@@ -38,7 +50,7 @@ $statusLabels = [
             <span>검색</span>
             <div class="input-with-icon">
                 <i class="bi bi-search"></i>
-                <input name="q" value="<?= htmlspecialchars($query, ENT_QUOTES, 'UTF-8') ?>" placeholder="<?= $isAdmin ? '직원, 부서, 휴가 종류, 사유, 관리자 메모' : '휴가 종류, 사유, 관리자 메모' ?>">
+                <input name="q" value="<?= htmlspecialchars($query, ENT_QUOTES, 'UTF-8') ?>" placeholder="<?= $isAdmin ? '직원, 부서, 휴가 종류, 사유, 관리자 메모, 취소 사유, 취소 사유' : '휴가 종류, 사유, 관리자 메모' ?>">
             </div>
         </label>
         <label>
@@ -88,6 +100,11 @@ $statusLabels = [
                 <?php
                 $halfDayPeriod = (string) ($item['half_day_period'] ?? '');
                 $halfDayLabel = $halfDayPeriod === 'am' ? ' · 오전' : ($halfDayPeriod === 'pm' ? ' · 오후' : '');
+                $isOwnRequest = (int) $item['user_id'] === $currentUserId;
+                $cancellationSource = (string) ($item['cancellation_source'] ?? '');
+                $cancellationSourceLabel = $cancellationSource === 'user'
+                    ? '사용자 취소'
+                    : ($cancellationSource === 'admin' ? '관리자 취소' : '');
                 ?>
                 <tr id="request-<?= (int) $item['id'] ?>">
                     <td><?= htmlspecialchars((string) $item['created_at'], ENT_QUOTES, 'UTF-8') ?></td>
@@ -101,13 +118,30 @@ $statusLabels = [
                     <td><?= htmlspecialchars((string) $item['start_date'], ENT_QUOTES, 'UTF-8') ?> ~ <?= htmlspecialchars((string) $item['end_date'], ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= number_format((float) $item['requested_amount'], 1) ?></td>
                     <td class="table-text-clip"><?= htmlspecialchars((string) ($item['reason'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                    <td><span class="badge <?= htmlspecialchars((string) $item['status'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($statusLabels[(string) $item['status']] ?? (string) $item['status'], ENT_QUOTES, 'UTF-8') ?></span></td>
                     <td>
-                        <?php if ($item['status'] === 'pending' && (!$isAdmin || (int) $item['user_id'] === $currentUserId)): ?>
-                            <form method="post" action="/leave/cancel" data-confirm-message="이 휴가 신청을 취소하시겠습니까?">
+                        <span class="badge <?= htmlspecialchars((string) $item['status'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($statusLabels[(string) $item['status']] ?? (string) $item['status'], ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php if ($item['status'] === 'cancelled' && $cancellationSourceLabel !== ''): ?>
+                            <span class="muted-line"><?= htmlspecialchars($cancellationSourceLabel, ENT_QUOTES, 'UTF-8') ?><?= !empty($item['cancelled_at']) ? ' · ' . htmlspecialchars((string) $item['cancelled_at'], ENT_QUOTES, 'UTF-8') : '' ?></span>
+                            <?php if (!empty($item['cancellation_note'])): ?>
+                                <span class="muted-line">사유: <?= htmlspecialchars((string) $item['cancellation_note'], ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <?php if ($item['status'] === 'pending' && $isOwnRequest): ?>
+                            <form method="post" action="/leave/cancel" data-confirm-message="승인 전 신청을 취소하면 신청 내역에서 완전히 삭제됩니다. 계속하시겠습니까?">
                                 <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                                 <input type="hidden" name="request_id" value="<?= (int) $item['id'] ?>">
-                                <button class="button small danger-ghost" type="submit"><i class="bi bi-x-circle"></i><span>취소</span></button>
+                                <input type="hidden" name="return_to" value="<?= htmlspecialchars($historyReturnTo, ENT_QUOTES, 'UTF-8') ?>">
+                                <button class="button small danger-ghost" type="submit"><i class="bi bi-trash3"></i><span>신청 취소</span></button>
+                            </form>
+                        <?php elseif ($item['status'] === 'approved' && $isOwnRequest): ?>
+                            <form class="cancel-approved-form" method="post" action="/leave/cancel-approved" data-confirm-message="승인된 휴가를 취소하시겠습니까? 차감된 연차는 자동 복원되고 관리자에게 알림이 전송됩니다.">
+                                <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                                <input type="hidden" name="request_id" value="<?= (int) $item['id'] ?>">
+                                <input type="hidden" name="return_to" value="<?= htmlspecialchars($historyReturnTo, ENT_QUOTES, 'UTF-8') ?>">
+                                <input name="cancellation_note" maxlength="1000" placeholder="취소 사유 (선택)">
+                                <button class="button small danger-ghost" type="submit"><i class="bi bi-calendar-x"></i><span>승인 휴가 취소</span></button>
                             </form>
                         <?php elseif ($isAdmin && $item['status'] === 'pending'): ?>
                             <a class="button small" href="/admin/requests"><i class="bi bi-check2-square"></i><span>처리</span></a>

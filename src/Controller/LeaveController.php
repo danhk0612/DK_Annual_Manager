@@ -320,14 +320,79 @@ final class LeaveController
             return Response::redirect('/login');
         }
 
+        $returnTo = $this->safeReturnTo((string) $request->input('return_to', '/leave/history'));
         $requestId = $this->positiveInt($request->input('request_id'));
-        if ($requestId === null || !$this->requests->cancelPending($requestId, (int) $user['id'])) {
-            return Response::redirect('/leave/history?error=' . rawurlencode('취소할 수 있는 신청을 찾지 못했습니다.'));
+        $deleted = $requestId !== null
+            ? $this->requests->deletePending($requestId, (int) $user['id'])
+            : null;
+
+        if ($deleted === null) {
+            return $this->redirectError('삭제할 수 있는 승인 대기 신청을 찾지 못했습니다.', $returnTo);
         }
 
-        $this->audit->record((int) $user['id'], 'leave.request_cancelled', 'leave_request', $requestId, [], $this->ip($request));
+        $this->audit->record(
+            (int) $user['id'],
+            'leave.pending_request_deleted',
+            'leave_request',
+            $requestId,
+            [
+                'leave_type' => (string) ($deleted['leave_code'] ?? ''),
+                'start_date' => (string) ($deleted['start_date'] ?? ''),
+                'end_date' => (string) ($deleted['end_date'] ?? ''),
+                'amount' => (float) ($deleted['requested_amount'] ?? 0),
+            ],
+            $this->ip($request),
+        );
 
-        return Response::redirect('/leave/history?message=' . rawurlencode('휴가 신청을 취소했습니다.'));
+        return Response::redirect($this->appendQuery($returnTo, [
+            'message' => '승인 대기 신청을 취소하고 삭제했습니다.',
+        ]));
+    }
+
+    public function cancelApproved(Request $request): Response
+    {
+        $user = $this->auth->user();
+        if ($user === null) {
+            return Response::redirect('/login');
+        }
+
+        $returnTo = $this->safeReturnTo((string) $request->input('return_to', '/leave/history'));
+        $requestId = $this->positiveInt($request->input('request_id'));
+        $note = trim((string) $request->input('cancellation_note', ''));
+
+        if ($requestId === null) {
+            return $this->redirectError('취소할 승인 휴가를 확인해 주세요.', $returnTo);
+        }
+
+        $result = $this->reviewer->cancelApprovedByUser(
+            $requestId,
+            (int) $user['id'],
+            $note !== '' ? $note : null,
+        );
+
+        if (!$result['changed'] || $result['request'] === null) {
+            return $this->redirectError('본인의 승인 상태 휴가를 찾지 못했습니다.', $returnTo);
+        }
+
+        $this->audit->record(
+            (int) $user['id'],
+            'leave.approved_request_cancelled_by_user',
+            'leave_request',
+            $requestId,
+            [
+                'status' => 'cancelled',
+                'cancellation_source' => 'user',
+                'cancellation_note' => $note !== '' ? $note : null,
+            ],
+            $this->ip($request),
+        );
+
+        $this->notifications->notifyAdminsOfApprovedCancellation($result['request']);
+        $this->notifications->notifyCompanyOfCancelledLeave($result['request']);
+
+        return Response::redirect($this->appendQuery($returnTo, [
+            'message' => '승인된 휴가를 취소했습니다. 차감된 연차가 있다면 자동으로 복원되었습니다.',
+        ]));
     }
 
     /** @param list<int> $workingWeekdays */
@@ -408,7 +473,7 @@ final class LeaveController
         }
 
         $path = (string) ($parts['path'] ?? '');
-        if (!in_array($path, ['/leave', '/calendar', '/admin/requests'], true)) {
+        if (!in_array($path, ['/leave', '/leave/history', '/calendar', '/admin/requests'], true)) {
             return '/leave';
         }
 

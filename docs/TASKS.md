@@ -470,7 +470,7 @@
 
 ## T25. v1.0.0 정식 배포
 
-상태: 구현 완료 / CI·자동 Release 대기
+상태: 완료
 
 - [x] VERSION 1.0.0
 - [x] README를 설치·사용·운영 중심으로 전면 정리
@@ -481,14 +481,14 @@
 - [x] 운영 서버 migration 최신 상태 확인
 - [x] 운영 preflight FAIL 0 / WARN 0 확인
 - [x] 실제 서비스 핵심 흐름 동작 확인
-- [ ] release/v1.0.0 PR CI 통과
-- [ ] main 병합
-- [ ] main CI 통과
-- [ ] v1.0.0 GitHub Release 자동 생성 확인
+- [x] release/v1.0.0 PR CI 통과
+- [x] main 병합
+- [x] main CI 통과
+- [x] v1.0.0 GitHub Release 자동 생성 확인
 
 ## T26. v1.0.1 재설치 완전 초기화 핫픽스
 
-상태: 구현 완료 / CI·자동 Release 대기
+상태: 완료
 
 - [x] 완전 초기화 대상에 schema_migrations 포함
 - [x] 초기화 직후 모든 서비스 테이블 제거 여부 검증
@@ -497,6 +497,32 @@
 - [x] 설치 Step 1 명칭을 DB 초기화 → DB 스키마 생성으로 명확화
 - [x] 스키마 생성과 완전 초기화의 차이를 설치 화면/문서에 명시
 - [x] VERSION 1.0.1 및 릴리스 노트
-- [ ] hotfix PR CI 통과
+- [x] hotfix PR CI 통과
+- [x] main 병합 및 main CI 통과
+- [x] v1.0.1 GitHub Release 자동 생성 확인
+
+## T27. v1.1.0 사용자 휴가 취소 흐름
+
+상태: 구현 완료 / CI·자동 Release 대기
+
+- [x] 승인 전 본인 신청 취소 시 leave_requests 행 삭제
+- [x] 승인 전 취소 시 leave_request_days FK cascade 삭제
+- [x] 승인 전 취소 시 관리자 추가 Telegram 알림 없음
+- [x] 승인 전 삭제 작업 Audit Log 기록
+- [x] 승인된 본인 휴가 사용자 취소 지원
+- [x] 다른 사용자의 승인 휴가 취소 차단
+- [x] 승인된 연차/반차 사용자 취소 시 reversal 자동 복원
+- [x] 승인 휴가 취소 이력은 cancelled 상태로 유지
+- [x] 취소 주체/시각/사유 메타데이터 추가
+- [x] 기존 승인자/승인시각/승인메모 보존
+- [x] 사용자 승인 휴가 취소 시 활성 관리자 개인 Telegram 알림
+- [x] 사용자 승인 휴가 취소 시 회사 공용 그룹 일정 취소 알림
+- [x] 신청 내역과 달력 상세에서 본인 취소 기능 제공
+- [x] 취소 이력에 사용자/관리자 취소 구분과 사유 표시
+- [x] 취소 사유 검색 지원
+- [x] MariaDB 회귀 테스트 추가
+- [x] migration / schema / production check 갱신
+- [x] VERSION 1.1.0 및 릴리스 노트
+- [ ] feature PR CI 통과
 - [ ] main 병합 및 main CI 통과
-- [ ] v1.0.1 GitHub Release 자동 생성 확인
+- [ ] v1.1.0 GitHub Release 자동 생성 확인
