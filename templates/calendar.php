@@ -63,6 +63,8 @@ $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'
 $selectedCalendarYear = (int) $start->format('Y');
 $selectedCalendarMonth = (int) $start->format('n');
 $calendarMaxYear = (int) date('Y') + 3;
+$atCalendarMin = $month === '2000-01';
+$atCalendarMax = $month === sprintf('%04d-12', $calendarMaxYear);
 ?>
 <section class="page-head">
     <div>
@@ -102,9 +104,17 @@ $calendarMaxYear = (int) date('Y') + 3;
 
 <div class="calendar-toolbar">
     <div class="calendar-nav">
-        <a class="button" href="/calendar?month=<?= $previous ?>"><i class="bi bi-chevron-left"></i> 이전 달</a>
+        <?php if ($atCalendarMin): ?>
+            <button class="button" type="button" disabled><i class="bi bi-chevron-left"></i> 이전 달</button>
+        <?php else: ?>
+            <a class="button" href="/calendar?month=<?= $previous ?>"><i class="bi bi-chevron-left"></i> 이전 달</a>
+        <?php endif; ?>
         <a class="button primary" href="/calendar?month=<?= date('Y-m') ?>"><i class="bi bi-calendar-event"></i> 이번 달</a>
-        <a class="button" href="/calendar?month=<?= $next ?>">다음 달 <i class="bi bi-chevron-right"></i></a>
+        <?php if ($atCalendarMax): ?>
+            <button class="button" type="button" disabled>다음 달 <i class="bi bi-chevron-right"></i></button>
+        <?php else: ?>
+            <a class="button" href="/calendar?month=<?= $next ?>">다음 달 <i class="bi bi-chevron-right"></i></a>
+        <?php endif; ?>
     </div>
     <div class="calendar-toolbar-stats">
         <?php if (!$isAdmin): ?>
