@@ -92,6 +92,16 @@ final class SetupService
         }
 
         $settings = new AppSettingRepository($this->pdo);
+        $completed = $settings->get('setup.completed', '0') === '1';
+
+        if (!$completed) {
+            $this->config->set('telegram.client_id', '');
+            $this->config->set('telegram.client_secret', '');
+            $this->config->set('telegram.bot_token', '');
+            $this->config->set('telegram.bootstrap_admin_telegram_ids', []);
+            $this->config->set('telegram.admin_chat_ids', []);
+            $this->config->set('holiday_api.service_key', '');
+        }
 
         $mappings = [
             'telegram.client_id' => 'telegram.client_id',
