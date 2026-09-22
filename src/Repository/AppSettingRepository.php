@@ -27,9 +27,9 @@ final class AppSettingRepository extends AbstractRepository
         $prefix = sprintf('annual_leave_override.%d.', $userId);
         $statement = $this->pdo->prepare(
             'SELECT setting_key, setting_value FROM app_settings '
-            . 'WHERE setting_key LIKE :prefix ORDER BY setting_key ASC'
+            . 'WHERE LOCATE(:prefix, setting_key) = 1 ORDER BY setting_key ASC'
         );
-        $statement->execute(['prefix' => $prefix . '%']);
+        $statement->execute(['prefix' => $prefix]);
 
         $result = [];
         foreach ($statement->fetchAll() as $row) {
