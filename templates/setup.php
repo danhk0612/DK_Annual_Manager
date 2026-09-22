@@ -26,6 +26,9 @@ $stepStates = [
     4 => $adminCount > 0,
     5 => $status['holiday'],
 ];
+
+$appCssVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.css') ?: '1');
+$appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js') ?: '1');
 ?>
 <!doctype html>
 <html lang="ko">
@@ -36,7 +39,7 @@ $stepStates = [
     <title>초기 서비스 설정 · DK Annual Manager</title>
     <link rel="icon" type="image/svg+xml" href="/assets/app-icon.svg">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="/assets/app.css">
+    <link rel="stylesheet" href="/assets/app.css?v=<?= rawurlencode($appCssVersion) ?>">
 </head>
 <body class="setup-body">
 <main class="setup-shell">
@@ -369,6 +372,6 @@ $stepStates = [
         </section>
     <?php endif; ?>
 </main>
-<script src="/assets/app.js" defer></script>
+<script src="/assets/app.js?v=<?= rawurlencode($appJsVersion) ?>" defer></script>
 </body>
 </html>
