@@ -37,6 +37,18 @@ final class Response
         return new self('', $status, ['Location' => $location]);
     }
 
+    public static function download(string $body, string $filename, string $contentType): self
+    {
+        $safeFilename = preg_replace('/[^A-Za-z0-9._-]/', '-', basename($filename)) ?: 'download.bin';
+
+        return new self($body, 200, [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => 'attachment; filename="' . $safeFilename . '"',
+            'Content-Length' => (string) strlen($body),
+            'Cache-Control' => 'private, no-store, max-age=0',
+        ]);
+    }
+
     public function send(): void
     {
         http_response_code($this->status);
