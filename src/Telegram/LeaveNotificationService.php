@@ -193,26 +193,31 @@ final class LeaveNotificationService
 
     private function webUrl(string $path): ?string
     {
-        $configured = rtrim(trim((string) $this->config->get('app.url', '')), '/');
-        if ($configured !== '' && filter_var($configured, FILTER_VALIDATE_URL) !== false) {
-            $scheme = strtolower((string) parse_url($configured, PHP_URL_SCHEME));
-            if (in_array($scheme, ['https', 'http'], true)) {
-                return $configured . $path;
-            }
+        $redirectUri = trim((string) $this->config->get('telegram.redirect_uri', ''));
+        $redirectBase = $this->urlBase($redirectUri);
+        if ($redirectBase !== null) {
+            return $redirectBase . $path;
         }
 
-        $redirectUri = trim((string) $this->config->get('telegram.redirect_uri', ''));
-        if (filter_var($redirectUri, FILTER_VALIDATE_URL) === false) {
+        $configured = rtrim(trim((string) $this->config->get('app.url', '')), '/');
+        $configuredBase = $this->urlBase($configured);
+        return $configuredBase !== null ? $configuredBase . $path : null;
+    }
+
+    private function urlBase(string $url): ?string
+    {
+        if ($url === '' || filter_var($url, FILTER_VALIDATE_URL) === false) {
             return null;
         }
 
-        $scheme = strtolower((string) parse_url($redirectUri, PHP_URL_SCHEME));
-        $host = (string) parse_url($redirectUri, PHP_URL_HOST);
-        $port = parse_url($redirectUri, PHP_URL_PORT);
+        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+        $host = (string) parse_url($url, PHP_URL_HOST);
+        $port = parse_url($url, PHP_URL_PORT);
         if (!in_array($scheme, ['https', 'http'], true) || $host === '') {
             return null;
         }
 
-        return $scheme . '://' . $host . ($port !== null ? ':' . $port : '') . $path;
+        return $scheme . '://' . $host . ($port !== null ? ':' . $port : '');
     }
+
 }
