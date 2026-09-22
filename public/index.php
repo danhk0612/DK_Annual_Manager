@@ -30,6 +30,7 @@ use DKAnnual\Middleware\RequireAuthMiddleware;
 use DKAnnual\Middleware\VerifyCsrfMiddleware;
 use DKAnnual\Repository\AnnualLeaveLedgerRepository;
 use DKAnnual\Repository\AuditLogRepository;
+use DKAnnual\Repository\AppSettingRepository;
 use DKAnnual\Repository\HolidayRepository;
 use DKAnnual\Repository\LeaveRequestRepository;
 use DKAnnual\Repository\LeaveTypeRepository;
@@ -60,6 +61,7 @@ $leaveTypes = new LeaveTypeRepository($pdo);
 $holidays = new HolidayRepository($pdo);
 $leaveRequests = new LeaveRequestRepository($pdo);
 $audit = new AuditLogRepository($pdo);
+$settings = new AppSettingRepository($pdo);
 $reports = new ReportingRepository($pdo);
 $auth = new Auth($session, $users);
 $csrf = new Csrf($session);
@@ -67,7 +69,7 @@ $view = new View(dirname(__DIR__) . '/templates');
 $router = new Router();
 
 $notifications = new LeaveNotificationService($config, new TelegramBotClient($config), $users);
-$annualLeave = new AnnualLeaveService(new AnnualLeaveCalculator(), $ledger);
+$annualLeave = new AnnualLeaveService(new AnnualLeaveCalculator(), $ledger, $settings);
 $telegramAuth = new TelegramAuthController(
     $config,
     $session,
@@ -83,6 +85,8 @@ $adminUsers = new AdminUserController($users, $annualLeave, $auth, $audit, $view
 $adminAnnualLeave = new AdminAnnualLeaveController($users, $ledger, $annualLeave, $auth, $audit, $view, $csrf);
 $adminRequests = new AdminLeaveRequestController(
     $leaveRequests,
+    $users,
+    $leaveTypes,
     new LeaveReviewService($pdo),
     $notifications,
     $auth,
@@ -98,9 +102,10 @@ $adminHolidays = new AdminHolidayController(
     $view,
     $csrf,
 );
-$profile = new ProfileController($auth, $users, $annualLeave, $audit, $view, $csrf);
+$profile = new ProfileController($auth, $users, $annualLeave, $reports, $audit, $view, $csrf);
 $leave = new LeaveController(
     $auth,
+    $users,
     $leaveTypes,
     $holidays,
     $leaveRequests,
@@ -112,7 +117,7 @@ $leave = new LeaveController(
     $view,
     $csrf,
 );
-$calendar = new CalendarController($auth, $leaveRequests, $holidays, $annualLeave, $view);
+$calendar = new CalendarController($auth, $leaveRequests, $holidays, $leaveTypes, $ledger, $annualLeave, $view, $csrf);
 
 $verifyCsrf = new VerifyCsrfMiddleware($csrf);
 $requireAuth = new RequireAuthMiddleware($auth);
@@ -142,12 +147,14 @@ $router->get('/admin/reports', [$adminReports, 'index'], [$requireAdmin]);
 $router->get('/admin/audit', [$adminAudit, 'index'], [$requireAdmin]);
 $router->get('/admin/requests', [$adminRequests, 'index'], [$requireAdmin]);
 $router->post('/admin/requests/review', [$adminRequests, 'review'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/requests/cancel-approved', [$adminRequests, 'cancelApproved'], [$requireAdmin, $verifyCsrf]);
 $router->get('/admin/users', [$adminUsers, 'index'], [$requireAdmin]);
 $router->post('/admin/users/save', [$adminUsers, 'save'], [$requireAdmin, $verifyCsrf]);
 $router->get('/admin/annual-leave', [$adminAnnualLeave, 'index'], [$requireAdmin]);
 $router->post('/admin/annual-leave/sync', [$adminAnnualLeave, 'sync'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/annual-leave/adjust', [$adminAnnualLeave, 'adjust'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/annual-leave/set-total', [$adminAnnualLeave, 'setTotal'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/annual-leave/clear-total', [$adminAnnualLeave, 'clearTotalOverride'], [$requireAdmin, $verifyCsrf]);
 $router->get('/admin/holidays', [$adminHolidays, 'index'], [$requireAdmin]);
 $router->post('/admin/holidays/sync', [$adminHolidays, 'sync'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/holidays/save', [$adminHolidays, 'save'], [$requireAdmin, $verifyCsrf]);
