@@ -53,15 +53,40 @@ final class SetupService
             return false;
         }
 
+        $this->migrateLegacyInstallation();
+
         $settings = new AppSettingRepository($this->pdo);
         return $settings->get('setup.completed', '0') === '1';
     }
 
+    public function migrateLegacyInstallation(): bool
+    {
+        if (!$this->schemaReady()) {
+            return false;
+        }
+
+        $settings = new AppSettingRepository($this->pdo);
+        if ($settings->get('setup.completed', null) !== null) {
+            return false;
+        }
+
+        $adminCount = (int) $this->pdo
+            ->query("SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'active'")
+            ->fetchColumn();
+
+        if ($adminCount < 1) {
+            return false;
+        }
+
+        $settings->set('setup.completed', '1', null);
+        $settings->set('setup.completed_at', date('c'), null);
+        $settings->set('setup.migrated_legacy', '1', null);
+
+        return true;
+    }
+
     public function initializeSchema(): void
     {
-        if ($this->schemaReady()) {
-            return;
-        }
 
         $schemaPath = $this->rootPath . '/database/schema.sql';
         if (!is_file($schemaPath)) {
