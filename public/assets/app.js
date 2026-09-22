@@ -178,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
             label = '최초 관리자 Telegram User ID';
         } else if (['group', 'supergroup', 'channel'].includes(chatType) && setupGroupChat) {
             target = setupGroupChat;
-            label = '관리자 알림 그룹 Chat ID';
+            label = '회사 공용 Telegram 그룹 Chat ID';
         }
 
         if (!target) {
