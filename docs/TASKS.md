@@ -503,7 +503,7 @@
 
 ## T27. v1.1.0 사용자 휴가 취소 흐름
 
-상태: 구현 완료 / CI·자동 Release 대기
+상태: 완료
 
 - [x] 승인 전 본인 신청 취소 시 leave_requests 행 삭제
 - [x] 승인 전 취소 시 leave_request_days FK cascade 삭제
@@ -523,6 +523,30 @@
 - [x] MariaDB 회귀 테스트 추가
 - [x] migration / schema / production check 갱신
 - [x] VERSION 1.1.0 및 릴리스 노트
+- [x] feature PR CI 통과
+- [x] main 병합 및 main CI 통과
+- [x] v1.1.0 GitHub Release 자동 생성 확인
+
+## T28. v1.2.0 Excel 출력 · 달력 탐색 개선
+
+상태: 구현 완료 / CI·자동 Release 대기
+
+- [x] 사용자 내 정보 연간/월간/전체 Excel(.xlsx) 출력
+- [x] 관리자 휴가 집계 전체/특정 사용자 Excel 출력
+- [x] 관리자 기간 연간/월간/전체 선택
+- [x] 실제 휴가 날짜 기준 기간 필터
+- [x] 신청일수와 기간내일수 동시 출력
+- [x] 승인/취소 메타데이터 Excel 포함
+- [x] 외부 패키지 없는 XLSX writer 구현
+- [x] 사용자 입력을 inline string으로 기록해 Excel formula injection 방지
+- [x] XLSX ZIP 구조 자동 테스트
+- [x] MariaDB 사용자/기간 export query 회귀 테스트
+- [x] 내 정보 월별 요약 → 해당 월 달력 이동
+- [x] 달력 제목 연도/월 셀렉터
+- [x] 선택 달력 연도 기준 잔여 연차 표시
+- [x] 취소/반려 휴가 상세 취소 액션 강제 숨김
+- [x] README/요구사항/아키텍처/집계 문서 갱신
+- [x] VERSION 1.2.0 및 릴리스 노트
 - [ ] feature PR CI 통과
 - [ ] main 병합 및 main CI 통과
-- [ ] v1.1.0 GitHub Release 자동 생성 확인
+- [ ] v1.2.0 GitHub Release 자동 생성 확인
