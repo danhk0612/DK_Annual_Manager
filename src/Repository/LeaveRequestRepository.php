@@ -136,13 +136,15 @@ final class LeaveRequestRepository extends AbstractRepository
         $query = trim($query);
         if ($query !== '') {
             $sql .= 'AND (u.name LIKE :q_user OR u.department LIKE :q_department '
-                . 'OR t.name LIKE :q_type OR r.reason LIKE :q_reason OR r.review_note LIKE :q_review) ';
+                . 'OR t.name LIKE :q_type OR r.reason LIKE :q_reason OR r.review_note LIKE :q_review '
+                . 'OR r.cancellation_note LIKE :q_cancel) ';
             $like = '%' . $query . '%';
             $params['q_user'] = $like;
             $params['q_department'] = $like;
             $params['q_type'] = $like;
             $params['q_reason'] = $like;
             $params['q_review'] = $like;
+            $params['q_cancel'] = $like;
         }
 
         if (in_array($status, ['pending', 'approved', 'rejected', 'cancelled'], true)) {
