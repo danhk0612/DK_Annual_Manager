@@ -163,7 +163,8 @@ final class AdminSettingsController
             $bot = new TelegramBotClient($this->config);
             $botInfo = $bot->getMe();
         } catch (Throwable $exception) {
-            return $this->error('Bot 연결 확인에 실패해 설정을 저장하지 않았습니다: ' . $exception->getMessage());
+            error_log('[DK Annual Settings] Telegram verification failed: ' . $exception::class);
+            return $this->error('Telegram Bot 연결 확인에 실패했습니다. Client ID/Secret, Bot Token, Allowed URL 설정을 확인해 주세요.');
         }
 
         $this->settings->set('telegram.client_id', $clientId, (int) $actor['id']);
@@ -234,7 +235,8 @@ final class AdminSettingsController
             $client = new KasiHolidayClient($this->config);
             $count = count($client->fetchYear((int) date('Y')));
         } catch (Throwable $exception) {
-            return $this->error('공휴일 API 연결 확인에 실패해 키를 저장하지 않았습니다: ' . $exception->getMessage());
+            error_log('[DK Annual Settings] Holiday API verification failed: ' . $exception::class);
+            return $this->error('공휴일 API 연결 확인에 실패했습니다. ServiceKey 승인 상태와 값을 확인해 주세요.');
         }
 
         $this->settings->set('holiday_api.service_key', $serviceKey, (int) $actor['id']);
