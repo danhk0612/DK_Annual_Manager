@@ -430,6 +430,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         let page = 1;
 
+        const params = new URLSearchParams(window.location.search);
+        const focusId = params.get('focus_request');
+        const hashId = window.location.hash.startsWith('#request-')
+            ? window.location.hash.slice('#request-'.length)
+            : '';
+        const targetId = focusId && /^\d+$/.test(focusId)
+            ? focusId
+            : (/^\d+$/.test(hashId) ? hashId : '');
+        let focusItem = null;
+        if (targetId !== '') {
+            const target = document.getElementById('request-' + targetId);
+            focusItem = target ? target.closest('[data-page-item]') : null;
+            const focusIndex = focusItem ? items.indexOf(focusItem) : -1;
+            if (focusIndex >= 0) {
+                page = Math.floor(focusIndex / pageSize) + 1;
+            }
+        }
+
         const controls = document.createElement('div');
         controls.className = 'pagination-controls';
         controls.innerHTML = [
@@ -486,6 +504,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         container.insertAdjacentElement('afterend', controls);
         render();
+
+        if (focusItem) {
+            window.requestAnimationFrame(() => focusItem.scrollIntoView({ block: 'center' }));
+        }
     });
 
     const reviewDialog = document.querySelector('[data-review-dialog]');
