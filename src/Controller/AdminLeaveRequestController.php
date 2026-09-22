@@ -122,7 +122,11 @@ final class AdminLeaveRequestController
             'leave.request_approval_cancelled',
             'leave_request',
             $requestId,
-            ['status' => 'cancelled', 'note' => $note !== '' ? $note : null],
+            [
+                'status' => 'cancelled',
+                'cancellation_source' => 'admin',
+                'cancellation_note' => $note !== '' ? $note : '관리자 승인 취소',
+            ],
             $this->ip($request),
         );
 
