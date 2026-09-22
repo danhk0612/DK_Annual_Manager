@@ -137,6 +137,7 @@ if (!$setupService->completed()) {
     $router->get('/setup', [$setupController, 'index'], [$setupAccess]);
     $router->post('/setup/database', [$setupController, 'initializeDatabase'], [$setupAccess, $verifyCsrf]);
     $router->post('/setup/telegram', [$setupController, 'saveTelegram'], [$setupAccess, $verifyCsrf]);
+    $router->get('/setup/telegram-probe', [$setupController, 'telegramProbe'], [$setupAccess]);
     $router->post('/setup/telegram-targets', [$setupController, 'saveTelegramTargets'], [$setupAccess, $verifyCsrf]);
     $router->post('/setup/holiday', [$setupController, 'saveHoliday'], [$setupAccess, $verifyCsrf]);
     $router->post('/setup/finish', [$setupController, 'finish'], [$setupAccess, $verifyCsrf]);
