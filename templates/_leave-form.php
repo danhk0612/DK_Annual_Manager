@@ -98,6 +98,7 @@ $adminDirectEntry = isset($adminDirectEntry) ? (bool) $adminDirectEntry : false;
     <label>
         사유
         <select name="reason_category" <?= $adminDirectEntry ? '' : 'required' ?>>
+            <?php if ($adminDirectEntry): ?><option value="">선택 안 함</option><?php endif; ?>
             <?php foreach ($reasonCategories as $reasonCategory): ?>
                 <option value="<?= htmlspecialchars($reasonCategory, ENT_QUOTES, 'UTF-8') ?>">
                     <?= htmlspecialchars($reasonCategory, ENT_QUOTES, 'UTF-8') ?>
