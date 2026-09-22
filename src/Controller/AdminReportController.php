@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace DKAnnual\Controller;
 
+use DKAnnual\Export\LeaveExportService;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Repository\ReportingRepository;
+use DKAnnual\Repository\UserRepository;
 use DKAnnual\View\View;
 
 final class AdminReportController
 {
     public function __construct(
         private readonly ReportingRepository $reports,
+        private readonly UserRepository $users,
+        private readonly LeaveExportService $exports,
         private readonly View $view,
     ) {
     }
@@ -98,7 +102,63 @@ final class AdminReportController
             'annualSummary' => $annualSummary,
             'monthlySummary' => $monthlySummary,
             'graphTotals' => $graphTotals,
+            'exportUsers' => $this->users->all(),
         ]));
+    }
+
+    public function export(Request $request): Response
+    {
+        $period = $this->exportPeriod($request->input('period'));
+        $year = $this->yearFrom($request->input('year'));
+        $month = $this->monthFrom($request->input('month'));
+        $userId = $this->userIdFrom($request->input('user_id'));
+
+        $targetLabel = '전체 사용자';
+        if ($userId !== null) {
+            $user = $this->users->findById($userId);
+            if ($user === null) {
+                return Response::redirect('/admin/reports?error=' . rawurlencode('내보낼 사용자를 찾지 못했습니다.'));
+            }
+            $targetLabel = (string) ($user['name'] ?? ('사용자 #' . $userId));
+        }
+
+        $file = $this->exports->create(
+            $userId,
+            $targetLabel,
+            $period,
+            $year,
+            $month,
+            true,
+            $userId === null ? 'leave-report-all-users' : 'leave-report-user-' . $userId,
+        );
+
+        return Response::download(
+            $file['content'],
+            $file['filename'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        );
+    }
+
+    private function exportPeriod(mixed $value): string
+    {
+        $period = (string) ($value ?? 'year');
+        return in_array($period, ['year', 'month', 'all'], true) ? $period : 'year';
+    }
+
+    private function monthFrom(mixed $value): int
+    {
+        $month = filter_var($value, FILTER_VALIDATE_INT);
+        return $month !== false && $month >= 1 && $month <= 12 ? (int) $month : (int) date('n');
+    }
+
+    private function userIdFrom(mixed $value): ?int
+    {
+        $value = (string) ($value ?? '');
+        if ($value === '' || $value === 'all') {
+            return null;
+        }
+
+        return ctype_digit($value) && (int) $value > 0 ? (int) $value : null;
     }
 
     private function yearFrom(mixed $value): int
