@@ -6,6 +6,7 @@ use DKAnnual\Config;
 use DKAnnual\Leave\LeaveReviewService;
 use DKAnnual\Migration\MigrationRunner;
 use DKAnnual\Repository\LeaveRequestRepository;
+use DKAnnual\Repository\ReportingRepository;
 use DKAnnual\Setup\SetupService;
 use PHPUnit\Framework\TestCase;
 
@@ -261,6 +262,56 @@ PHP);
         self::assertSame($userId, (int) $stored['cancelled_by']);
         self::assertSame('user', $stored['cancellation_source']);
         self::assertSame('개인 일정 변경', $stored['cancellation_note']);
+    }
+
+    public function testLeaveExportRowsUseActualLeaveDatesAndUserScope(): void
+    {
+        $this->pdo->exec(
+            "INSERT INTO users (name, role, status) VALUES "
+            . "('직원A', 'user', 'active'), ('직원B', 'user', 'active')"
+        );
+        $userA = (int) $this->pdo->query("SELECT id FROM users WHERE name = '직원A'")->fetchColumn();
+        $userB = (int) $this->pdo->query("SELECT id FROM users WHERE name = '직원B'")->fetchColumn();
+        $leaveTypeId = (int) $this->pdo->query("SELECT id FROM leave_types WHERE code = 'V'")->fetchColumn();
+
+        $requests = new LeaveRequestRepository($this->pdo);
+        $requestA = $requests->create(
+            $userA,
+            $leaveTypeId,
+            '2026-09-30',
+            '2026-10-01',
+            2.0,
+            null,
+            '월 경계 테스트',
+            ['2026-09-30', '2026-10-01'],
+            1.0,
+        );
+        $requests->create(
+            $userB,
+            $leaveTypeId,
+            '2026-09-30',
+            '2026-09-30',
+            1.0,
+            null,
+            '다른 사용자',
+            ['2026-09-30'],
+            1.0,
+        );
+
+        $reports = new ReportingRepository($this->pdo);
+
+        $september = $reports->leaveExportRows($userA, '2026-09-01', '2026-09-30');
+        self::assertCount(1, $september);
+        self::assertSame($requestA, (int) $september[0]['id']);
+        self::assertSame(2.0, (float) $september[0]['requested_amount']);
+        self::assertSame(1.0, (float) $september[0]['period_amount']);
+
+        $year = $reports->leaveExportRows($userA, '2026-01-01', '2026-12-31');
+        self::assertCount(1, $year);
+        self::assertSame(2.0, (float) $year[0]['period_amount']);
+
+        $allUsersSeptember = $reports->leaveExportRows(null, '2026-09-01', '2026-09-30');
+        self::assertCount(2, $allUsersSeptember);
     }
 
     public function testApprovalAndCancellationUpdateAnnualLeaveLedgerAtomically(): void
