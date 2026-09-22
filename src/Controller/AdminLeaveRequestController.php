@@ -36,7 +36,7 @@ final class AdminLeaveRequestController
         return Response::html($this->view->render('admin-leave-requests', [
             'title' => '휴가 승인',
             'requests' => $this->requests->pendingForAdmin(),
-            'approvedRequests' => $this->requests->approvedForAdmin(30),
+            'approvedRequests' => $this->requests->approvedForAdmin(),
             'users' => $this->users->active(),
             'leaveTypes' => $this->leaveTypes->active(),
             'reasonCategories' => ['개인 사유', '가족 행사', '병원/건강', '업무 관련', '기타'],
