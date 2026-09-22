@@ -41,11 +41,11 @@ final class CalendarController
 
         $this->annualLeave->syncAccruals($user, new DateTimeImmutable('today'), null);
 
-        $month = $this->month((string) $request->input('month', date('Y-m')));
+        $month = $this->requestedMonth($request);
         $start = new DateTimeImmutable($month . '-01');
         $end = $start->modify('last day of this month');
         $scopeUserId = ($user['role'] ?? null) === 'admin' ? null : (int) $user['id'];
-        $year = (int) date('Y');
+        $year = (int) $start->format('Y');
         $calendarTitle = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'), (int) $start->format('n'));
 
         return Response::html($this->view->render('calendar', [
@@ -79,6 +79,25 @@ final class CalendarController
             'warning' => $request->input('warning'),
             'error' => $request->input('error'),
         ]));
+    }
+
+    private function requestedMonth(Request $request): string
+    {
+        $year = filter_var($request->input('year'), FILTER_VALIDATE_INT);
+        $monthNumber = filter_var($request->input('month_number'), FILTER_VALIDATE_INT);
+
+        if (
+            $year !== false
+            && $year >= 2000
+            && $year <= 2100
+            && $monthNumber !== false
+            && $monthNumber >= 1
+            && $monthNumber <= 12
+        ) {
+            return sprintf('%04d-%02d', (int) $year, (int) $monthNumber);
+        }
+
+        return $this->month((string) $request->input('month', date('Y-m')));
     }
 
     private function month(string $value): string
