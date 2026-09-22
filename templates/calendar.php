@@ -225,7 +225,7 @@ $targetUsers = [];
                             data-open-request-detail
                             data-request-id="<?= (int) $item['id'] ?>"
                             data-request-user="<?= htmlspecialchars((string) $item['user_name'], ENT_QUOTES, 'UTF-8') ?>"
-                            data-request-department=""
+                            data-request-department="<?= htmlspecialchars((string) ($item['department'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                             data-request-type="<?= htmlspecialchars((string) $item['leave_type_name'] . $halfDayLabel, ENT_QUOTES, 'UTF-8') ?>"
                             data-request-period="<?= htmlspecialchars((string) $item['start_date'] . ' ~ ' . (string) $item['end_date'], ENT_QUOTES, 'UTF-8') ?>"
                             data-request-amount="<?= htmlspecialchars(number_format((float) $item['requested_amount'], 1) . '일', ENT_QUOTES, 'UTF-8') ?>"
