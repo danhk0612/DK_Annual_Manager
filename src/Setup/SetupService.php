@@ -129,7 +129,7 @@ final class SetupService
             $this->config->set('telegram.client_secret', '');
             $this->config->set('telegram.bot_token', '');
             $this->config->set('telegram.bootstrap_admin_telegram_ids', []);
-            $this->config->set('telegram.admin_chat_ids', []);
+            $this->config->set('telegram.company_chat_id', []);
             $this->config->set('holiday_api.service_key', '');
         }
 
@@ -153,9 +153,9 @@ final class SetupService
             $this->config->set('telegram.bootstrap_admin_telegram_ids', $managedAdminIds);
         }
 
-        $managedChatsRaw = $settings->get('telegram.admin_chat_ids', null);
-        if ($managedChatsRaw !== null) {
-            $this->config->set('telegram.admin_chat_ids', $settings->lineList('telegram.admin_chat_ids'));
+        $managedCompanyChat = trim((string) $settings->get('telegram.company_chat_id', ''));
+        if ($managedCompanyChat !== '') {
+            $this->config->set('telegram.company_chat_id', $managedCompanyChat);
         }
     }
 
@@ -188,7 +188,7 @@ final class SetupService
             && trim((string) $settings->get('telegram.client_secret', '')) !== ''
             && trim((string) $settings->get('telegram.bot_token', '')) !== '';
 
-        $chat = $settings->lineList('telegram.admin_chat_ids') !== [];
+        $chat = trim((string) $settings->get('telegram.company_chat_id', '')) !== '';
         $admin = $settings->lineList('telegram.bootstrap_admin_telegram_ids') !== [];
         $holiday = trim((string) $settings->get('holiday_api.service_key', '')) !== '';
 
