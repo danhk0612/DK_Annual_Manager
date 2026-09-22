@@ -9,8 +9,11 @@ use DKAnnual\Auth\Auth;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Leave\AnnualLeaveService;
+use DKAnnual\Repository\AnnualLeaveLedgerRepository;
 use DKAnnual\Repository\HolidayRepository;
 use DKAnnual\Repository\LeaveRequestRepository;
+use DKAnnual\Repository\LeaveTypeRepository;
+use DKAnnual\Security\Csrf;
 use DKAnnual\View\View;
 
 final class CalendarController
@@ -19,8 +22,11 @@ final class CalendarController
         private readonly Auth $auth,
         private readonly LeaveRequestRepository $requests,
         private readonly HolidayRepository $holidays,
+        private readonly LeaveTypeRepository $leaveTypes,
+        private readonly AnnualLeaveLedgerRepository $ledger,
         private readonly AnnualLeaveService $annualLeave,
         private readonly View $view,
+        private readonly Csrf $csrf,
     ) {
     }
 
@@ -37,9 +43,11 @@ final class CalendarController
         $start = new DateTimeImmutable($month . '-01');
         $end = $start->modify('last day of this month');
         $scopeUserId = ($user['role'] ?? null) === 'admin' ? null : (int) $user['id'];
+        $year = (int) date('Y');
 
         return Response::html($this->view->render('calendar', [
             'title' => '휴가 달력',
+            'user' => $user,
             'month' => $month,
             'start' => $start,
             'end' => $end,
@@ -58,6 +66,14 @@ final class CalendarController
                 $start->format('Y-m-d'),
                 $end->format('Y-m-d'),
             ),
+            'leaveTypes' => $this->leaveTypes->active(),
+            'annualBalance' => $this->ledger->balanceForUserYear((int) $user['id'], $year),
+            'reasonCategories' => ['개인 사유', '가족 행사', '병원/건강', '업무 관련', '기타'],
+            'today' => date('Y-m-d'),
+            'csrfToken' => $this->csrf->token(),
+            'message' => $request->input('message'),
+            'warning' => $request->input('warning'),
+            'error' => $request->input('error'),
         ]));
     }
 
