@@ -956,6 +956,10 @@ progress::-moz-progress-bar {
     margin-top: 14px;
 }
 
+[data-page-item][hidden] {
+    display: none !important;
+}
+
 .pagination-controls {
     display: flex;
     align-items: center;
@@ -1848,6 +1852,16 @@ html[data-theme="dark"] progress::-webkit-progress-bar {
     html[data-theme="system"] .menu-card:hover,
     html[data-theme="system"] .quick-action:hover {
         background: color-mix(in srgb, var(--primary) 5%, var(--surface));
+    }
+
+    html[data-theme="system"] .weekday-head > .non-working-weekday.weekend-saturday,
+    html[data-theme="system"] .calendar-day.non-working-day.weekend-saturday:not(.public-holiday):not(.company-holiday):not(.today) {
+        background: #18263a;
+    }
+
+    html[data-theme="system"] .weekday-head > .non-working-weekday.weekend-sunday,
+    html[data-theme="system"] .calendar-day.non-working-day.weekend-sunday:not(.public-holiday):not(.company-holiday):not(.today) {
+        background: #352023;
     }
 
     html[data-theme="system"] .calendar-day.public-holiday { background: #302022; }
