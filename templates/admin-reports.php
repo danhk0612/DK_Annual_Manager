@@ -9,6 +9,8 @@
 /** @var list<array<string, mixed>> $annualSummary */
 /** @var list<array<string, mixed>> $monthlySummary */
 /** @var array<int, float> $graphTotals */
+/** @var list<array<string, mixed>> $exportUsers */
+/** @var mixed $error */
 
 $monthly = [];
 $types = [];
@@ -29,6 +31,10 @@ $maxGraph = max(1.0, ...array_values($graphTotals));
     </div>
     <a class="button" href="/admin">관리자 대시보드</a>
 </section>
+
+<?php if (is_string($error) && $error !== ''): ?>
+    <div class="notice error"><i class="bi bi-x-circle"></i><span><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></span></div>
+<?php endif; ?>
 
 <section class="panel filter-panel">
     <form class="filter-grid" method="get" action="/admin/reports">
@@ -76,6 +82,55 @@ $maxGraph = max(1.0, ...array_values($graphTotals));
             <a class="button" href="/admin/reports?year=<?= $year ?>">초기화</a>
         </div>
     </form>
+</section>
+
+<section class="panel export-panel">
+    <div class="section-head">
+        <div>
+            <p class="eyebrow">Excel export</p>
+            <h2><i class="bi bi-file-earmark-excel"></i><span>휴가 집계 엑셀 출력</span></h2>
+            <p>특정 사용자 또는 전체 사용자의 휴가 신청 내역을 원하는 기간으로 내려받습니다.</p>
+        </div>
+    </div>
+
+    <form class="export-form admin-export-form" method="get" action="/admin/reports/export" data-export-form>
+        <label>
+            대상
+            <select name="user_id">
+                <option value="all">전체 사용자</option>
+                <?php foreach ($exportUsers as $exportUser): ?>
+                    <option value="<?= (int) $exportUser['id'] ?>">
+                        <?= htmlspecialchars((string) $exportUser['name'], ENT_QUOTES, 'UTF-8') ?>
+                        <?php if (!empty($exportUser['department'])): ?> · <?= htmlspecialchars((string) $exportUser['department'], ENT_QUOTES, 'UTF-8') ?><?php endif; ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+        <label>
+            기간
+            <select name="period" data-export-period>
+                <option value="year">연간</option>
+                <option value="month">월간</option>
+                <option value="all">전체</option>
+            </select>
+        </label>
+        <label data-export-year-wrap>
+            연도
+            <input type="number" name="year" min="2000" max="2100" value="<?= $year ?>">
+        </label>
+        <label data-export-month-wrap>
+            월
+            <select name="month">
+                <?php for ($exportMonth = 1; $exportMonth <= 12; $exportMonth++): ?>
+                    <option value="<?= $exportMonth ?>" <?= $exportMonth === (int) date('n') ? 'selected' : '' ?>><?= $exportMonth ?>월</option>
+                <?php endfor; ?>
+            </select>
+        </label>
+        <div class="filter-actions">
+            <button class="button primary" type="submit"><i class="bi bi-download"></i><span>엑셀 다운로드</span></button>
+        </div>
+    </form>
+    <p class="form-hint">내보내기 파일에는 신청 상태, 휴가 종류, 원래 신청 일수, 선택 기간 내 실제 일수, 승인 정보와 취소 정보가 포함됩니다.</p>
 </section>
 
 <section class="panel">

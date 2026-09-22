@@ -6,6 +6,7 @@ namespace DKAnnual\Controller;
 
 use DateTimeImmutable;
 use DKAnnual\Auth\Auth;
+use DKAnnual\Export\LeaveExportService;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Leave\AnnualLeaveService;
@@ -22,6 +23,7 @@ final class ProfileController
         private readonly UserRepository $users,
         private readonly AnnualLeaveService $annualLeave,
         private readonly ReportingRepository $reports,
+        private readonly LeaveExportService $exports,
         private readonly AuditLogRepository $audit,
         private readonly View $view,
         private readonly Csrf $csrf,
@@ -48,6 +50,34 @@ final class ProfileController
             'message' => $request->input('message'),
             'error' => $request->input('error'),
         ]));
+    }
+
+    public function export(Request $request): Response
+    {
+        $user = $this->auth->user();
+        if ($user === null) {
+            return Response::redirect('/login');
+        }
+
+        $period = $this->exportPeriod($request->input('period'));
+        $year = $this->exportYear($request->input('year'));
+        $month = $this->exportMonth($request->input('month'));
+
+        $file = $this->exports->create(
+            (int) $user['id'],
+            (string) ($user['name'] ?? '내 휴가'),
+            $period,
+            $year,
+            $month,
+            false,
+            'my-leave',
+        );
+
+        return Response::download(
+            $file['content'],
+            $file['filename'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        );
     }
 
     public function saveProfile(Request $request): Response
@@ -93,6 +123,24 @@ final class ProfileController
         return Response::redirect('/profile?message=' . rawurlencode(
             $added > 0 ? sprintf('내 정보를 저장하고 연차 발생분 %d건을 반영했습니다.', $added) : '내 정보를 저장했습니다.'
         ));
+    }
+
+    private function exportPeriod(mixed $value): string
+    {
+        $period = (string) ($value ?? 'year');
+        return in_array($period, ['year', 'month', 'all'], true) ? $period : 'year';
+    }
+
+    private function exportYear(mixed $value): int
+    {
+        $year = filter_var($value, FILTER_VALIDATE_INT);
+        return $year !== false && $year >= 2000 && $year <= 2100 ? (int) $year : (int) date('Y');
+    }
+
+    private function exportMonth(mixed $value): int
+    {
+        $month = filter_var($value, FILTER_VALIDATE_INT);
+        return $month !== false && $month >= 1 && $month <= 12 ? (int) $month : (int) date('n');
     }
 
     private function textLength(string $value): int

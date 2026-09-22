@@ -49,7 +49,7 @@
     <div class="monthly-leave-grid">
         <?php foreach ($monthlyLeaveSummary as $monthSummary): ?>
             <?php $isCurrentMonth = $year === (int) date('Y') && (int) $monthSummary['month_number'] === (int) date('n'); ?>
-            <div class="monthly-leave-card <?= $isCurrentMonth ? 'current' : '' ?>">
+            <a class="monthly-leave-card <?= $isCurrentMonth ? 'current' : '' ?>" href="/calendar?month=<?= sprintf('%04d-%02d', $year, (int) $monthSummary['month_number']) ?>" aria-label="<?= $year ?>년 <?= (int) $monthSummary['month_number'] ?>월 달력으로 이동">
                 <div class="monthly-leave-card-head">
                     <strong><?= (int) $monthSummary['month_number'] ?>월</strong>
                     <span><?= (int) $monthSummary['request_count'] ?>건</span>
@@ -59,9 +59,46 @@
                     <span class="deduct"><i></i>연차 차감 <?= number_format((float) $monthSummary['deducted_amount'], 1) ?></span>
                     <span class="free"><i></i>미차감 <?= number_format((float) $monthSummary['non_deducted_amount'], 1) ?></span>
                 </div>
-            </div>
+            </a>
         <?php endforeach; ?>
     </div>
+</section>
+
+<section class="panel export-panel">
+    <div class="section-head">
+        <div>
+            <p class="eyebrow">Excel export</p>
+            <h2><i class="bi bi-file-earmark-excel"></i><span>내 휴가 엑셀 출력</span></h2>
+            <p>내 휴가 신청 내역을 연간, 월간 또는 전체 기간으로 내려받습니다.</p>
+        </div>
+    </div>
+
+    <form class="export-form" method="get" action="/profile/export" data-export-form>
+        <label>
+            기간
+            <select name="period" data-export-period>
+                <option value="year">연간</option>
+                <option value="month">월간</option>
+                <option value="all">전체</option>
+            </select>
+        </label>
+        <label data-export-year-wrap>
+            연도
+            <input type="number" name="year" min="2000" max="2100" value="<?= $year ?>">
+        </label>
+        <label data-export-month-wrap>
+            월
+            <select name="month">
+                <?php for ($exportMonth = 1; $exportMonth <= 12; $exportMonth++): ?>
+                    <option value="<?= $exportMonth ?>" <?= $exportMonth === (int) date('n') ? 'selected' : '' ?>><?= $exportMonth ?>월</option>
+                <?php endfor; ?>
+            </select>
+        </label>
+        <div class="filter-actions">
+            <button class="button primary" type="submit"><i class="bi bi-download"></i><span>엑셀 다운로드</span></button>
+        </div>
+    </form>
+    <p class="form-hint">기간을 걸쳐 신청한 휴가는 실제 휴가 날짜를 기준으로 선택 기간에 해당하는 일수를 함께 표시합니다.</p>
 </section>
 
 <div class="content-grid two-column">
