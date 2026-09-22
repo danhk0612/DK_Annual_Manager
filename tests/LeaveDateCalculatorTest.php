@@ -50,6 +50,20 @@ final class LeaveDateCalculatorTest extends TestCase
         );
     }
 
+    public function testJanuaryNinth2026IsAWorkingDayWithDefaultSchedule(): void
+    {
+        $calculator = new LeaveDateCalculator();
+
+        self::assertSame(
+            ['2026-01-09'],
+            $calculator->workingDates(
+                new DateTimeImmutable('2026-01-09'),
+                new DateTimeImmutable('2026-01-09'),
+                [],
+            )
+        );
+    }
+
     public function testReverseRangeProducesNoDates(): void
     {
         $calculator = new LeaveDateCalculator();
