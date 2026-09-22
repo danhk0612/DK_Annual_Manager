@@ -461,7 +461,7 @@
 - [x] MariaDB 10.6 CI 통합 테스트 추가
 - [x] 승인 → 연차 차감 → 승인 취소 → 연차 복원 DB 통합 테스트
 - [x] Composer dependency audit CI 추가
-- [ ] composer.lock 저장소 고정
+- [x] composer.lock 저장소 고정
 - [ ] PHP 8.2/8.4 + MariaDB CI 최종 통과
 - [ ] 실제 Telegram에서 관리자/사용자 인라인 버튼 및 로그인 복귀 검증
 - [ ] 실제 운영 서버에서 php bin/migrate.php / php bin/check.php --production 검증
