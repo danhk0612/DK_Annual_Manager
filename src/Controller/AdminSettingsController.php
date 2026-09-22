@@ -200,6 +200,10 @@ final class AdminSettingsController
             return $this->error('회사 공용 Telegram 그룹 Chat ID를 확인해 주세요.');
         }
 
+        if (!$this->isCompanyGroup($chatId)) {
+            return $this->error('회사 공용 Telegram 그룹은 Bot이 참여 중인 group 또는 supergroup이어야 합니다.');
+        }
+
         $this->settings->set('telegram.company_chat_id', $chatId, (int) $actor['id']);
         $this->settings->delete('telegram.admin_chat_ids');
         $this->config->set('telegram.company_chat_id', $chatId);
@@ -247,6 +251,10 @@ final class AdminSettingsController
 
         if ($chatId === '' || preg_match('/^-?\d+$/', $chatId) !== 1) {
             return $this->error('회사 공용 Telegram 그룹 Chat ID를 확인해 주세요.');
+        }
+
+        if (!$this->isCompanyGroup($chatId)) {
+            return $this->error('회사 공용 Telegram 그룹은 Bot이 참여 중인 group 또는 supergroup이어야 합니다.');
         }
 
         $this->settings->set('telegram.company_chat_id', $chatId, (int) $actor['id']);
@@ -372,6 +380,17 @@ final class AdminSettingsController
 
         $configured = rtrim((string) $this->config->get('app.url', ''), '/');
         return filter_var($configured, FILTER_VALIDATE_URL) !== false ? $configured : '';
+    }
+
+    private function isCompanyGroup(string $chatId): bool
+    {
+        try {
+            $chat = $this->telegramBot->getChat($chatId);
+            return in_array((string) ($chat['type'] ?? ''), ['group', 'supergroup'], true);
+        } catch (Throwable $exception) {
+            error_log('[DK Annual Settings] Company Telegram group validation failed: ' . $exception::class);
+            return false;
+        }
     }
 
     private function configuredCompanyChatId(): string
