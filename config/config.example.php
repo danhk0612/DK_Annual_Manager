@@ -36,7 +36,8 @@ return [
         'scopes' => ['openid', 'profile', 'telegram:bot_access'],
         'bot_api_base_url' => 'https://api.telegram.org',
         'bootstrap_admin_telegram_ids' => [],
-        'admin_chat_ids' => [],
+        // 관리자와 직원이 함께 보는 회사 공용 그룹. 신청 사유 등 관리 정보는 이 그룹에 보내지 않습니다.
+        'company_chat_id' => '',
     ],
 
     // ServiceKey는 /setup 또는 관리자 환경설정에서 입력할 수 있습니다.
