@@ -125,6 +125,15 @@ final class LeaveController
             $isAdminProxy = true;
         }
 
+        if (trim((string) ($subject['hire_date'] ?? '')) === '') {
+            return $this->redirectError(
+                $isAdminProxy
+                    ? '입사일이 등록되지 않은 직원은 휴가를 등록할 수 없습니다. 직원 정보에서 입사일을 먼저 입력해 주세요.'
+                    : '입사일이 등록되지 않아 휴가를 신청할 수 없습니다. 내 정보에서 입사일을 먼저 입력해 주세요.',
+                $returnTo,
+            );
+        }
+
         $this->annualLeave->syncAccruals($subject, new DateTimeImmutable('today'), (int) $actor['id']);
 
         $leaveTypeId = $this->positiveInt($request->input('leave_type_id'));
@@ -280,9 +289,8 @@ final class LeaveController
                 $this->ip($request),
             );
 
-            $this->notifications->notifyUserOfDecision($reviewResult['request']);
-            $this->notifications->notifyCompanyOfApprovedLeave($reviewResult['request']);
-
+            // Administrator direct registration is an internal authoritative entry.
+            // Do not send Telegram notifications for this path.
             $message = sprintf(
                 '%s님의 %s %.1f일을 등록하고 즉시 승인했습니다.',
                 (string) $subject['name'],
