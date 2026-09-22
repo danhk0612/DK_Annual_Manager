@@ -51,9 +51,10 @@ cp config/config.example.php config/config.php
 
 1. MariaDB 데이터베이스와 전용 계정을 준비하고 `config/config.php`에 DB 접속 정보와 서비스 URL을 입력합니다.
 2. 웹 서버 DocumentRoot를 반드시 `public/`으로 지정합니다.
-3. 브라우저에서 `/setup`을 열어 DB schema, Telegram, 최초 관리자, 공휴일 API를 순서대로 설정합니다.
-4. 신규 설치는 최신 `database/schema.sql`을 사용하며 별도 migration이 필요하지 않습니다.
-5. 아래 명령으로 환경을 점검합니다.
+3. `php84 bin/setup-key.php`로 설치 접근 키를 생성하고 출력된 보호 URL로 `/setup`에 접속합니다.
+4. DB schema, Telegram, 최초 관리자, 공휴일 API를 순서대로 설정합니다. Telegram Allowed Origin과 Redirect URI는 현재 접속 주소에서 자동 계산합니다.
+5. 신규 설치는 최신 `database/schema.sql`을 사용하며 별도 migration이 필요하지 않습니다.
+6. 아래 명령으로 환경을 점검합니다.
 
 ```bash
 php bin/check.php
@@ -86,8 +87,9 @@ php bin/check.php
 - [`docs/HOLIDAY_SYNC.md`](docs/HOLIDAY_SYNC.md) — 한국 공휴일 동기화 정책
 - [`docs/REPORTING_AND_AUDIT.md`](docs/REPORTING_AND_AUDIT.md) — 집계/Audit 기준
 - [`docs/INSTALL.md`](docs/INSTALL.md) — 설치 및 운영 설정
+- [`docs/SETUP_FLOW.md`](docs/SETUP_FLOW.md) — 보안 설치 마법사 및 Telegram 연결 흐름
 - [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) — 정식 릴리스 전 검증 항목
 
 ## 개발 상태
 
-T01~T13 주요 기능 구현 완료. 실제 운영 환경의 브랜딩·Telegram·모바일 UI 통합 검증 단계입니다.
+T01~T15 주요 기능 구현 완료. 실제 NAS에서 완전 초기화 설치 마법사와 Telegram/공휴일 통합 검증 단계입니다.
