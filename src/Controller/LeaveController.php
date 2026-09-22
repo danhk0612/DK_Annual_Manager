@@ -10,6 +10,7 @@ use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Leave\AnnualLeaveService;
 use DKAnnual\Leave\LeaveDateCalculator;
+use DKAnnual\Leave\LeaveReviewService;
 use DKAnnual\Repository\AnnualLeaveLedgerRepository;
 use DKAnnual\Repository\AppSettingRepository;
 use DKAnnual\Repository\AuditLogRepository;
@@ -34,6 +35,7 @@ final class LeaveController
         private readonly AppSettingRepository $settings,
         private readonly LeaveDateCalculator $dates,
         private readonly LeaveNotificationService $notifications,
+        private readonly LeaveReviewService $reviewer,
         private readonly AuditLogRepository $audit,
         private readonly View $view,
         private readonly Csrf $csrf,
@@ -108,6 +110,7 @@ final class LeaveController
         $returnTo = $this->safeReturnTo((string) $request->input('return_to', '/leave'));
         $subject = $actor;
         $targetUserId = $this->positiveInt($request->input('target_user_id'));
+        $isAdminProxy = false;
 
         if ($targetUserId !== null) {
             if (($actor['role'] ?? null) !== 'admin') {
@@ -119,6 +122,7 @@ final class LeaveController
                 return $this->redirectError('대리 신청할 활성 직원을 찾을 수 없습니다.', $returnTo);
             }
             $subject = $target;
+            $isAdminProxy = true;
         }
 
         $this->annualLeave->syncAccruals($subject, new DateTimeImmutable('today'), (int) $actor['id']);
@@ -234,21 +238,55 @@ final class LeaveController
             'admin_date_exception' => $adminDateOverride,
         ], $this->ip($request));
 
-        $this->notifications->notifyAdminsOfRequest([
-            'id' => $requestId,
-            'user_name' => (string) $subject['name'],
-            'leave_type_name' => (string) $leaveType['name'],
-            'start_date' => $start->format('Y-m-d'),
-            'end_date' => $end->format('Y-m-d'),
-            'requested_amount' => $requestedAmount,
-            'half_day_period' => $halfDayPeriod !== '' ? $halfDayPeriod : null,
-            'reason' => $reason,
-            'balance_warning' => $balanceWarning,
-        ]);
+        if ($isAdminProxy) {
+            $reviewResult = $this->reviewer->review(
+                $requestId,
+                'approve',
+                (int) $actor['id'],
+                null,
+            );
 
-        $message = (int) $actor['id'] === (int) $subject['id']
-            ? sprintf('%s %.1f일을 신청했습니다.', (string) $leaveType['name'], $requestedAmount)
-            : sprintf('%s님의 %s %.1f일을 대리 신청했습니다.', (string) $subject['name'], (string) $leaveType['name'], $requestedAmount);
+            if (!$reviewResult['changed'] || $reviewResult['request'] === null) {
+                return $this->redirectError('관리자 대리 등록의 자동 승인 처리에 실패했습니다.', $returnTo);
+            }
+
+            $this->audit->record(
+                (int) $actor['id'],
+                'leave.request_approved',
+                'leave_request',
+                $requestId,
+                [
+                    'status' => 'approved',
+                    'source' => 'admin_proxy',
+                    'automatic' => true,
+                ],
+                $this->ip($request),
+            );
+
+            $this->notifications->notifyUserOfDecision($reviewResult['request']);
+            $this->notifications->notifyCompanyOfApprovedLeave($reviewResult['request']);
+
+            $message = sprintf(
+                '%s님의 %s %.1f일을 등록하고 즉시 승인했습니다.',
+                (string) $subject['name'],
+                (string) $leaveType['name'],
+                $requestedAmount,
+            );
+        } else {
+            $this->notifications->notifyAdminsOfRequest([
+                'id' => $requestId,
+                'user_name' => (string) $subject['name'],
+                'leave_type_name' => (string) $leaveType['name'],
+                'start_date' => $start->format('Y-m-d'),
+                'end_date' => $end->format('Y-m-d'),
+                'requested_amount' => $requestedAmount,
+                'half_day_period' => $halfDayPeriod !== '' ? $halfDayPeriod : null,
+                'reason' => $reason,
+                'balance_warning' => $balanceWarning,
+            ]);
+
+            $message = sprintf('%s %.1f일을 신청했습니다.', (string) $leaveType['name'], $requestedAmount);
+        }
 
         $query = ['message' => $message];
         if ($balanceWarning !== null) {
