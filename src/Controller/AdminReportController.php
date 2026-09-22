@@ -63,9 +63,9 @@ final class AdminReportController
             },
         ));
 
-        $allMonthly = $this->reports->monthlyApprovedLeaveSummary($year);
+        $monthlyTypeSource = $this->reports->monthlyApprovedLeaveSummary($year);
         $leaveTypes = [];
-        foreach ($allMonthly as $row) {
+        foreach ($monthlyTypeSource as $row) {
             $leaveTypes[(string) $row['code']] = (string) $row['name'];
         }
 
@@ -73,6 +73,7 @@ final class AdminReportController
             $leaveType = '';
         }
 
+        $allMonthly = $this->reports->monthlyApprovedLeaveSummary($year, $query, $status, $department);
         $monthlySummary = $leaveType === ''
             ? $allMonthly
             : array_values(array_filter(
