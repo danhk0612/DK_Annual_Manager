@@ -11,18 +11,21 @@ final class LeaveDateCalculator
 {
     /**
      * @param list<string> $holidayDates
+     * @param list<int> $workingWeekdays ISO-8601 weekday numbers, Monday=1 ... Sunday=7
      * @return list<string>
      */
     public function workingDates(
         DateTimeImmutable $start,
         DateTimeImmutable $end,
         array $holidayDates,
+        array $workingWeekdays = [1, 2, 3, 4, 5],
     ): array {
         if ($end < $start) {
             return [];
         }
 
         $holidaySet = array_fill_keys($holidayDates, true);
+        $workingDaySet = array_fill_keys($workingWeekdays, true);
         $dates = [];
         $cursor = $start;
 
@@ -30,7 +33,7 @@ final class LeaveDateCalculator
             $date = $cursor->format('Y-m-d');
             $dayOfWeek = (int) $cursor->format('N');
 
-            if ($dayOfWeek < 6 && !isset($holidaySet[$date])) {
+            if (isset($workingDaySet[$dayOfWeek]) && !isset($holidaySet[$date])) {
                 $dates[] = $date;
             }
 
