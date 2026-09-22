@@ -56,6 +56,36 @@ final class AnnualLeaveLedgerRepository extends AbstractRepository
         return (int) $this->pdo->lastInsertId();
     }
 
+    public function deleteAutomaticGrantsForUser(int $userId): int
+    {
+        $statement = $this->pdo->prepare(
+            "DELETE FROM annual_leave_ledger "
+            . "WHERE user_id = :user_id AND transaction_type = 'grant' "
+            . "AND ledger_key LIKE :ledger_key"
+        );
+        $statement->execute([
+            'user_id' => $userId,
+            'ledger_key' => sprintf('user:%d:%%', $userId),
+        ]);
+
+        return $statement->rowCount();
+    }
+
+    public function nonUsageTotalForUserYear(int $userId, int $leaveYear): float
+    {
+        $statement = $this->pdo->prepare(
+            "SELECT COALESCE(SUM(amount), 0) FROM annual_leave_ledger "
+            . "WHERE user_id = :user_id AND leave_year = :leave_year "
+            . "AND transaction_type <> 'usage'"
+        );
+        $statement->execute([
+            'user_id' => $userId,
+            'leave_year' => $leaveYear,
+        ]);
+
+        return (float) $statement->fetchColumn();
+    }
+
     /** @return list<array<string, mixed>> */
     public function entriesForUserYear(int $userId, int $leaveYear): array
     {
