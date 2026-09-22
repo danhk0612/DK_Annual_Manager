@@ -49,10 +49,10 @@ composer install --no-dev --optimize-autoloader
 cp config/config.example.php config/config.php
 ```
 
-1. MariaDB 데이터베이스와 전용 계정을 준비합니다.
-2. 신규 DB에 `database/schema.sql`을 적용합니다.
-3. `config/config.php`에 DB, Telegram, 공휴일 API 정보를 입력합니다.
-4. 웹 서버 DocumentRoot를 반드시 `public/`으로 지정합니다.
+1. MariaDB 데이터베이스와 전용 계정을 준비하고 `config/config.php`에 DB 접속 정보와 서비스 URL을 입력합니다.
+2. 웹 서버 DocumentRoot를 반드시 `public/`으로 지정합니다.
+3. 브라우저에서 `/setup`을 열어 DB schema, Telegram, 최초 관리자, 공휴일 API를 순서대로 설정합니다.
+4. 신규 설치는 최신 `database/schema.sql`을 사용하며 별도 migration이 필요하지 않습니다.
 5. 아래 명령으로 환경을 점검합니다.
 
 ```bash
@@ -63,7 +63,8 @@ php bin/check.php
 
 ## 설정 보안
 
-- 실제 설정은 `config/config.php`에서 관리합니다.
+- DB 접속정보와 웹 서버 기본값은 `config/config.php`에서 관리합니다.
+- Telegram 연결정보, 알림 대상, 공휴일 API, 회사명·로고·대표색·테마는 초기 설치 후 관리자 화면에서 관리할 수 있습니다.
 - `config/config.php`는 `.gitignore` 대상이며 저장소에 커밋하지 않습니다.
 - 운영 환경은 HTTPS와 `session_cookie_secure=true` 사용을 권장합니다.
 - `app.debug`는 운영에서 `false`로 유지합니다.
