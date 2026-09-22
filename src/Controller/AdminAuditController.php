@@ -19,9 +19,15 @@ final class AdminAuditController
 
     public function index(Request $request): Response
     {
+        $query = trim((string) $request->input('q', ''));
+        $action = trim((string) $request->input('action', ''));
+
         return Response::html($this->view->render('admin-audit', [
             'title' => '변경 이력',
-            'logs' => $this->audit->recent(200),
+            'logs' => $this->audit->search($query, $action, 200),
+            'actions' => $this->audit->actionNames(),
+            'query' => $query,
+            'selectedAction' => $action,
         ]));
     }
 }
