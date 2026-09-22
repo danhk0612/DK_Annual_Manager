@@ -1163,6 +1163,8 @@ h2 .bi,
 
 .calendar-side .panel {
     margin-top: 0;
+    max-height: calc(100vh - 102px);
+    overflow: auto;
 }
 
 .calendar-side {
@@ -1740,6 +1742,7 @@ html[data-theme="dark"] progress::-webkit-progress-bar {
 
     .calendar-side .panel {
         max-height: none;
+        overflow: visible;
     }
 }
 
