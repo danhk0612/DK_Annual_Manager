@@ -313,7 +313,7 @@
                 <span>직원, 휴가 신청, 연차 원장, 공휴일, 관리자 설정, 업로드 로고가 삭제되고 초기 설치 마법사부터 다시 시작합니다. DB 접속용 config와 소스코드는 유지됩니다.</span>
             </div>
         </div>
-        <form class="form-grid settings-subsection" method="post" action="/admin/settings/reset-install" onsubmit="return confirm('모든 휴가관리 데이터를 삭제하고 재설치를 시작하시겠습니까? 이 작업은 되돌릴 수 없습니다.');">
+        <form class="form-grid settings-subsection" method="post" action="/admin/settings/reset-install" data-confirm-reset>
             <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
             <label class="span-2">
                 확인을 위해 RESET 입력
