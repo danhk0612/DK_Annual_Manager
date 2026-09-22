@@ -46,7 +46,6 @@
             </div>
         </div>
         <dl class="details">
-            <div><dt>이름</dt><dd><?= htmlspecialchars((string) $user['name'], ENT_QUOTES, 'UTF-8') ?></dd></div>
             <div><dt>Telegram</dt><dd><?= htmlspecialchars((string) ($user['telegram_username'] ?? $user['telegram_user_id'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></dd></div>
             <div><dt>권한</dt><dd><?= $user['role'] === 'admin' ? '관리자' : '사용자' ?></dd></div>
         </dl>
@@ -61,6 +60,10 @@
         </div>
         <form class="form-grid" method="post" action="/profile/save">
             <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+            <label class="span-2">
+                이름
+                <input name="name" maxlength="100" required value="<?= htmlspecialchars((string) ($user['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+            </label>
             <label>
                 부서
                 <input name="department" maxlength="100" value="<?= htmlspecialchars((string) ($user['department'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
@@ -76,7 +79,7 @@
             <div class="form-actions">
                 <button class="button primary" type="submit">내 정보 저장</button>
             </div>
-            <p class="form-hint span-2">입사일 저장 시 현재 날짜까지 발생한 연차를 자동 반영합니다. 입사일을 변경하면 자동 발생분을 다시 계산합니다.</p>
+            <p class="form-hint span-2">이름은 이 시스템에서 표시할 이름입니다. 입사일 저장 시 현재 날짜까지 발생한 연차를 자동 반영하며, 입사일을 변경하면 자동 발생분을 다시 계산합니다.</p>
         </form>
     </section>
 </div>
