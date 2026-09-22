@@ -56,7 +56,7 @@ $appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js')
             <?php foreach ($stepStates as $number => $done): ?>
                 <div class="setup-progress-item <?= $done ? 'done' : '' ?>">
                     <span><?= $done ? '<i class="bi bi-check-lg"></i>' : $number ?></span>
-                    <strong><?= ['DB', 'Telegram', '알림/관리자', '관리자 로그인', '공휴일'][$number - 1] ?></strong>
+                    <strong><?= ['DB', 'Telegram', '채팅/관리자', '관리자 로그인', '공휴일'][$number - 1] ?></strong>
                 </div>
             <?php endforeach; ?>
         </div>
@@ -195,7 +195,7 @@ $appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js')
                     <span class="setup-substep">3B</span>
                     <div>
                         <h3><i class="bi bi-people"></i> 회사 공용 그룹</h3>
-                        <p>봇을 휴가 알림용 그룹에 추가한 뒤 그룹에서 메시지를 한 번 보냅니다. 자동 확인 후 group/supergroup Chat ID를 선택합니다.</p>
+                        <p>관리자와 직원이 함께 보는 회사 그룹에 봇을 추가한 뒤 메시지를 한 번 보냅니다. 자동 확인 후 group/supergroup Chat ID를 선택합니다. 승인된 휴가 일정과 일정 취소처럼 공개 가능한 내용만 이 그룹에 알립니다.</p>
                     </div>
                 </article>
             </div>
