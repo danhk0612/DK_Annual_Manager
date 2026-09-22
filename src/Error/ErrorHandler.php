@@ -18,7 +18,7 @@ final class ErrorHandler
                 '[%s] %s: %s in %s:%d',
                 self::$appName,
                 $exception::class,
-                $exception->getMessage(),
+                self::redactSensitive($exception->getMessage()),
                 $exception->getFile(),
                 $exception->getLine(),
             ));
@@ -32,7 +32,7 @@ final class ErrorHandler
             }
 
             $detail = self::$debug
-                ? sprintf('%s: %s', $exception::class, $exception->getMessage())
+                ? sprintf('%s: %s', $exception::class, self::redactSensitive($exception->getMessage()))
                 : '요청을 처리하는 중 오류가 발생했습니다.';
 
             echo '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
@@ -44,6 +44,23 @@ final class ErrorHandler
                 . '<h1>서비스 오류</h1><p>' . htmlspecialchars($detail, ENT_QUOTES, 'UTF-8') . '</p>'
                 . '<p><a href="/">처음 화면으로 돌아가기</a></p></main></body></html>';
         });
+    }
+
+    private static function redactSensitive(string $message): string
+    {
+        $patterns = [
+            '/\/bot\d+:[A-Za-z0-9_-]+\//',
+            '/([?&](?:ServiceKey|service_key|client_secret|bot_token)=)[^&\s]+/i',
+            '/((?:ServiceKey|service_key|client_secret|bot_token)\s*[:=]\s*)[^\s,;]+/i',
+        ];
+
+        $replacements = [
+            '/bot[REDACTED]/',
+            '$1[REDACTED]',
+            '$1[REDACTED]',
+        ];
+
+        return preg_replace($patterns, $replacements, $message) ?? '[redacted error]';
     }
 
     public static function setDebug(bool $debug): void
