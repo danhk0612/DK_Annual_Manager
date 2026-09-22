@@ -97,7 +97,7 @@ $adminDirectEntry = isset($adminDirectEntry) ? (bool) $adminDirectEntry : false;
 
     <label>
         사유
-        <select name="reason_category" required>
+        <select name="reason_category" <?= $adminDirectEntry ? '' : 'required' ?>>
             <?php foreach ($reasonCategories as $reasonCategory): ?>
                 <option value="<?= htmlspecialchars($reasonCategory, ENT_QUOTES, 'UTF-8') ?>">
                     <?= htmlspecialchars($reasonCategory, ENT_QUOTES, 'UTF-8') ?>
@@ -128,9 +128,13 @@ $adminDirectEntry = isset($adminDirectEntry) ? (bool) $adminDirectEntry : false;
     </div>
 
     <p class="form-hint span-2">
-        <?php if ($annualBalance !== null): ?>
-            현재 잔여 연차 <strong><?= number_format($annualBalance, 1) ?>일</strong>.
+        <?php if ($adminDirectEntry): ?>
+            관리자 직접 등록은 선택한 날짜를 그대로 기록하고 즉시 승인합니다. 근무요일·공휴일·중복 일정·잔여 연차 조건은 적용하지 않습니다.
+        <?php else: ?>
+            <?php if ($annualBalance !== null): ?>
+                현재 잔여 연차 <strong><?= number_format($annualBalance, 1) ?>일</strong>.
+            <?php endif; ?>
+            잔여 연차보다 많이 신청해도 접수되며, 부족한 경우 관리자에게 경고가 표시됩니다.
         <?php endif; ?>
-        잔여 연차보다 많이 신청해도 접수되며, 부족한 경우 관리자에게 경고가 표시됩니다.
     </p>
 </form>
