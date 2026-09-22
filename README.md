@@ -20,6 +20,7 @@ PHP + MariaDB 기반의 소규모 조직용 연차·휴가 관리 웹 애플리�
 - 주말·공휴일 자동 제외
 - 관리자 승인·반려 및 연차 원장 자동 차감
 - 신청 시 관리자 개인 알림, 승인/반려 신청자 개인 알림, 승인 일정 회사 공용 그룹 공유
+- Telegram 관리자/사용자 알림에서 해당 승인·상세 화면으로 바로 이동하는 인라인 버튼
 - 반응형 월간 휴가 달력, 월별 신청 내역 및 휴가 상세 팝업
 - 사용자 본인 발생·사용·잔여 연차 조회
 - 관리자 직원별 연간 연차 및 월별 휴가 집계
@@ -49,6 +50,7 @@ PHP + MariaDB 기반의 소규모 조직용 연차·휴가 관리 웹 애플리�
 git clone https://github.com/danhk0612/DK_Annual_Manager.git
 cd DK_Annual_Manager
 composer install --no-dev --optimize-autoloader
+composer audit --locked
 cp config/config.example.php config/config.php
 ```
 
@@ -60,7 +62,7 @@ cp config/config.example.php config/config.php
 6. 아래 명령으로 환경을 점검합니다.
 
 ```bash
-php bin/check.php
+php bin/check.php --production
 ```
 
 상세 절차는 [`docs/INSTALL.md`](docs/INSTALL.md)를 참고하세요.
@@ -96,4 +98,4 @@ php bin/check.php
 
 ## 개발 상태
 
-T01~T18 주요 기능 구현 완료. 실제 서버 환경에서 완전 초기화 설치 마법사와 Telegram/공휴일 통합 검증 단계입니다.
+T01~T24 주요 기능 및 배포 하드닝 구현 완료. CI에서 PHP 8.2/8.4, MariaDB 10.6 schema/migration, 승인·취소 연차 원장 흐름을 검증하며 실제 Telegram/공휴일 자격 증명을 사용한 운영 환경 최종 검증 단계입니다.
