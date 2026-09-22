@@ -46,10 +46,12 @@ final class View
         }
 
         $logoPath = trim((string) $this->settings->get('ui.logo_path', ''));
-        $currentPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
+        $requestUri = (string) ($_SERVER['REQUEST_URI'] ?? '/');
+        $currentPath = parse_url($requestUri, PHP_URL_PATH);
         if (!is_string($currentPath) || $currentPath === '') {
             $currentPath = '/';
         }
+        $currentQuery = (string) (parse_url($requestUri, PHP_URL_QUERY) ?? '');
 
         extract($data, EXTR_SKIP);
 
