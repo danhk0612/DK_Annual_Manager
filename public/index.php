@@ -10,11 +10,13 @@ use DKAnnual\Controller\AdminDashboardController;
 use DKAnnual\Controller\AdminHolidayController;
 use DKAnnual\Controller\AdminLeaveRequestController;
 use DKAnnual\Controller\AdminReportController;
+use DKAnnual\Controller\AdminSettingsController;
 use DKAnnual\Controller\AdminUserController;
 use DKAnnual\Controller\CalendarController;
 use DKAnnual\Controller\LeaveController;
 use DKAnnual\Controller\ProfileController;
 use DKAnnual\Controller\TelegramAuthController;
+use DKAnnual\Controller\ThemeController;
 use DKAnnual\Database;
 use DKAnnual\Error\ErrorHandler;
 use DKAnnual\Holiday\KasiHolidayClient;
@@ -65,10 +67,20 @@ $settings = new AppSettingRepository($pdo);
 $reports = new ReportingRepository($pdo);
 $auth = new Auth($session, $users);
 $csrf = new Csrf($session);
-$view = new View(dirname(__DIR__) . '/templates');
-$router = new Router();
+$managedAppName = trim((string) $settings->get(
+    'ui.app_name',
+    (string) $config->get('app.name', 'DK Annual Manager'),
+));
+if ($managedAppName === '') {
+    $managedAppName = 'DK Annual Manager';
+}
+ErrorHandler::setAppName($managedAppName);
 
-$notifications = new LeaveNotificationService($config, new TelegramBotClient($config), $users);
+$view = new View(dirname(__DIR__) . '/templates', $settings, $config);
+$router = new Router($managedAppName);
+
+$telegramBot = new TelegramBotClient($config);
+$notifications = new LeaveNotificationService($config, $telegramBot, $users, $settings);
 $annualLeave = new AnnualLeaveService(new AnnualLeaveCalculator(), $ledger, $settings);
 $telegramAuth = new TelegramAuthController(
     $config,
@@ -81,6 +93,17 @@ $telegramAuth = new TelegramAuthController(
 $adminDashboard = new AdminDashboardController($reports, $audit, $view);
 $adminReports = new AdminReportController($reports, $view);
 $adminAudit = new AdminAuditController($audit, $view);
+$adminSettings = new AdminSettingsController(
+    $config,
+    $settings,
+    $telegramBot,
+    $auth,
+    $audit,
+    $view,
+    $csrf,
+    dirname(__DIR__) . '/public',
+);
+$theme = new ThemeController($settings);
 $adminUsers = new AdminUserController($users, $annualLeave, $auth, $audit, $view, $csrf);
 $adminAnnualLeave = new AdminAnnualLeaveController($users, $ledger, $annualLeave, $auth, $audit, $view, $csrf);
 $adminRequests = new AdminLeaveRequestController(
@@ -127,6 +150,7 @@ $router->get('/', [$calendar, 'index'], [$requireAuth]);
 $router->get('/login', [$telegramAuth, 'loginPage']);
 $router->get('/auth/telegram/start', [$telegramAuth, 'start']);
 $router->get('/auth/telegram/callback', [$telegramAuth, 'callback']);
+$router->get('/theme.css', [$theme, 'css']);
 $router->get('/health', static function (Request $request) use ($pdo): Response {
     $pdo->query('SELECT 1')->fetchColumn();
     return Response::json(['status' => 'ok']);
@@ -145,6 +169,13 @@ $router->post('/profile/hire-date', [$profile, 'saveProfile'], [$requireAuth, $v
 $router->get('/admin', [$adminDashboard, 'index'], [$requireAdmin]);
 $router->get('/admin/reports', [$adminReports, 'index'], [$requireAdmin]);
 $router->get('/admin/audit', [$adminAudit, 'index'], [$requireAdmin]);
+$router->get('/admin/settings', [$adminSettings, 'index'], [$requireAdmin]);
+$router->post('/admin/settings/appearance', [$adminSettings, 'saveAppearance'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/settings/telegram', [$adminSettings, 'saveTelegram'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/settings/telegram/add-chat', [$adminSettings, 'addTelegramChat'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/settings/telegram/test', [$adminSettings, 'testTelegram'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/settings/logo', [$adminSettings, 'uploadLogo'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/settings/logo/remove', [$adminSettings, 'removeLogo'], [$requireAdmin, $verifyCsrf]);
 $router->get('/admin/requests', [$adminRequests, 'index'], [$requireAdmin]);
 $router->post('/admin/requests/review', [$adminRequests, 'review'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/requests/cancel-approved', [$adminRequests, 'cancelApproved'], [$requireAdmin, $verifyCsrf]);

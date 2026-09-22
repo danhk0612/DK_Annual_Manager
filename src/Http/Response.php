@@ -19,6 +19,11 @@ final class Response
         return new self($body, $status, ['Content-Type' => 'text/html; charset=utf-8']);
     }
 
+    public static function css(string $body, int $status = 200): self
+    {
+        return new self($body, $status, ['Content-Type' => 'text/css; charset=utf-8']);
+    }
+
     /** @param array<string, mixed> $data */
     public static function json(array $data, int $status = 200): self
     {
@@ -41,7 +46,7 @@ final class Response
             'X-Frame-Options' => 'DENY',
             'Referrer-Policy' => 'same-origin',
             'Permissions-Policy' => 'camera=(), microphone=(), geolocation=()',
-            'Content-Security-Policy' => "default-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
+            'Content-Security-Policy' => "default-src 'self'; style-src 'self' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
         ];
 
         foreach (array_merge($securityHeaders, $this->headers) as $name => $value) {

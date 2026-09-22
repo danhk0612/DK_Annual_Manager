@@ -6,6 +6,10 @@ namespace DKAnnual\Http;
 
 final class Router
 {
+    public function __construct(private readonly string $appName = 'DK Annual Manager')
+    {
+    }
+
     /** @var array<string, array<string, array{handler: callable, middleware: list<MiddlewareInterface>}>> */
     private array $routes = [];
 
@@ -37,7 +41,9 @@ final class Router
             return Response::html(
                 '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
                 . '<meta name="viewport" content="width=device-width,initial-scale=1">'
-                . '<title>페이지 없음 · DK Annual Manager</title><link rel="stylesheet" href="/assets/app.css">'
+                . '<title>페이지 없음 · ' . htmlspecialchars($this->appName, ENT_QUOTES, 'UTF-8') . '</title>'
+                . '<link rel="icon" type="image/svg+xml" href="/assets/app-icon.svg">'
+                . '<link rel="stylesheet" href="/assets/app.css"><link rel="stylesheet" href="/theme.css">'
                 . '</head><body><main class="container"><section class="panel narrow">'
                 . '<p class="eyebrow">404</p><h1>페이지를 찾을 수 없습니다.</h1>'
                 . '<p>주소를 확인하거나 처음 화면으로 돌아가 주세요.</p>'

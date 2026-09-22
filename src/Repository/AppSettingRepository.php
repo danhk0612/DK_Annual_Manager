@@ -6,6 +6,81 @@ namespace DKAnnual\Repository;
 
 final class AppSettingRepository extends AbstractRepository
 {
+    public function get(string $key, ?string $default = null): ?string
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT setting_value FROM app_settings WHERE setting_key = :setting_key LIMIT 1'
+        );
+        $statement->execute(['setting_key' => $key]);
+        $value = $statement->fetchColumn();
+
+        return $value === false ? $default : (string) $value;
+    }
+
+    public function set(string $key, ?string $value, ?int $updatedBy): void
+    {
+        if ($value === null) {
+            $this->delete($key);
+            return;
+        }
+
+        $statement = $this->pdo->prepare(
+            'INSERT INTO app_settings (setting_key, setting_value, updated_by) '
+            . 'VALUES (:setting_key, :setting_value, :updated_by) '
+            . 'ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), '
+            . 'updated_by = VALUES(updated_by), updated_at = CURRENT_TIMESTAMP'
+        );
+        $statement->execute([
+            'setting_key' => $key,
+            'setting_value' => $value,
+            'updated_by' => $updatedBy,
+        ]);
+    }
+
+    /** @param array<string, string|null> $values */
+    public function setMany(array $values, ?int $updatedBy): void
+    {
+        $this->pdo->beginTransaction();
+
+        try {
+            foreach ($values as $key => $value) {
+                $this->set($key, $value, $updatedBy);
+            }
+            $this->pdo->commit();
+        } catch (\Throwable $exception) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $exception;
+        }
+    }
+
+    public function delete(string $key): void
+    {
+        $statement = $this->pdo->prepare('DELETE FROM app_settings WHERE setting_key = :setting_key');
+        $statement->execute(['setting_key' => $key]);
+    }
+
+    /** @return list<string> */
+    public function lineList(string $key): array
+    {
+        $value = trim((string) $this->get($key, ''));
+        if ($value === '') {
+            return [];
+        }
+
+        $items = preg_split('/[\r\n,]+/', $value) ?: [];
+        $result = [];
+        foreach ($items as $item) {
+            $item = trim($item);
+            if ($item !== '') {
+                $result[$item] = $item;
+            }
+        }
+
+        return array_values($result);
+    }
+
     public function annualLeaveOverride(int $userId, int $year): ?float
     {
         $statement = $this->pdo->prepare(

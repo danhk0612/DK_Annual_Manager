@@ -95,4 +95,52 @@ document.addEventListener('DOMContentLoaded', () => {
             dialog.showModal();
         }
     }
+
+    const detailDialog = document.querySelector('[data-request-detail-dialog]');
+    if (detailDialog instanceof HTMLDialogElement) {
+        const setText = (selector, value, fallback = '-') => {
+            const element = detailDialog.querySelector(selector);
+            if (element) {
+                element.textContent = value && value.trim() !== '' ? value : fallback;
+            }
+        };
+
+        document.querySelectorAll('[data-open-request-detail]').forEach((button) => {
+            button.addEventListener('click', () => {
+                setText('[data-detail-id]', '#' + (button.dataset.requestId || ''));
+                setText('[data-detail-status]', button.dataset.requestStatus || '');
+                setText('[data-detail-user]', [
+                    button.dataset.requestUser || '',
+                    button.dataset.requestDepartment || '',
+                ].filter(Boolean).join(' · '));
+                setText('[data-detail-type]', button.dataset.requestType || '');
+                setText('[data-detail-period]', button.dataset.requestPeriod || '');
+                setText('[data-detail-amount]', button.dataset.requestAmount || '');
+                setText('[data-detail-reason]', button.dataset.requestReason || '', '입력 없음');
+                setText('[data-detail-review-note]', button.dataset.requestReviewNote || '', '입력 없음');
+                setText('[data-detail-created]', button.dataset.requestCreated || '');
+                detailDialog.showModal();
+            });
+        });
+
+        detailDialog.querySelectorAll('[data-close-detail-dialog]').forEach((button) => {
+            button.addEventListener('click', () => detailDialog.close());
+        });
+
+        detailDialog.addEventListener('click', (event) => {
+            if (event.target === detailDialog) {
+                detailDialog.close();
+            }
+        });
+    }
+
+    document.querySelectorAll('input[type="color"]').forEach((input) => {
+        const row = input.closest('.color-input-row');
+        const code = row ? row.querySelector('code') : null;
+        if (code) {
+            input.addEventListener('input', () => {
+                code.textContent = input.value;
+            });
+        }
+    });
 });

@@ -56,6 +56,11 @@ final class ProfileController
             return Response::redirect('/login');
         }
 
+        $name = trim((string) $request->input('name', ''));
+        if ($name === '' || $this->textLength($name) > 100) {
+            return Response::redirect('/profile?error=' . rawurlencode('이름은 1~100자로 입력해 주세요.'));
+        }
+
         $value = trim((string) $request->input('hire_date', ''));
         $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
         if ($date === false || $date->format('Y-m-d') !== $value) {
@@ -65,7 +70,7 @@ final class ProfileController
         $department = $this->optionalText($request->input('department'), 100);
         $position = $this->optionalText($request->input('position'), 100);
 
-        $this->users->updateOwnProfile((int) $user['id'], $value, $department, $position);
+        $this->users->updateOwnProfile((int) $user['id'], $name, $value, $department, $position);
 
         $updated = $this->users->findById((int) $user['id']);
         $added = 0;
@@ -77,6 +82,7 @@ final class ProfileController
         }
 
         $this->audit->record((int) $user['id'], 'profile.updated', 'user', (int) $user['id'], [
+            'name' => $name,
             'hire_date' => $value,
             'department' => $department,
             'position' => $position,
@@ -86,6 +92,12 @@ final class ProfileController
         return Response::redirect('/profile?message=' . rawurlencode(
             $added > 0 ? sprintf('내 정보를 저장하고 연차 발생분 %d건을 반영했습니다.', $added) : '내 정보를 저장했습니다.'
         ));
+    }
+
+    private function textLength(string $value): int
+    {
+        $characters = preg_split('//u', $value, -1, PREG_SPLIT_NO_EMPTY);
+        return is_array($characters) ? count($characters) : strlen($value);
     }
 
     private function optionalText(mixed $value, int $maxLength): ?string

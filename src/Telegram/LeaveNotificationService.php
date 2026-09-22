@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace DKAnnual\Telegram;
 
 use DKAnnual\Config;
+use DKAnnual\Repository\AppSettingRepository;
 use DKAnnual\Repository\UserRepository;
 use Throwable;
 
@@ -14,6 +15,7 @@ final class LeaveNotificationService
         private readonly Config $config,
         private readonly TelegramBotClient $bot,
         private readonly UserRepository $users,
+        private readonly AppSettingRepository $settings,
     ) {
     }
 
@@ -86,11 +88,19 @@ final class LeaveNotificationService
     private function adminTargets(): array
     {
         $targets = [];
-        $configured = $this->config->get('telegram.admin_chat_ids', []);
-        if (is_array($configured)) {
-            foreach ($configured as $chatId) {
-                if ((is_int($chatId) || is_string($chatId)) && (string) $chatId !== '') {
-                    $targets[] = $chatId;
+        $managedRaw = $this->settings->get('telegram.admin_chat_ids', null);
+
+        if ($managedRaw !== null) {
+            foreach ($this->settings->lineList('telegram.admin_chat_ids') as $chatId) {
+                $targets[] = $chatId;
+            }
+        } else {
+            $configured = $this->config->get('telegram.admin_chat_ids', []);
+            if (is_array($configured)) {
+                foreach ($configured as $chatId) {
+                    if ((is_int($chatId) || is_string($chatId)) && (string) $chatId !== '') {
+                        $targets[] = $chatId;
+                    }
                 }
             }
         }

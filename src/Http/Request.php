@@ -6,13 +6,19 @@ namespace DKAnnual\Http;
 
 final class Request
 {
-    /** @param array<string, mixed> $query @param array<string, mixed> $post @param array<string, mixed> $server */
+    /**
+     * @param array<string, mixed> $query
+     * @param array<string, mixed> $post
+     * @param array<string, mixed> $server
+     * @param array<string, mixed> $files
+     */
     private function __construct(
         private readonly string $method,
         private readonly string $path,
         private readonly array $query,
         private readonly array $post,
         private readonly array $server,
+        private readonly array $files,
     ) {
     }
 
@@ -27,6 +33,7 @@ final class Request
             $_GET,
             $_POST,
             $_SERVER,
+            $_FILES,
         );
     }
 
@@ -48,5 +55,12 @@ final class Request
     public function server(string $key, mixed $default = null): mixed
     {
         return $this->server[$key] ?? $default;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function file(string $key): ?array
+    {
+        $file = $this->files[$key] ?? null;
+        return is_array($file) ? $file : null;
     }
 }

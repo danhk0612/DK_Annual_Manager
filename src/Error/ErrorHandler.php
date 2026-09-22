@@ -9,12 +9,14 @@ use Throwable;
 final class ErrorHandler
 {
     private static bool $debug = false;
+    private static string $appName = 'DK Annual Manager';
 
     public static function register(): void
     {
         set_exception_handler(static function (Throwable $exception): void {
             error_log(sprintf(
-                '[DK Annual Manager] %s: %s in %s:%d',
+                '[%s] %s: %s in %s:%d',
+                self::$appName,
                 $exception::class,
                 $exception->getMessage(),
                 $exception->getFile(),
@@ -35,7 +37,7 @@ final class ErrorHandler
 
             echo '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
                 . '<meta name="viewport" content="width=device-width,initial-scale=1">'
-                . '<title>오류 · DK Annual Manager</title>'
+                . '<title>오류 · ' . htmlspecialchars(self::$appName, ENT_QUOTES, 'UTF-8') . '</title>'
                 . '<style>body{margin:0;background:#f5f7fb;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}'
                 . 'main{max-width:640px;margin:12vh auto;padding:36px;background:#fff;border:1px solid #e5e9f2;border-radius:18px}'
                 . 'h1{margin-top:0}p{color:#586174;line-height:1.7}a{color:#4054e8}</style></head><body><main>'
@@ -47,5 +49,13 @@ final class ErrorHandler
     public static function setDebug(bool $debug): void
     {
         self::$debug = $debug;
+    }
+
+    public static function setAppName(string $appName): void
+    {
+        $appName = trim($appName);
+        if ($appName !== '') {
+            self::$appName = $appName;
+        }
     }
 }
