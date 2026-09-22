@@ -190,7 +190,7 @@ final class LeaveRequestRepository extends AbstractRepository
     /** @return list<array<string, mixed>> */
     public function calendarRequestList(string $startDate, string $endDate, ?int $userId = null): array
     {
-        $sql = 'SELECT r.*, u.name AS user_name, t.code AS leave_code, t.name AS leave_type_name '
+        $sql = 'SELECT r.*, u.name AS user_name, u.department, t.code AS leave_code, t.name AS leave_type_name '
             . 'FROM leave_requests r '
             . 'INNER JOIN users u ON u.id = r.user_id '
             . 'INNER JOIN leave_types t ON t.id = r.leave_type_id '
