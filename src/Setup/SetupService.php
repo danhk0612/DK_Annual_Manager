@@ -211,12 +211,28 @@ final class SetupService
         }
 
         $legacy = $settings->lineList('telegram.admin_chat_ids');
-        if ($legacy === []) {
+        if ($legacy !== []) {
+            $settings->set('telegram.company_chat_id', $legacy[0], null);
+            $settings->delete('telegram.admin_chat_ids');
             return;
         }
 
-        $settings->set('telegram.company_chat_id', $legacy[0], null);
-        $settings->delete('telegram.admin_chat_ids');
+        $configured = trim((string) $this->config->get('telegram.company_chat_id', ''));
+        if ($configured !== '') {
+            $settings->set('telegram.company_chat_id', $configured, null);
+            return;
+        }
+
+        $legacyConfigured = $this->config->get('telegram.admin_chat_ids', []);
+        if (is_array($legacyConfigured)) {
+            foreach ($legacyConfigured as $chatId) {
+                $chatId = trim((string) $chatId);
+                if ($chatId !== '') {
+                    $settings->set('telegram.company_chat_id', $chatId, null);
+                    return;
+                }
+            }
+        }
     }
 
     /** @return list<string> */
