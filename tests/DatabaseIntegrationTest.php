@@ -116,10 +116,16 @@ PHP);
         );
         self::assertSame(1, (int) $this->pdo->query('SELECT COUNT(*) FROM leave_requests')->fetchColumn());
 
+        $testRoot = sys_get_temp_dir() . '/dkannual-reset-' . bin2hex(random_bytes(6));
+        mkdir($testRoot . '/database', 0777, true);
+        mkdir($testRoot . '/storage', 0777, true);
+        mkdir($testRoot . '/public/uploads/branding', 0777, true);
+        copy(dirname(__DIR__) . '/database/schema.sql', $testRoot . '/database/schema.sql');
+
         $setup = new SetupService(
             $this->pdo,
             new Config($this->configPath),
-            dirname(__DIR__),
+            $testRoot,
         );
         $setup->resetInstallation();
 
@@ -144,7 +150,15 @@ PHP);
 
         $setup->initializeSchema();
         self::assertSame(0, (int) $this->pdo->query('SELECT COUNT(*) FROM leave_requests')->fetchColumn());
-        @unlink(dirname(__DIR__) . '/storage/setup.key');
+
+        @unlink($testRoot . '/storage/setup.key');
+        @unlink($testRoot . '/database/schema.sql');
+        @rmdir($testRoot . '/public/uploads/branding');
+        @rmdir($testRoot . '/public/uploads');
+        @rmdir($testRoot . '/public');
+        @rmdir($testRoot . '/storage');
+        @rmdir($testRoot . '/database');
+        @rmdir($testRoot);
     }
 
     public function testApprovalAndCancellationUpdateAnnualLeaveLedgerAtomically(): void
