@@ -418,6 +418,148 @@ document.addEventListener('DOMContentLoaded', () => {
         '[data-close-closed-history-dialog]'
     );
 
+    document.querySelectorAll('[data-paginate]').forEach((container) => {
+        const items = Array.from(container.querySelectorAll('[data-page-item]'));
+        if (items.length === 0) {
+            return;
+        }
+
+        let pageSize = Number.parseInt(container.dataset.pageSize || '20', 10);
+        if (![10, 20, 50, 100].includes(pageSize)) {
+            pageSize = 20;
+        }
+        let page = 1;
+
+        const controls = document.createElement('div');
+        controls.className = 'pagination-controls';
+        controls.innerHTML = [
+            '<span class="pagination-summary"></span>',
+            '<label>페이지당 <select class="pagination-size">',
+            '<option value="10">10</option>',
+            '<option value="20">20</option>',
+            '<option value="50">50</option>',
+            '<option value="100">100</option>',
+            '</select>건</label>',
+            '<div class="pagination-buttons">',
+            '<button class="button small" type="button" data-page-prev><i class="bi bi-chevron-left"></i><span>이전</span></button>',
+            '<span class="pagination-page"></span>',
+            '<button class="button small" type="button" data-page-next><span>다음</span><i class="bi bi-chevron-right"></i></button>',
+            '</div>',
+        ].join('');
+
+        const sizeSelect = controls.querySelector('.pagination-size');
+        const summary = controls.querySelector('.pagination-summary');
+        const pageLabel = controls.querySelector('.pagination-page');
+        const prev = controls.querySelector('[data-page-prev]');
+        const next = controls.querySelector('[data-page-next]');
+        sizeSelect.value = String(pageSize);
+
+        const render = () => {
+            const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+            page = Math.min(Math.max(1, page), totalPages);
+            const start = (page - 1) * pageSize;
+            const end = Math.min(items.length, start + pageSize);
+
+            items.forEach((item, index) => {
+                item.hidden = index < start || index >= end;
+            });
+
+            summary.textContent = items.length + '건 중 ' + (start + 1) + '–' + end + '건';
+            pageLabel.textContent = page + ' / ' + totalPages;
+            prev.disabled = page <= 1;
+            next.disabled = page >= totalPages;
+        };
+
+        sizeSelect.addEventListener('change', () => {
+            pageSize = Number.parseInt(sizeSelect.value, 10) || 20;
+            page = 1;
+            render();
+        });
+        prev.addEventListener('click', () => {
+            page--;
+            render();
+        });
+        next.addEventListener('click', () => {
+            page++;
+            render();
+        });
+
+        container.insertAdjacentElement('afterend', controls);
+        render();
+    });
+
+    const reviewDialog = document.querySelector('[data-review-dialog]');
+    if (reviewDialog instanceof HTMLDialogElement) {
+        const requestId = reviewDialog.querySelector('[data-review-request-id]');
+        const actionInput = reviewDialog.querySelector('[data-review-action-input]');
+        const title = reviewDialog.querySelector('[data-review-title]');
+        const summary = reviewDialog.querySelector('[data-review-summary]');
+        const submit = reviewDialog.querySelector('[data-review-submit]');
+        const note = reviewDialog.querySelector('[name="review_note"]');
+
+        document.querySelectorAll('[data-open-review-dialog]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const action = button.dataset.reviewAction || 'approve';
+                requestId.value = button.dataset.reviewId || '';
+                actionInput.value = action;
+                title.textContent = action === 'reject' ? '휴가 반려' : '휴가 승인';
+                submit.textContent = action === 'reject' ? '반려 처리' : '승인 처리';
+                submit.classList.toggle('danger-ghost', action === 'reject');
+                submit.classList.toggle('primary', action !== 'reject');
+                summary.textContent = [
+                    button.dataset.reviewUser || '',
+                    button.dataset.reviewType || '',
+                    button.dataset.reviewPeriod || '',
+                ].filter(Boolean).join(' · ');
+                if (note) note.value = '';
+                reviewDialog.showModal();
+            });
+        });
+        reviewDialog.querySelectorAll('[data-close-review-dialog]').forEach((button) => {
+            button.addEventListener('click', () => reviewDialog.close());
+        });
+    }
+
+    const adminCancelDialog = document.querySelector('[data-admin-cancel-dialog]');
+    if (adminCancelDialog instanceof HTMLDialogElement) {
+        const id = adminCancelDialog.querySelector('[data-admin-cancel-id]');
+        const summary = adminCancelDialog.querySelector('[data-admin-cancel-summary]');
+        const note = adminCancelDialog.querySelector('[name="cancellation_note"]');
+        document.querySelectorAll('[data-open-admin-cancel-dialog]').forEach((button) => {
+            button.addEventListener('click', () => {
+                id.value = button.dataset.cancelId || '';
+                summary.textContent = [
+                    button.dataset.cancelUser || '',
+                    button.dataset.cancelType || '',
+                    button.dataset.cancelPeriod || '',
+                ].filter(Boolean).join(' · ');
+                if (note) note.value = '';
+                adminCancelDialog.showModal();
+            });
+        });
+        adminCancelDialog.querySelectorAll('[data-close-admin-cancel-dialog]').forEach((button) => {
+            button.addEventListener('click', () => adminCancelDialog.close());
+        });
+    }
+
+    const userCancelDialog = document.querySelector('[data-user-cancel-dialog]');
+    if (userCancelDialog instanceof HTMLDialogElement) {
+        const id = userCancelDialog.querySelector('[data-user-cancel-id]');
+        const summary = userCancelDialog.querySelector('[data-user-cancel-summary]');
+        const note = userCancelDialog.querySelector('[name="cancellation_note"]');
+        document.querySelectorAll('[data-open-user-cancel-dialog]').forEach((button) => {
+            button.addEventListener('click', () => {
+                id.value = button.dataset.cancelId || '';
+                summary.textContent = button.dataset.cancelSummary || '';
+                if (note) note.value = '';
+                userCancelDialog.showModal();
+            });
+        });
+        userCancelDialog.querySelectorAll('[data-close-user-cancel-dialog]').forEach((button) => {
+            button.addEventListener('click', () => userCancelDialog.close());
+        });
+    }
+
     document.querySelectorAll('[data-confirm-message]').forEach((form) => {
         form.addEventListener('submit', (event) => {
             const message = form.dataset.confirmMessage || '계속 진행하시겠습니까?';
