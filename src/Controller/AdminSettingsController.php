@@ -12,6 +12,8 @@ use DKAnnual\Http\Response;
 use DKAnnual\Repository\AppSettingRepository;
 use DKAnnual\Repository\AuditLogRepository;
 use DKAnnual\Security\Csrf;
+use DKAnnual\Session\Session;
+use DKAnnual\Setup\SetupService;
 use DKAnnual\Telegram\TelegramBotClient;
 use DKAnnual\View\View;
 use RuntimeException;
@@ -27,6 +29,8 @@ final class AdminSettingsController
         private readonly AuditLogRepository $audit,
         private readonly View $view,
         private readonly Csrf $csrf,
+        private readonly SetupService $setup,
+        private readonly Session $session,
         private readonly string $publicPath,
     ) {
     }
@@ -94,6 +98,7 @@ final class AdminSettingsController
             ],
             'employeeBotLink' => $botUsername !== '' ? 'https://t.me/' . rawurlencode($botUsername) . '?start=employee' : null,
             'employeeLoginLink' => $appUrl !== '' ? $appUrl . '/login' : null,
+            'workingWeekdays' => $this->settings->workingWeekdays(),
             'csrfToken' => $this->csrf->token(),
             'message' => $request->input('message'),
             'error' => $request->input('error'),
@@ -130,6 +135,65 @@ final class AdminSettingsController
         ], $this->ip($request));
 
         return $this->message('화면 설정을 저장했습니다.');
+    }
+
+    public function saveWorkweek(Request $request): Response
+    {
+        $actor = $this->requireActor();
+        $raw = $request->input('working_weekdays', []);
+        $values = is_array($raw) ? $raw : [$raw];
+        $weekdays = [];
+
+        foreach ($values as $value) {
+            $value = (string) $value;
+            if (ctype_digit($value)) {
+                $day = (int) $value;
+                if ($day >= 1 && $day <= 7) {
+                    $weekdays[$day] = $day;
+                }
+            }
+        }
+
+        if ($weekdays === []) {
+            return $this->error('주 근무 요일을 최소 1개 이상 선택해 주세요.');
+        }
+
+        $days = array_values($weekdays);
+        sort($days);
+        $this->settings->setWorkingWeekdays($days, (int) $actor['id']);
+
+        $this->audit->record((int) $actor['id'], 'settings.workweek_updated', 'app_settings', null, [
+            'working_weekdays' => $days,
+        ], $this->ip($request));
+
+        return $this->message('주 근무 요일을 저장했습니다. 휴가 일수 계산과 달력 비근무일 표시에 즉시 적용됩니다.');
+    }
+
+    public function resetInstallation(Request $request): Response
+    {
+        $actor = $this->requireActor();
+        $confirmation = trim((string) $request->input('confirmation', ''));
+
+        if ($confirmation !== 'RESET') {
+            return $this->error('재설치하려면 확인 입력란에 RESET을 정확히 입력해 주세요.');
+        }
+
+        $this->audit->record((int) $actor['id'], 'system.installation_reset_requested', 'system', null, [], $this->ip($request));
+
+        try {
+            $this->setup->resetInstallation();
+        } catch (Throwable $exception) {
+            error_log('[DK Annual Settings] Installation reset failed: ' . $exception::class);
+            return $this->error('초기화에 실패했습니다. 서버/PHP 오류 로그를 확인해 주세요.');
+        }
+
+        $this->session->remove('user_id');
+        $this->session->remove('auth_role');
+        $this->session->remove('auth_status');
+        $this->session->set('setup_authorized', true);
+        $this->session->regenerate();
+
+        return Response::redirect('/setup?message=' . rawurlencode('모든 서비스 데이터를 초기화했습니다. 신규 설치를 처음부터 진행하세요.'));
     }
 
     public function saveTelegramCredentials(Request $request): Response
