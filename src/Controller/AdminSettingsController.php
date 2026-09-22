@@ -46,7 +46,8 @@ final class AdminSettingsController
                     $this->settings->set('telegram.bot_username', $username, null);
                 }
             } catch (Throwable $exception) {
-                $telegramProbeError = $exception->getMessage();
+                error_log('[DK Annual Settings] Telegram probe failed: ' . $exception::class);
+                $telegramProbeError = 'Telegram Bot 또는 최근 채팅을 확인하지 못했습니다. 입력값과 Bot 권한을 확인해 주세요.';
             }
         }
 
