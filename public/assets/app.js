@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (chatType === 'private' && setupAdminChat) {
             target = setupAdminChat;
             label = '최초 관리자 Telegram User ID';
-        } else if (['group', 'supergroup', 'channel'].includes(chatType) && setupGroupChat) {
+        } else if (['group', 'supergroup'].includes(chatType) && setupGroupChat) {
             target = setupGroupChat;
             label = '회사 공용 Telegram 그룹 Chat ID';
         }
@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     option.label = title;
                     setupPrivateList.appendChild(option);
                 }
-            } else if (['group', 'supergroup', 'channel'].includes(type)) {
+            } else if (['group', 'supergroup'].includes(type)) {
                 groupChats.push(chat);
                 if (setupGroupList) {
                     const option = document.createElement('option');
