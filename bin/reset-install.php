@@ -70,12 +70,18 @@ try {
     }
     @chmod($setupKeyPath, 0600);
 
+    $setupPath = '/setup?setup_key=' . $setupKey;
     $appUrl = rtrim((string) $config->get('app.url', ''), '/');
-    $setupUrl = ($appUrl !== '' ? $appUrl : '') . '/setup?setup_key=' . $setupKey;
 
     fwrite(STDOUT, "\n초기화 완료. config/config.php와 Composer 설치 파일은 유지했습니다.\n");
     fwrite(STDOUT, "초기 설정 접근 키도 새로 생성했습니다.\n\n");
-    fwrite(STDOUT, $setupUrl . "\n");
+    fwrite(STDOUT, "경로: " . $setupPath . "\n");
+
+    if ($appUrl !== '' && filter_var($appUrl, FILTER_VALIDATE_URL) !== false && !str_contains($appUrl, 'example.com')) {
+        fwrite(STDOUT, "URL:  " . $appUrl . $setupPath . "\n");
+    } else {
+        fwrite(STDOUT, "현재 서비스 주소 뒤에 위 경로를 붙여 접속하세요.\n");
+    }
 } catch (Throwable $exception) {
     fwrite(STDERR, "초기화 실패했습니다. 서버/PHP 로그를 확인하세요. (" . $exception::class . ")\n");
     exit(1);
