@@ -332,7 +332,7 @@ $formatLeaveDays = static function (float $value): string {
                 <span class="count-badge"><?= count($entries) ?>건</span>
             </div>
             <div class="table-wrap">
-                <table class="data-table">
+                <table class="data-table" data-paginate data-page-size="20">
                     <thead>
                     <tr><th>등록일</th><th>유형</th><th>일수</th><th>메모</th><th>처리자</th></tr>
                     </thead>
