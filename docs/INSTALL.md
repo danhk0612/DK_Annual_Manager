@@ -17,6 +17,7 @@
 git clone https://github.com/danhk0612/DK_Annual_Manager.git
 cd DK_Annual_Manager
 composer install --no-dev --optimize-autoloader
+composer audit --locked
 ```
 
 개발/테스트 환경에서는 `--no-dev`를 빼고 설치한다.
@@ -31,7 +32,7 @@ composer install --no-dev --optimize-autoloader
 mysql -u <관리자계정> -p <DB명> < database/schema.sql
 ```
 
-`database/migrations/`은 이전 버전으로 이미 설치한 DB를 최신 구조로 올릴 때만 순서대로 적용한다. 신규 설치 시 schema에 최신 변경이 포함되어 있으므로 migrations를 다시 적용하지 않는다.
+`database/migrations/`은 이전 버전으로 이미 설치한 DB를 최신 구조로 올릴 때 사용한다. 직접 SQL 파일을 하나씩 실행하지 말고 `php bin/migrate.php`를 사용한다. `schema_migrations`가 적용 이력을 기록하며, 기존 migration도 재실행 가능한 형태로 유지한다. 신규 설치의 최신 schema에는 현재 migration 이력이 미리 기록된다.
 
 ## 3. 설정 파일
 
@@ -95,9 +96,10 @@ PHP-FPM 소켓 경로는 서버 환경에 맞게 변경한다.
 
 ```bash
 php bin/check.php
+php bin/check.php --production
 ```
 
-이 명령은 PHP 버전/확장, 설정파일, DB 연결, 필수 테이블, HTTPS/세션 설정, Telegram 및 공휴일 API 설정 여부를 확인하며 데이터를 변경하지 않는다.
+기본 점검은 개발/운영 공통 상태를 확인한다. `--production`을 붙이면 운영 배포 기준으로 `app.debug=false`, HTTPS, Secure Cookie, composer.lock, migration 최신 상태를 필수 조건으로 검사한다. 두 명령 모두 업무 데이터를 변경하지 않는다.
 
 웹에서도 `/health`가 `{ "status": "ok" }`를 반환하는지 확인한다.
 
@@ -126,9 +128,12 @@ php bin/check.php
 1. DB 백업
 2. 코드 업데이트
 3. `composer install --no-dev --optimize-autoloader`
-4. 새 migration이 있으면 파일명 순서대로 적용
-5. `php bin/check.php`
-6. `/health`와 핵심 업무 흐름 확인
+4. `composer audit --locked`
+5. `php bin/migrate.php`
+6. `php bin/check.php --production`
+7. `/health`와 핵심 업무 흐름 확인
+
+`bin/migrate.php`는 `schema_migrations`를 기준으로 미적용 SQL만 실행한다. 구버전에서 이미 일부 SQL을 수동 적용했던 DB도 현재 migration이 반복 실행 가능하도록 작성되어 있어 추적 테이블을 안전하게 채울 수 있다.
 
 
 ## 신규 설치 마법사
@@ -165,8 +170,9 @@ php bin/reset-install.php --confirm=RESET-INSTALL
 
 ### Telegram 알림 구분
 
-- 활성 관리자는 휴가 신청 사유와 잔여 연차 경고를 개인 Telegram으로 받는다.
-- 신청자는 승인/반려/승인 취소 결과를 개인 Telegram으로 받는다.
+- 활성 관리자는 휴가 신청 사유와 잔여 연차 경고를 개인 Telegram으로 받고, 메시지의 **신청 확인 · 승인** 버튼으로 해당 관리자 승인 항목에 바로 이동한다.
+- 신청자는 승인/반려/승인 취소 결과를 개인 Telegram으로 받고, 메시지의 **휴가 상세 보기** 버튼으로 해당 월의 신청 상세에 바로 이동한다.
+- Telegram 링크를 눌렀을 때 웹 로그인이 필요하면 인증 완료 후 원래 대상 화면으로 돌아간다.
 - 회사 공용 그룹은 관리자와 직원이 함께 보는 그룹으로, 승인된 휴가 일정 등록/취소만 공유한다.
 
 
