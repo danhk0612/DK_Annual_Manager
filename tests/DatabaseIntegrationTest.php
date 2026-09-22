@@ -386,6 +386,89 @@ PHP);
         self::assertSame('2026-09-24', $upcoming[0]['first_leave_date']);
     }
 
+    public function testClosedLeaveHistoryCleanupPreservesPendingAndApprovedOnly(): void
+    {
+        $this->pdo->exec(
+            "INSERT INTO users (name, role, status) VALUES "
+            . "('관리자', 'admin', 'active'), ('직원', 'user', 'active')"
+        );
+        $adminId = (int) $this->pdo->query("SELECT id FROM users WHERE name = '관리자'")->fetchColumn();
+        $userId = (int) $this->pdo->query("SELECT id FROM users WHERE name = '직원'")->fetchColumn();
+        $leaveTypeId = (int) $this->pdo->query("SELECT id FROM leave_types WHERE code = 'V'")->fetchColumn();
+
+        $requests = new LeaveRequestRepository($this->pdo);
+        $reviewer = new LeaveReviewService($this->pdo);
+
+        $pendingId = $requests->create(
+            $userId, $leaveTypeId, '2026-10-01', '2026-10-01', 1.0, null,
+            '대기 유지', ['2026-10-01'], 1.0,
+        );
+
+        $approvedId = $requests->create(
+            $userId, $leaveTypeId, '2026-10-02', '2026-10-02', 1.0, null,
+            '승인 유지', ['2026-10-02'], 1.0,
+        );
+        self::assertTrue($reviewer->review($approvedId, 'approve', $adminId, null)['changed']);
+
+        $rejectedId = $requests->create(
+            $userId, $leaveTypeId, '2026-10-03', '2026-10-03', 1.0, null,
+            '반려 삭제', ['2026-10-03'], 1.0,
+        );
+        self::assertTrue($reviewer->review($rejectedId, 'reject', $adminId, '반려')['changed']);
+
+        $cancelledId = $requests->create(
+            $userId, $leaveTypeId, '2026-10-04', '2026-10-04', 1.0, null,
+            '취소 삭제', ['2026-10-04'], 1.0,
+        );
+        self::assertTrue($reviewer->review($cancelledId, 'approve', $adminId, null)['changed']);
+        self::assertTrue($reviewer->cancelApproved($cancelledId, $adminId, '취소')['changed']);
+
+        $auditInsert = $this->pdo->prepare(
+            "INSERT INTO audit_logs (actor_user_id, action, target_type, target_id) "
+            . "VALUES (:actor, 'test.leave', 'leave_request', :target)"
+        );
+        foreach ([$pendingId, $approvedId, $rejectedId, $cancelledId] as $id) {
+            $auditInsert->execute(['actor' => $adminId, 'target' => $id]);
+        }
+
+        self::assertSame(2, $requests->closedHistoryCount());
+
+        $result = $requests->purgeClosedHistory();
+
+        self::assertSame(2, $result['requests']);
+        self::assertSame(2, $result['days']);
+        self::assertSame(2, $result['ledger']);
+        self::assertSame(2, $result['audit']);
+        self::assertSame(0, $requests->closedHistoryCount());
+
+        $remaining = $this->pdo->query(
+            "SELECT id, status FROM leave_requests ORDER BY id"
+        )->fetchAll();
+        self::assertSame(
+            [
+                ['id' => $pendingId, 'status' => 'pending'],
+                ['id' => $approvedId, 'status' => 'approved'],
+            ],
+            array_map(
+                static fn (array $row): array => ['id' => (int) $row['id'], 'status' => (string) $row['status']],
+                $remaining,
+            ),
+        );
+
+        self::assertSame(2, (int) $this->pdo->query(
+            'SELECT COUNT(*) FROM leave_request_days'
+        )->fetchColumn());
+        self::assertSame(1, (int) $this->pdo->query(
+            'SELECT COUNT(*) FROM annual_leave_ledger WHERE reference_request_id = ' . $approvedId
+        )->fetchColumn());
+        self::assertSame(0, (int) $this->pdo->query(
+            'SELECT COUNT(*) FROM annual_leave_ledger WHERE reference_request_id = ' . $cancelledId
+        )->fetchColumn());
+        self::assertSame(2, (int) $this->pdo->query(
+            "SELECT COUNT(*) FROM audit_logs WHERE action = 'test.leave'"
+        )->fetchColumn());
+    }
+
     public function testApprovalAndCancellationUpdateAnnualLeaveLedgerAtomically(): void
     {
         $this->pdo->exec(
