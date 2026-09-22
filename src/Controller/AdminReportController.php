@@ -103,6 +103,7 @@ final class AdminReportController
             'monthlySummary' => $monthlySummary,
             'graphTotals' => $graphTotals,
             'exportUsers' => $this->users->all(),
+            'error' => $request->input('error'),
         ]));
     }
 
