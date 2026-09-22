@@ -146,9 +146,11 @@ final class AdminSettingsController
             return $this->error('추가할 Telegram Chat ID를 확인해 주세요.');
         }
 
-        $ids = $this->settings->lineList('telegram.admin_chat_ids');
-        $ids[$chatId] = $chatId;
-        $ids = array_values(array_unique(array_values($ids)));
+        $ids = $this->settings->get('telegram.admin_chat_ids', null) !== null
+            ? $this->settings->lineList('telegram.admin_chat_ids')
+            : $this->configuredAdminChats();
+        $ids[] = $chatId;
+        $ids = array_values(array_unique($ids));
         $this->settings->set('telegram.admin_chat_ids', implode("\n", $ids), (int) $actor['id']);
 
         $this->audit->record((int) $actor['id'], 'settings.telegram_chat_added', 'app_settings', null, [
