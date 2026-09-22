@@ -41,9 +41,11 @@ final class Auth
         $sessionRole = $this->session->get('auth_role');
         $sessionStatus = $this->session->get('auth_status');
         if ($sessionRole === null || $sessionStatus === null) {
-            $this->session->set('auth_role', (string) $user['role']);
-            $this->session->set('auth_status', (string) $user['status']);
-        } elseif ($sessionRole !== (string) $user['role'] || $sessionStatus !== (string) $user['status']) {
+            $this->clearIdentity();
+            return null;
+        }
+
+        if ($sessionRole !== (string) $user['role'] || $sessionStatus !== (string) $user['status']) {
             $this->clearIdentity();
             return null;
         }
