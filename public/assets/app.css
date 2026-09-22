@@ -3270,3 +3270,13 @@ html[data-theme="dark"] .calendar-day.non-working-day:not(.public-holiday):not(.
         grid-template-columns: 1fr;
     }
 }
+
+
+[id^="request-"] {
+    scroll-margin-top: 5rem;
+}
+
+[id^="request-"]:target {
+    outline: 2px solid var(--primary, #315efb);
+    outline-offset: 3px;
+}

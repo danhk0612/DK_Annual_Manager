@@ -13,6 +13,27 @@ jobs:
       matrix:
         php: ['8.2', '8.4']
 
+    services:
+      mariadb:
+        image: mariadb:10.6
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: dk_annual_test
+          MARIADB_USER: dkannual
+          MARIADB_PASSWORD: dkannual
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mariadb-admin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DK_TEST_DB_DSN: mysql:host=127.0.0.1;port=3306;dbname=dk_annual_test;charset=utf8mb4
+      DK_TEST_DB_USER: dkannual
+      DK_TEST_DB_PASSWORD: dkannual
+
     steps:
       - uses: actions/checkout@v4
 
@@ -25,10 +46,13 @@ jobs:
           tools: composer:v2
 
       - name: Validate Composer
-        run: composer validate --no-check-lock
+        run: composer validate --no-check-publish
 
-      - name: Install dependencies
+      - name: Install locked dependencies
         run: composer install --no-interaction --prefer-dist
+
+      - name: Audit dependencies
+        run: composer audit --locked
 
       - name: PHP syntax check
         run: find src public bin tests templates -name '*.php' -print0 | xargs -0 -n1 php -l

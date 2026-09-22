@@ -443,3 +443,27 @@
 - [x] PHP 8.2/8.4 CI
 - [ ] 실제 브라우저에서 직원 목록 연차 표시 및 dialog 동작 검증
 - [ ] 연차 동기화/고정/조정 후 목록 값 즉시 갱신 검증
+
+## T24. 배포 하드닝 · Telegram 바로가기
+
+상태: 구현 완료 / CI 통과 / 실제 외부 연동·운영 서버 검증 대기
+
+- [x] 공휴일 API/DB 오류 원문을 관리자 화면에 직접 노출하지 않도록 수정
+- [x] Telegram Bot API 인라인 URL 버튼 지원
+- [x] 관리자 신청 알림에 해당 승인 항목 바로가기 추가
+- [x] 사용자 승인/반려/취소 알림에 해당 휴가 상세 바로가기 추가
+- [x] deep link 진입 후 Telegram 로그인 시 원래 경로 복귀
+- [x] 신청 항목 anchor/강조 및 달력 상세 자동 열기
+- [x] schema_migrations 기반 migration 추적
+- [x] bin/migrate.php 안전한 업그레이드 명령 추가
+- [x] 기존 migration 반복 실행 가능하도록 보강
+- [x] bin/check.php migration 최신 상태 점검 추가
+- [x] MariaDB 10.6 CI 통합 테스트 추가
+- [x] 승인 → 연차 차감 → 승인 취소 → 연차 복원 DB 통합 테스트
+- [x] Composer dependency audit CI 추가
+- [x] composer.lock 저장소 고정
+- [x] 전역 오류 로그에서 Bot Token/ServiceKey 등 민감정보 마스킹
+- [x] bin/check.php --production 운영 배포 필수 조건 판정 추가
+- [x] PHP 8.2/8.4 + MariaDB CI 최종 통과
+- [ ] 실제 Telegram에서 관리자/사용자 인라인 버튼 및 로그인 복귀 검증
+- [ ] 실제 운영 서버에서 php bin/migrate.php / php bin/check.php --production 검증

@@ -36,6 +36,7 @@ final class TelegramAuthController
         return Response::html($this->view->render('login', [
             'title' => '로그인',
             'configured' => $this->isConfigured(),
+            'returnTo' => $this->safeReturnTo((string) $request->input('return_to', '/')),
             'message' => $request->input('message'),
         ]));
     }
@@ -52,6 +53,7 @@ final class TelegramAuthController
                 'state' => $state,
                 'nonce' => $nonce,
                 'code_verifier' => $codeVerifier,
+                'return_to' => $this->safeReturnTo((string) $request->input('return_to', '/')),
                 'created_at' => time(),
             ]);
 
@@ -134,7 +136,7 @@ final class TelegramAuthController
                 return Response::redirect('/setup?message=' . rawurlencode('최초 관리자 Telegram 로그인을 완료했습니다.'));
             }
 
-            return Response::redirect('/');
+            return Response::redirect($this->safeReturnTo((string) ($stored['return_to'] ?? '/')));
         } catch (Throwable $exception) {
             return $this->statusResponse('로그인 검증 실패', 'Telegram 로그인 정보를 검증하지 못했습니다.', 400);
         }
@@ -193,6 +195,21 @@ final class TelegramAuthController
         return trim((string) $this->config->get('telegram.client_id', '')) !== ''
             && trim((string) $this->config->get('telegram.client_secret', '')) !== ''
             && trim((string) $this->config->get('telegram.redirect_uri', '')) !== '';
+    }
+
+    private function safeReturnTo(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '' || !str_starts_with($value, '/') || str_starts_with($value, '//')) {
+            return '/';
+        }
+
+        $parts = parse_url($value);
+        if (!is_array($parts) || isset($parts['scheme']) || isset($parts['host'])) {
+            return '/';
+        }
+
+        return $value;
     }
 
     private function randomUrlSafe(int $bytes): string

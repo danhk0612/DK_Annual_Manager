@@ -159,6 +159,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 detailDialog.close();
             }
         });
+
+        const focusRequest = new URLSearchParams(window.location.search).get('focus_request');
+        const focusSelector = focusRequest && /^\d+$/.test(focusRequest)
+            ? '#request-' + focusRequest
+            : (window.location.hash.startsWith('#request-') ? window.location.hash : '');
+        const focusTarget = focusSelector !== '' ? document.querySelector(focusSelector) : null;
+        if (focusTarget) {
+            focusTarget.scrollIntoView({ block: 'center' });
+            if (focusTarget.matches('[data-open-request-detail]')) {
+                focusTarget.click();
+            }
+        }
     }
 
     const bindSimpleDialog = (dialogSelector, openSelector, closeSelector) => {

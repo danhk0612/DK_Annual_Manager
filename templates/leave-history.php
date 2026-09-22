@@ -89,7 +89,7 @@ $statusLabels = [
                 $halfDayPeriod = (string) ($item['half_day_period'] ?? '');
                 $halfDayLabel = $halfDayPeriod === 'am' ? ' · 오전' : ($halfDayPeriod === 'pm' ? ' · 오후' : '');
                 ?>
-                <tr>
+                <tr id="request-<?= (int) $item['id'] ?>">
                     <td><?= htmlspecialchars((string) $item['created_at'], ENT_QUOTES, 'UTF-8') ?></td>
                     <?php if ($isAdmin): ?>
                         <td>

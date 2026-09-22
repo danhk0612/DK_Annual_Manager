@@ -247,6 +247,7 @@ $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'
                         ?>
                         <button
                             type="button"
+                            id="request-<?= (int) $item['id'] ?>"
                             class="month-request-item <?= $deductionClass ?>"
                             data-open-request-detail
                             data-request-id="<?= (int) $item['id'] ?>"

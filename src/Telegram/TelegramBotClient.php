@@ -104,13 +104,43 @@ final class TelegramBotClient
         return $payload['result'];
     }
 
-    public function sendMessage(int|string $chatId, string $text): void
+    /**
+     * @param list<array{text:string,url:string}> $buttons
+     */
+    public function sendMessage(int|string $chatId, string $text, array $buttons = []): void
     {
+        $payload = [
+            'chat_id' => $chatId,
+            'text' => $text,
+        ];
+
+        $inlineButtons = [];
+        foreach ($buttons as $button) {
+            $label = trim((string) ($button['text'] ?? ''));
+            $url = trim((string) ($button['url'] ?? ''));
+            if ($label === '' || filter_var($url, FILTER_VALIDATE_URL) === false) {
+                continue;
+            }
+
+            $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+            if (!in_array($scheme, ['https', 'http'], true)) {
+                continue;
+            }
+
+            $inlineButtons[] = [[
+                'text' => $label,
+                'url' => $url,
+            ]];
+        }
+
+        if ($inlineButtons !== []) {
+            $payload['reply_markup'] = [
+                'inline_keyboard' => $inlineButtons,
+            ];
+        }
+
         $this->http->post($this->apiUrl('sendMessage'), [
-            'json' => [
-                'chat_id' => $chatId,
-                'text' => $text,
-            ],
+            'json' => $payload,
         ]);
     }
 

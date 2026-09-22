@@ -1,11 +1,11 @@
 SET NAMES utf8mb4;
 
 ALTER TABLE users
-    ADD COLUMN department VARCHAR(100) NULL AFTER telegram_username,
-    ADD COLUMN position VARCHAR(100) NULL AFTER department;
+    ADD COLUMN IF NOT EXISTS department VARCHAR(100) NULL AFTER telegram_username,
+    ADD COLUMN IF NOT EXISTS position VARCHAR(100) NULL AFTER department;
 
 ALTER TABLE leave_requests
-    ADD COLUMN half_day_period ENUM('am', 'pm') NULL AFTER requested_amount;
+    ADD COLUMN IF NOT EXISTS half_day_period ENUM('am', 'pm') NULL AFTER requested_amount;
 
 UPDATE leave_types SET is_active = 0 WHERE code = 'P';
 

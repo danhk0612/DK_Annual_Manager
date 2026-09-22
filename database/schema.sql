@@ -3,6 +3,11 @@
 
 SET NAMES utf8mb4;
 
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    migration_name VARCHAR(190) PRIMARY KEY,
+    applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -129,3 +134,8 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     KEY idx_audit_logs_created_at (created_at),
     KEY idx_audit_logs_target (target_type, target_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO schema_migrations (migration_name) VALUES
+    ('20260917_001_users_hire_date_nullable.sql'),
+    ('20260917_002_annual_leave_ledger_key.sql'),
+    ('20260922_003_leave_usability.sql');
