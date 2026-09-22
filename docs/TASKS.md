@@ -529,7 +529,7 @@
 
 ## T28. v1.2.0 Excel 출력 · 달력 탐색 개선
 
-상태: 구현 완료 / PR CI 통과 / main·자동 Release 대기
+상태: 완료
 
 - [x] 사용자 내 정보 연간/월간/전체 Excel(.xlsx) 출력
 - [x] 관리자 휴가 집계 전체/특정 사용자 Excel 출력
@@ -548,5 +548,19 @@
 - [x] README/요구사항/아키텍처/집계 문서 갱신
 - [x] VERSION 1.2.0 및 릴리스 노트
 - [x] feature PR CI 통과
+- [x] main 병합 및 main CI 통과
+- [x] v1.2.0 GitHub Release 자동 생성 확인
+
+## T29. v1.2.1 XLSX 스타일 XML · 출력 카드 간격 핫픽스
+
+상태: 구현 완료 / PR CI 통과 / main·자동 Release 대기
+
+- [x] XLSX styles.xml 잘못된 bottom 종료 태그 수정
+- [x] 생성된 XLSX 내부 XML/관계 파일 전체 파싱 테스트 추가
+- [x] styles.xml 회귀 assertion 추가
+- [x] 사용자 Excel 출력 하단 안내문 간격 개선
+- [x] 관리자 휴가 집계 Excel 출력 하단 안내문 간격 개선
+- [x] VERSION 1.2.1 및 릴리스 노트
+- [x] feature PR CI 통과
 - [ ] main 병합 및 main CI 통과
-- [ ] v1.2.0 GitHub Release 자동 생성 확인
+- [ ] v1.2.1 GitHub Release 자동 생성 확인
