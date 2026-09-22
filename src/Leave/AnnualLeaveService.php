@@ -27,8 +27,14 @@ final class AnnualLeaveService
     /** @param array<string, mixed> $user */
     public function syncAccruals(array $user, DateTimeImmutable $asOf, ?int $createdBy): int
     {
+        $userId = (int) $user['id'];
         $hireDateValue = $user['hire_date'] ?? null;
         if (!is_string($hireDateValue) || $hireDateValue === '') {
+            foreach ($this->settings->annualLeaveOverridesForUser($userId) as $year => $amount) {
+                if ($year <= (int) $asOf->format('Y')) {
+                    $this->enforceOverride($userId, $year, $amount, $createdBy);
+                }
+            }
             return 0;
         }
 
@@ -38,7 +44,6 @@ final class AnnualLeaveService
             $employmentEndDate = new DateTimeImmutable($user['employment_end_date']);
         }
 
-        $userId = (int) $user['id'];
         $inserted = 0;
 
         foreach ($this->calculator->accrualEvents($hireDate, $asOf, $employmentEndDate) as $event) {
