@@ -17,6 +17,7 @@ final class LeaveRequestRepository extends AbstractRepository
         string $startDate,
         string $endDate,
         float $requestedAmount,
+        ?string $halfDayPeriod,
         ?string $reason,
         array $leaveDates,
         float $dailyAmount,
@@ -26,8 +27,8 @@ final class LeaveRequestRepository extends AbstractRepository
         try {
             $statement = $this->pdo->prepare(
                 'INSERT INTO leave_requests '
-                . '(user_id, leave_type_id, start_date, end_date, requested_amount, reason, status) '
-                . "VALUES (:user_id, :leave_type_id, :start_date, :end_date, :requested_amount, :reason, 'pending')"
+                . '(user_id, leave_type_id, start_date, end_date, requested_amount, half_day_period, reason, status) '
+                . "VALUES (:user_id, :leave_type_id, :start_date, :end_date, :requested_amount, :half_day_period, :reason, 'pending')"
             );
             $statement->execute([
                 'user_id' => $userId,
@@ -35,6 +36,7 @@ final class LeaveRequestRepository extends AbstractRepository
                 'start_date' => $startDate,
                 'end_date' => $endDate,
                 'requested_amount' => $requestedAmount,
+                'half_day_period' => $halfDayPeriod,
                 'reason' => $reason,
             ]);
 
@@ -110,7 +112,9 @@ final class LeaveRequestRepository extends AbstractRepository
     {
         $statement = $this->pdo->query(
             'SELECT r.*, u.name AS user_name, u.telegram_user_id, '
-            . 't.code AS leave_code, t.name AS leave_type_name, t.deducts_annual_leave '
+            . 't.code AS leave_code, t.name AS leave_type_name, t.deducts_annual_leave, '
+            . "(SELECT COALESCE(SUM(l.amount), 0) FROM annual_leave_ledger l "
+            . "WHERE l.user_id = r.user_id AND l.leave_year = YEAR(r.start_date)) AS annual_balance "
             . 'FROM leave_requests r '
             . 'INNER JOIN users u ON u.id = r.user_id '
             . 'INNER JOIN leave_types t ON t.id = r.leave_type_id '
@@ -136,10 +140,9 @@ final class LeaveRequestRepository extends AbstractRepository
     }
 
     /** @return list<array<string, mixed>> */
-    public function calendarEntries(string $startDate, string $endDate): array
+    public function calendarEntries(string $startDate, string $endDate, ?int $userId = null): array
     {
-        $statement = $this->pdo->prepare(
-            'SELECT d.leave_date, d.amount, r.id AS request_id, r.status, '
+        $sql = 'SELECT d.leave_date, d.amount, r.id AS request_id, r.status, r.half_day_period, '
             . 'u.id AS user_id, u.name AS user_name, '
             . 't.code AS leave_code, t.name AS leave_type_name '
             . 'FROM leave_request_days d '
@@ -147,13 +150,46 @@ final class LeaveRequestRepository extends AbstractRepository
             . 'INNER JOIN users u ON u.id = r.user_id '
             . 'INNER JOIN leave_types t ON t.id = r.leave_type_id '
             . 'WHERE d.leave_date BETWEEN :start_date AND :end_date '
-            . "AND r.status IN ('pending', 'approved') "
-            . 'ORDER BY d.leave_date ASC, u.name ASC, r.id ASC'
-        );
-        $statement->execute([
+            . "AND r.status IN ('pending', 'approved') ";
+
+        $params = [
             'start_date' => $startDate,
             'end_date' => $endDate,
-        ]);
+        ];
+        if ($userId !== null) {
+            $sql .= 'AND r.user_id = :user_id ';
+            $params['user_id'] = $userId;
+        }
+
+        $sql .= 'ORDER BY d.leave_date ASC, u.name ASC, r.id ASC';
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute($params);
+
+        return $statement->fetchAll();
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function calendarRequestList(string $startDate, string $endDate, ?int $userId = null): array
+    {
+        $sql = 'SELECT r.*, u.name AS user_name, t.code AS leave_code, t.name AS leave_type_name '
+            . 'FROM leave_requests r '
+            . 'INNER JOIN users u ON u.id = r.user_id '
+            . 'INNER JOIN leave_types t ON t.id = r.leave_type_id '
+            . 'WHERE r.start_date <= :end_date AND r.end_date >= :start_date '
+            . "AND r.status IN ('pending', 'approved') ";
+
+        $params = [
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ];
+        if ($userId !== null) {
+            $sql .= 'AND r.user_id = :user_id ';
+            $params['user_id'] = $userId;
+        }
+
+        $sql .= 'ORDER BY r.start_date ASC, u.name ASC, r.id ASC';
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute($params);
 
         return $statement->fetchAll();
     }
