@@ -43,7 +43,7 @@ $statusIcons = [
 
 $previous = $start->modify('-1 month')->format('Y-m');
 $next = $start->modify('+1 month')->format('Y-m');
-$leading = (int) $start->format('N') - 1;
+$leading = (int) $start->format('w');
 $days = (int) $end->format('j');
 
 $approvedCount = 0;
@@ -58,7 +58,7 @@ foreach ($monthlyRequests as $item) {
 
 $returnTo = '/calendar?month=' . rawurlencode($month);
 $targetUsers = [];
-$weekdayLabels = [1 => '월', 2 => '화', 3 => '수', 4 => '목', 5 => '금', 6 => '토', 7 => '일'];
+$weekdayLabels = [7 => '일', 1 => '월', 2 => '화', 3 => '수', 4 => '목', 5 => '금', 6 => '토'];
 $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'), (int) $start->format('n'));
 ?>
 <section class="page-head">
