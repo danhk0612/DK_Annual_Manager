@@ -136,25 +136,13 @@ final class SetupService
 
         $settings = new AppSettingRepository($this->pdo);
 
-        $telegram = trim((string) $settings->get('telegram.client_id', (string) $this->config->get('telegram.client_id', ''))) !== ''
-            && trim((string) $settings->get('telegram.client_secret', (string) $this->config->get('telegram.client_secret', ''))) !== ''
-            && trim((string) $settings->get('telegram.bot_token', (string) $this->config->get('telegram.bot_token', ''))) !== '';
+        $telegram = trim((string) $settings->get('telegram.client_id', '')) !== ''
+            && trim((string) $settings->get('telegram.client_secret', '')) !== ''
+            && trim((string) $settings->get('telegram.bot_token', '')) !== '';
 
-        $chat = $settings->get('telegram.admin_chat_ids', null) !== null
-            ? $settings->lineList('telegram.admin_chat_ids') !== []
-            : is_array($this->config->get('telegram.admin_chat_ids', []))
-                && $this->config->get('telegram.admin_chat_ids', []) !== [];
-
+        $chat = $settings->lineList('telegram.admin_chat_ids') !== [];
         $admin = $settings->lineList('telegram.bootstrap_admin_telegram_ids') !== [];
-        if (!$admin) {
-            $configured = $this->config->get('telegram.bootstrap_admin_telegram_ids', []);
-            $admin = is_array($configured) && $configured !== [];
-        }
-
-        $holiday = trim((string) $settings->get(
-            'holiday_api.service_key',
-            (string) $this->config->get('holiday_api.service_key', ''),
-        )) !== '';
+        $holiday = trim((string) $settings->get('holiday_api.service_key', '')) !== '';
 
         return [
             'schema' => true,
