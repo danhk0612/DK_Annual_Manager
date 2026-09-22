@@ -169,10 +169,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const owned = button.dataset.requestOwned === '1';
                 const statusCode = button.dataset.requestStatusCode || '';
                 if (pendingCancelForm) {
-                    pendingCancelForm.hidden = !(owned && statusCode === 'pending');
+                    const showPendingCancel = owned && statusCode === 'pending';
+                    pendingCancelForm.hidden = !showPendingCancel;
+                    pendingCancelForm.setAttribute('aria-hidden', showPendingCancel ? 'false' : 'true');
                 }
                 if (approvedCancelForm) {
-                    approvedCancelForm.hidden = !(owned && statusCode === 'approved');
+                    const showApprovedCancel = owned && statusCode === 'approved';
+                    approvedCancelForm.hidden = !showApprovedCancel;
+                    approvedCancelForm.setAttribute('aria-hidden', showApprovedCancel ? 'false' : 'true');
                 }
                 if (pendingCancelId) {
                     pendingCancelId.value = button.dataset.requestId || '';
@@ -213,6 +217,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 focusTarget.click();
             }
         }
+    }
+
+    document.querySelectorAll('[data-export-form]').forEach((form) => {
+        const period = form.querySelector('[data-export-period]');
+        const yearWrap = form.querySelector('[data-export-year-wrap]');
+        const monthWrap = form.querySelector('[data-export-month-wrap]');
+        const yearInput = yearWrap ? yearWrap.querySelector('input, select') : null;
+        const monthInput = monthWrap ? monthWrap.querySelector('input, select') : null;
+
+        if (!period) {
+            return;
+        }
+
+        const syncExportPeriod = () => {
+            const value = period.value;
+            const needsYear = value === 'year' || value === 'month';
+            const needsMonth = value === 'month';
+
+            if (yearWrap) {
+                yearWrap.hidden = !needsYear;
+            }
+            if (monthWrap) {
+                monthWrap.hidden = !needsMonth;
+            }
+            if (yearInput) {
+                yearInput.disabled = !needsYear;
+            }
+            if (monthInput) {
+                monthInput.disabled = !needsMonth;
+            }
+        };
+
+        period.addEventListener('change', syncExportPeriod);
+        syncExportPeriod();
+    });
+
+    const calendarPeriodForm = document.querySelector('[data-calendar-period-form]');
+    if (calendarPeriodForm instanceof HTMLFormElement) {
+        calendarPeriodForm.querySelectorAll('select').forEach((select) => {
+            select.addEventListener('change', () => calendarPeriodForm.submit());
+        });
     }
 
     const bindSimpleDialog = (dialogSelector, openSelector, closeSelector) => {
