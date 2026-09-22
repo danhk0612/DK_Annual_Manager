@@ -60,11 +60,27 @@ $returnTo = '/calendar?month=' . rawurlencode($month);
 $targetUsers = [];
 $weekdayLabels = [7 => '일', 1 => '월', 2 => '화', 3 => '수', 4 => '목', 5 => '금', 6 => '토'];
 $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'), (int) $start->format('n'));
+$selectedCalendarYear = (int) $start->format('Y');
+$selectedCalendarMonth = (int) $start->format('n');
 ?>
 <section class="page-head">
     <div>
         <p class="eyebrow"><?= $isAdmin ? 'Team calendar' : 'My calendar' ?></p>
-        <h1><?= htmlspecialchars($calendarHeading, ENT_QUOTES, 'UTF-8') ?></h1>
+        <form class="calendar-title-selector" method="get" action="/calendar" data-calendar-period-form aria-label="달력 연도와 월 선택">
+            <select name="year" aria-label="연도">
+                <?php for ($calendarYear = 2000; $calendarYear <= 2100; $calendarYear++): ?>
+                    <option value="<?= $calendarYear ?>" <?= $calendarYear === $selectedCalendarYear ? 'selected' : '' ?>><?= $calendarYear ?></option>
+                <?php endfor; ?>
+            </select>
+            <span>년</span>
+            <select name="month_number" aria-label="월">
+                <?php for ($calendarMonth = 1; $calendarMonth <= 12; $calendarMonth++): ?>
+                    <option value="<?= $calendarMonth ?>" <?= $calendarMonth === $selectedCalendarMonth ? 'selected' : '' ?>><?= $calendarMonth ?></option>
+                <?php endfor; ?>
+            </select>
+            <span>월 휴가 현황</span>
+            <button class="button small calendar-title-submit" type="submit">이동</button>
+        </form>
         <p><?= $isAdmin ? '전 직원의 휴가 일정과 신청 상태를 한 화면에서 확인합니다.' : '내 휴가 일정과 신청 상태를 한 화면에서 확인합니다.' ?></p>
     </div>
     <div class="page-actions">
