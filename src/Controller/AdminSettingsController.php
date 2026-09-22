@@ -61,10 +61,10 @@ final class AdminSettingsController
             $botUsername = (string) $telegramBotInfo['username'];
         }
 
-        $appUrl = rtrim((string) $this->config->get('app.url', ''), '/');
+        $appUrl = $this->detectedOrigin($request);
         $redirectUri = (string) $this->settings->get(
             'telegram.redirect_uri',
-            (string) $this->config->get('telegram.redirect_uri', $appUrl !== '' ? $appUrl . '/auth/telegram/callback' : ''),
+            $appUrl !== '' ? $appUrl . '/auth/telegram/callback' : (string) $this->config->get('telegram.redirect_uri', ''),
         );
 
         return Response::html($this->view->render('admin-settings', [
@@ -373,6 +373,24 @@ final class AdminSettingsController
         $this->audit->record((int) $actor['id'], 'settings.logo_removed', 'app_settings', null, [], $this->ip($request));
 
         return $this->message('회사 로고를 기본 아이콘으로 되돌렸습니다.');
+    }
+
+    private function detectedOrigin(Request $request): string
+    {
+        $forwardedProto = strtolower(trim(explode(',', (string) $request->server('HTTP_X_FORWARDED_PROTO', ''))[0] ?? ''));
+        $scheme = in_array($forwardedProto, ['http', 'https'], true)
+            ? $forwardedProto
+            : (((string) $request->server('HTTPS', '') !== '' && (string) $request->server('HTTPS', '') !== 'off') ? 'https' : 'http');
+
+        $forwardedHost = trim(explode(',', (string) $request->server('HTTP_X_FORWARDED_HOST', ''))[0] ?? '');
+        $host = $forwardedHost !== '' ? $forwardedHost : trim((string) $request->server('HTTP_HOST', ''));
+
+        if ($host !== '' && preg_match('/^[A-Za-z0-9.-]+(?::[0-9]{1,5})?$/', $host) === 1) {
+            return $scheme . '://' . $host;
+        }
+
+        $configured = rtrim((string) $this->config->get('app.url', ''), '/');
+        return filter_var($configured, FILTER_VALIDATE_URL) !== false ? $configured : '';
     }
 
     /** @return list<string> */
