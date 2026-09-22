@@ -163,6 +163,8 @@ $adminSettings = new AdminSettingsController(
     $audit,
     $view,
     $csrf,
+    $setupService,
+    $session,
     $root . '/public',
 );
 $adminUsers = new AdminUserController($users, $annualLeave, $auth, $audit, $view, $csrf);
@@ -228,6 +230,8 @@ $router->get('/admin/reports', [$adminReports, 'index'], [$requireAdmin]);
 $router->get('/admin/audit', [$adminAudit, 'index'], [$requireAdmin]);
 $router->get('/admin/settings', [$adminSettings, 'index'], [$requireAdmin]);
 $router->post('/admin/settings/appearance', [$adminSettings, 'saveAppearance'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/settings/workweek', [$adminSettings, 'saveWorkweek'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/settings/reset-install', [$adminSettings, 'resetInstallation'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/telegram-credentials', [$adminSettings, 'saveTelegramCredentials'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/telegram', [$adminSettings, 'saveTelegram'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/holiday-api', [$adminSettings, 'saveHolidayApi'], [$requireAdmin, $verifyCsrf]);
