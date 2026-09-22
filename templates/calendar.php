@@ -264,7 +264,7 @@ $calendarMaxYear = (int) date('Y') + 3;
             <?php if ($monthlyRequests === []): ?>
                 <div class="empty-state"><i class="bi bi-calendar2-check"></i><span>이달 신청 내역이 없습니다.</span></div>
             <?php else: ?>
-                <div class="month-request-list">
+                <div class="month-request-list" data-paginate data-page-size="10">
                     <?php foreach ($monthlyRequests as $item): ?>
                         <?php
                         $halfDayPeriod = (string) ($item['half_day_period'] ?? '');
@@ -282,6 +282,7 @@ $calendarMaxYear = (int) date('Y') + 3;
                             type="button"
                             id="request-<?= (int) $item['id'] ?>"
                             class="month-request-item <?= $deductionClass ?>"
+                            data-page-item
                             data-open-request-detail
                             data-request-id="<?= (int) $item['id'] ?>"
                             data-request-user="<?= htmlspecialchars((string) $item['user_name'], ENT_QUOTES, 'UTF-8') ?>"
