@@ -67,8 +67,17 @@ $settings = new AppSettingRepository($pdo);
 $reports = new ReportingRepository($pdo);
 $auth = new Auth($session, $users);
 $csrf = new Csrf($session);
+$managedAppName = trim((string) $settings->get(
+    'ui.app_name',
+    (string) $config->get('app.name', 'DK Annual Manager'),
+));
+if ($managedAppName === '') {
+    $managedAppName = 'DK Annual Manager';
+}
+ErrorHandler::setAppName($managedAppName);
+
 $view = new View(dirname(__DIR__) . '/templates', $settings, $config);
-$router = new Router();
+$router = new Router($managedAppName);
 
 $telegramBot = new TelegramBotClient($config);
 $notifications = new LeaveNotificationService($config, $telegramBot, $users, $settings);
