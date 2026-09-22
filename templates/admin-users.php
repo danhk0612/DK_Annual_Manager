@@ -1,10 +1,15 @@
 <?php
 /** @var list<array<string, mixed>> $users */
 /** @var array<string, mixed>|null $editUser */
+/** @var int $activeAdminCount */
 /** @var string $csrfToken */
 /** @var mixed $message */
 /** @var mixed $error */
 $editing = is_array($editUser);
+$isSoleActiveAdmin = $editing
+    && ($editUser['role'] ?? null) === 'admin'
+    && ($editUser['status'] ?? null) === 'active'
+    && $activeAdminCount === 1;
 ?>
 <section class="page-head">
     <div>
@@ -24,6 +29,9 @@ $editing = is_array($editUser);
 
 <section class="panel">
     <h2><?= $editing ? '직원 수정' : '직원 추가' ?></h2>
+    <?php if ($isSoleActiveAdmin): ?>
+        <div class="notice warning"><i class="bi bi-shield-exclamation"></i><span>현재 유일한 활성 관리자입니다. 다른 관리자를 먼저 지정하기 전에는 사용자로 변경하거나 비활성화할 수 없습니다.</span></div>
+    <?php endif; ?>
     <form class="form-grid" method="post" action="/admin/users/save">
         <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
         <input type="hidden" name="id" value="<?= $editing ? (int) $editUser['id'] : '' ?>">
@@ -56,7 +64,7 @@ $editing = is_array($editUser);
             권한
             <?php $role = $editing ? (string) $editUser['role'] : 'user'; ?>
             <select name="role">
-                <option value="user" <?= $role === 'user' ? 'selected' : '' ?>>사용자</option>
+                <option value="user" <?= $role === 'user' ? 'selected' : '' ?> <?= $isSoleActiveAdmin ? 'disabled' : '' ?>>사용자</option>
                 <option value="admin" <?= $role === 'admin' ? 'selected' : '' ?>>관리자</option>
             </select>
         </label>
@@ -64,9 +72,9 @@ $editing = is_array($editUser);
             상태
             <?php $status = $editing ? (string) $editUser['status'] : 'active'; ?>
             <select name="status">
-                <option value="pending" <?= $status === 'pending' ? 'selected' : '' ?>>승인 대기</option>
+                <option value="pending" <?= $status === 'pending' ? 'selected' : '' ?> <?= $isSoleActiveAdmin ? 'disabled' : '' ?>>승인 대기</option>
                 <option value="active" <?= $status === 'active' ? 'selected' : '' ?>>활성</option>
-                <option value="inactive" <?= $status === 'inactive' ? 'selected' : '' ?>>비활성</option>
+                <option value="inactive" <?= $status === 'inactive' ? 'selected' : '' ?> <?= $isSoleActiveAdmin ? 'disabled' : '' ?>>비활성</option>
             </select>
         </label>
         <div class="form-actions">

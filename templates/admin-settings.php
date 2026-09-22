@@ -13,6 +13,7 @@
 /** @var array<string, bool> $credentialStatus */
 /** @var string|null $employeeBotLink */
 /** @var string|null $employeeLoginLink */
+/** @var list<int> $workingWeekdays */
 /** @var string $csrfToken */
 /** @var mixed $message */
 /** @var mixed $error */
@@ -100,6 +101,36 @@
                 <?php endif; ?>
             </div>
         </div>
+    </section>
+
+    <section class="panel settings-card">
+        <div class="section-head">
+            <div>
+                <p class="eyebrow">Work schedule</p>
+                <h2><i class="bi bi-calendar-week"></i><span>주 근무 요일</span></h2>
+            </div>
+        </div>
+        <p>실제 근무 요일을 선택합니다. 선택하지 않은 요일은 달력에서 비근무일로 강조되고 휴가 일수 계산에서도 제외됩니다.</p>
+        <form class="settings-subsection" method="post" action="/admin/settings/workweek">
+            <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+            <div class="weekday-checkbox-grid">
+                <?php foreach ([1 => '월', 2 => '화', 3 => '수', 4 => '목', 5 => '금', 6 => '토', 7 => '일'] as $dayNumber => $dayLabel): ?>
+                    <label class="weekday-checkbox">
+                        <input
+                            type="checkbox"
+                            name="working_weekdays[]"
+                            value="<?= $dayNumber ?>"
+                            <?= in_array($dayNumber, $workingWeekdays, true) ? 'checked' : '' ?>
+                        >
+                        <span><?= $dayLabel ?></span>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+            <p class="form-hint">기본값은 월~금입니다. 최소 1개 요일은 선택해야 합니다.</p>
+            <div class="form-actions settings-subsection">
+                <button class="button primary" type="submit"><i class="bi bi-check2-circle"></i><span>근무 요일 저장</span></button>
+            </div>
+        </form>
     </section>
 
     <section class="panel settings-card">
@@ -265,6 +296,31 @@
             <div class="form-actions">
                 <button class="button primary" type="submit"><i class="bi bi-cloud-check"></i><span>저장·연결 확인</span></button>
                 <a class="button" href="/admin/holidays"><i class="bi bi-arrow-repeat"></i><span>공휴일 관리·동기화</span></a>
+            </div>
+        </form>
+    </section>
+    <section class="panel settings-card danger-zone-card">
+        <div class="section-head">
+            <div>
+                <p class="eyebrow">Reinstall</p>
+                <h2><i class="bi bi-arrow-repeat"></i><span>재설치 · 완전 초기화</span></h2>
+            </div>
+        </div>
+        <div class="danger-zone-note">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div>
+                <strong>모든 휴가관리 데이터를 삭제합니다.</strong>
+                <span>직원, 휴가 신청, 연차 원장, 공휴일, 관리자 설정, 업로드 로고가 삭제되고 초기 설치 마법사부터 다시 시작합니다. DB 접속용 config와 소스코드는 유지됩니다.</span>
+            </div>
+        </div>
+        <form class="form-grid settings-subsection" method="post" action="/admin/settings/reset-install" data-confirm-reset>
+            <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+            <label class="span-2">
+                확인을 위해 RESET 입력
+                <input name="confirmation" autocomplete="off" placeholder="RESET" required>
+            </label>
+            <div class="form-actions">
+                <button class="button danger" type="submit"><i class="bi bi-trash3"></i><span>완전 초기화 후 재설치</span></button>
             </div>
         </form>
     </section>

@@ -11,6 +11,7 @@ use DKAnnual\Http\Response;
 use DKAnnual\Leave\AnnualLeaveService;
 use DKAnnual\Leave\LeaveDateCalculator;
 use DKAnnual\Repository\AnnualLeaveLedgerRepository;
+use DKAnnual\Repository\AppSettingRepository;
 use DKAnnual\Repository\AuditLogRepository;
 use DKAnnual\Repository\HolidayRepository;
 use DKAnnual\Repository\LeaveRequestRepository;
@@ -30,6 +31,7 @@ final class LeaveController
         private readonly LeaveRequestRepository $requests,
         private readonly AnnualLeaveService $annualLeave,
         private readonly AnnualLeaveLedgerRepository $ledger,
+        private readonly AppSettingRepository $settings,
         private readonly LeaveDateCalculator $dates,
         private readonly LeaveNotificationService $notifications,
         private readonly AuditLogRepository $audit,
@@ -69,9 +71,15 @@ final class LeaveController
             return Response::redirect('/login');
         }
 
+        $isAdmin = ($user['role'] ?? null) === 'admin';
+
         return Response::html($this->view->render('leave-history', [
-            'title' => '휴가 신청 내역',
-            'requests' => $this->requests->forUser((int) $user['id']),
+            'title' => $isAdmin ? '전체 휴가 신청 내역' : '휴가 신청 내역',
+            'requests' => $isAdmin
+                ? $this->requests->allForAdmin()
+                : $this->requests->forUser((int) $user['id']),
+            'isAdmin' => $isAdmin,
+            'currentUserId' => (int) $user['id'],
             'csrfToken' => $this->csrf->token(),
             'message' => $request->input('message'),
             'error' => $request->input('error'),
@@ -134,10 +142,15 @@ final class LeaveController
             $start->format('Y-m-d'),
             $end->format('Y-m-d'),
         );
-        $leaveDates = $this->dates->workingDates($start, $end, $holidayDates);
+        $leaveDates = $this->dates->workingDates(
+            $start,
+            $end,
+            $holidayDates,
+            $this->settings->workingWeekdays(),
+        );
 
         if ($leaveDates === []) {
-            return $this->redirectError('신청 기간에 휴가로 계산할 평일이 없습니다.', $returnTo);
+            return $this->redirectError('신청 기간에 설정된 근무일이 없습니다.', $returnTo);
         }
 
         if ($this->requests->hasOpenDays((int) $subject['id'], $leaveDates)) {

@@ -109,7 +109,7 @@ if ($managedAppName === '') {
 }
 ErrorHandler::setAppName($managedAppName);
 
-$view = new View($root . '/templates', $settings, $config);
+$view = new View($root . '/templates', $settings, $config, $auth);
 $router = new Router($managedAppName);
 $telegramBot = new TelegramBotClient($config);
 $telegramAuth = new TelegramAuthController(
@@ -163,6 +163,8 @@ $adminSettings = new AdminSettingsController(
     $audit,
     $view,
     $csrf,
+    $setupService,
+    $session,
     $root . '/public',
 );
 $adminUsers = new AdminUserController($users, $annualLeave, $auth, $audit, $view, $csrf);
@@ -195,13 +197,14 @@ $leave = new LeaveController(
     $leaveRequests,
     $annualLeave,
     $ledger,
+    $settings,
     new LeaveDateCalculator(),
     $notifications,
     $audit,
     $view,
     $csrf,
 );
-$calendar = new CalendarController($auth, $leaveRequests, $holidays, $leaveTypes, $ledger, $annualLeave, $view, $csrf);
+$calendar = new CalendarController($auth, $leaveRequests, $holidays, $leaveTypes, $ledger, $annualLeave, $settings, $view, $csrf);
 
 $requireAuth = new RequireAuthMiddleware($auth);
 $requireAdmin = new RequireAdminMiddleware($auth);
@@ -227,6 +230,8 @@ $router->get('/admin/reports', [$adminReports, 'index'], [$requireAdmin]);
 $router->get('/admin/audit', [$adminAudit, 'index'], [$requireAdmin]);
 $router->get('/admin/settings', [$adminSettings, 'index'], [$requireAdmin]);
 $router->post('/admin/settings/appearance', [$adminSettings, 'saveAppearance'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/settings/workweek', [$adminSettings, 'saveWorkweek'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/settings/reset-install', [$adminSettings, 'resetInstallation'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/telegram-credentials', [$adminSettings, 'saveTelegramCredentials'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/telegram', [$adminSettings, 'saveTelegram'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/holiday-api', [$adminSettings, 'saveHolidayApi'], [$requireAdmin, $verifyCsrf]);

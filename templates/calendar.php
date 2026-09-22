@@ -9,6 +9,7 @@
 /** @var list<array<string, mixed>> $holidays */
 /** @var list<array<string, mixed>> $leaveTypes */
 /** @var float $annualBalance */
+/** @var list<int> $workingWeekdays */
 /** @var list<string> $reasonCategories */
 /** @var string $today */
 /** @var string $csrfToken */
@@ -57,16 +58,18 @@ foreach ($monthlyRequests as $item) {
 
 $returnTo = '/calendar?month=' . rawurlencode($month);
 $targetUsers = [];
+$weekdayLabels = [1 => '월', 2 => '화', 3 => '수', 4 => '목', 5 => '금', 6 => '토', 7 => '일'];
+$calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'), (int) $start->format('n'));
 ?>
 <section class="page-head">
     <div>
         <p class="eyebrow"><?= $isAdmin ? 'Team calendar' : 'My calendar' ?></p>
-        <h1><?= htmlspecialchars($month, ENT_QUOTES, 'UTF-8') ?> 휴가 달력</h1>
-        <p><?= $isAdmin ? '전체 직원의 휴가와 신청 상태를 달력과 월별 내역으로 함께 확인합니다.' : '내 휴가 일정과 신청 상태를 한 화면에서 확인합니다.' ?></p>
+        <h1><?= htmlspecialchars($calendarHeading, ENT_QUOTES, 'UTF-8') ?></h1>
+        <p><?= $isAdmin ? '전 직원의 휴가 일정과 신청 상태를 한 화면에서 확인합니다.' : '내 휴가 일정과 신청 상태를 한 화면에서 확인합니다.' ?></p>
     </div>
     <div class="page-actions">
         <button class="button primary" type="button" data-open-leave-dialog><i class="bi bi-plus-circle"></i> 휴가 신청</button>
-        <a class="button" href="/leave/history"><i class="bi bi-list-check"></i> 전체 신청 내역</a>
+        <a class="button" href="/leave/history"><i class="bi bi-list-check"></i> <?= $isAdmin ? '전체 신청 내역' : '신청 내역' ?></a>
     </div>
 </section>
 
@@ -83,7 +86,7 @@ $targetUsers = [];
 <div class="calendar-toolbar">
     <div class="calendar-nav">
         <a class="button" href="/calendar?month=<?= $previous ?>"><i class="bi bi-chevron-left"></i> 이전 달</a>
-        <a class="button" href="/calendar?month=<?= date('Y-m') ?>"><i class="bi bi-calendar-event"></i> 이번 달</a>
+        <a class="button primary" href="/calendar?month=<?= date('Y-m') ?>"><i class="bi bi-calendar-event"></i> 이번 달</a>
         <a class="button" href="/calendar?month=<?= $next ?>">다음 달 <i class="bi bi-chevron-right"></i></a>
     </div>
     <div class="calendar-toolbar-stats">
@@ -99,8 +102,8 @@ $targetUsers = [];
     <section class="calendar-main">
         <div class="calendar-scroll">
             <div class="calendar-grid weekday-head">
-                <?php foreach (['월', '화', '수', '목', '금', '토', '일'] as $weekday): ?>
-                    <div><?= $weekday ?></div>
+                <?php foreach ($weekdayLabels as $weekdayNumber => $weekday): ?>
+                    <div class="<?= in_array($weekdayNumber, $workingWeekdays, true) ? '' : 'non-working-weekday' ?>"><?= $weekday ?></div>
                 <?php endforeach; ?>
             </div>
 
@@ -112,7 +115,9 @@ $targetUsers = [];
                 <?php for ($day = 1; $day <= $days; $day++):
                     $date = $month . '-' . str_pad((string) $day, 2, '0', STR_PAD_LEFT);
                     $dateObject = new DateTimeImmutable($date);
-                    $isWeekend = (int) $dateObject->format('N') >= 6;
+                    $weekdayNumber = (int) $dateObject->format('N');
+                    $isWorkingWeekday = in_array($weekdayNumber, $workingWeekdays, true);
+                    $isNonWorkingDay = !$isWorkingWeekday;
                     $dayHolidays = $holidaysByDate[$date] ?? [];
                     $isPublicHoliday = false;
                     $isCompanyHoliday = false;
@@ -126,8 +131,8 @@ $targetUsers = [];
                     }
                     $isToday = $date === date('Y-m-d');
                     $dayClasses = ['calendar-day'];
-                    if ($isWeekend) {
-                        $dayClasses[] = 'weekend';
+                    if ($isNonWorkingDay) {
+                        $dayClasses[] = 'non-working-day';
                     }
                     if ($isPublicHoliday) {
                         $dayClasses[] = 'public-holiday';
@@ -141,7 +146,7 @@ $targetUsers = [];
                 ?>
                     <div class="<?= implode(' ', $dayClasses) ?>">
                         <div class="day-number">
-                            <?php if (!$isWeekend && !$isPublicHoliday): ?>
+                            <?php if ($isWorkingWeekday && !$isPublicHoliday && !$isCompanyHoliday): ?>
                                 <button
                                     class="calendar-date-trigger"
                                     type="button"
@@ -192,6 +197,7 @@ $targetUsers = [];
         </div>
 
         <div class="calendar-legend">
+            <span><i class="legend-dot non-working"></i> 비근무일</span>
             <span><i class="legend-dot holiday"></i> 공휴일</span>
             <span><i class="legend-dot company"></i> 회사 휴무</span>
             <span><i class="legend-dot approved"></i> 승인</span>
@@ -204,7 +210,7 @@ $targetUsers = [];
             <div class="section-head">
                 <div>
                     <p class="eyebrow">This month</p>
-                    <h2><?= $isAdmin ? '이달 신청·휴가' : '내 신청 내역' ?></h2>
+                    <h2><?= $isAdmin ? '전체 신청 내역' : '내 신청 내역' ?></h2>
                 </div>
                 <span class="count-badge"><?= count($monthlyRequests) ?>건</span>
             </div>
@@ -250,7 +256,7 @@ $targetUsers = [];
                 </div>
             <?php endif; ?>
 
-            <a class="text-link" href="/leave/history"><i class="bi bi-arrow-right-circle"></i> 전체 신청 내역 보기</a>
+            <a class="text-link" href="/leave/history"><i class="bi bi-arrow-right-circle"></i> <?= $isAdmin ? '전체 신청 내역 보기' : '내 전체 신청 내역 보기' ?></a>
         </section>
     </aside>
 </div>

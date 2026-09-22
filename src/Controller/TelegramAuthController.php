@@ -36,6 +36,7 @@ final class TelegramAuthController
         return Response::html($this->view->render('login', [
             'title' => '로그인',
             'configured' => $this->isConfigured(),
+            'message' => $request->input('message'),
         ]));
     }
 
@@ -175,6 +176,10 @@ final class TelegramAuthController
 
     private function isBootstrapAdmin(int $telegramUserId): bool
     {
+        if ($this->setup !== null && $this->setup->completed()) {
+            return false;
+        }
+
         $ids = $this->config->get('telegram.bootstrap_admin_telegram_ids', []);
         if (!is_array($ids)) {
             return false;

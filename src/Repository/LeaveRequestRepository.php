@@ -108,6 +108,21 @@ final class LeaveRequestRepository extends AbstractRepository
     }
 
     /** @return list<array<string, mixed>> */
+    public function allForAdmin(): array
+    {
+        $statement = $this->pdo->query(
+            'SELECT r.*, u.name AS user_name, u.department, '
+            . 't.code AS leave_code, t.name AS leave_type_name '
+            . 'FROM leave_requests r '
+            . 'INNER JOIN users u ON u.id = r.user_id '
+            . 'INNER JOIN leave_types t ON t.id = r.leave_type_id '
+            . 'ORDER BY r.created_at DESC, r.id DESC'
+        );
+
+        return $statement->fetchAll();
+    }
+
+    /** @return list<array<string, mixed>> */
     public function pendingForAdmin(): array
     {
         $statement = $this->pdo->query(

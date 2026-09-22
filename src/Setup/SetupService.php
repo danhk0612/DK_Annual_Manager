@@ -168,6 +168,50 @@ final class SetupService
         }
     }
 
+    public function resetInstallation(): string
+    {
+        $tables = [
+            'audit_logs',
+            'app_settings',
+            'holidays',
+            'annual_leave_ledger',
+            'leave_request_days',
+            'leave_requests',
+            'leave_types',
+            'users',
+        ];
+
+        $this->pdo->exec('SET FOREIGN_KEY_CHECKS=0');
+        try {
+            foreach ($tables as $table) {
+                $this->pdo->exec('DROP TABLE IF EXISTS ' . $table);
+            }
+        } finally {
+            $this->pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+        }
+
+        $brandingDir = $this->rootPath . '/public/uploads/branding';
+        foreach (glob($brandingDir . '/company-logo.*') ?: [] as $file) {
+            @unlink($file);
+        }
+
+        $storageDir = $this->rootPath . '/storage';
+        if (!is_dir($storageDir) && !mkdir($storageDir, 0755, true) && !is_dir($storageDir)) {
+            throw new RuntimeException('setup storage directory creation failed');
+        }
+        @chmod($storageDir, 0755);
+
+        $setupKey = bin2hex(random_bytes(24));
+        $setupKeyHash = hash('sha256', $setupKey);
+        $setupKeyPath = $storageDir . '/setup.key';
+        if (file_put_contents($setupKeyPath, $setupKeyHash . PHP_EOL, LOCK_EX) === false) {
+            throw new RuntimeException('setup access key write failed');
+        }
+        @chmod($setupKeyPath, 0644);
+
+        return $setupKey;
+    }
+
     /** @return array<string, bool> */
     public function status(): array
     {

@@ -166,6 +166,16 @@ try {
     $adminTelegramCount > 0
         ? $pass(sprintf('Telegram 관리자 개인 알림 대상: %d명', $adminTelegramCount))
         : $warn('Telegram 개인 알림을 받을 활성 관리자가 없습니다.');
+
+    $activeAdminCount = (int) $pdo->query(
+        "SELECT COUNT(*) FROM users WHERE role = 'admin' AND status = 'active'"
+    )->fetchColumn();
+    $activeAdminCount > 0
+        ? $pass(sprintf('활성 관리자 계정: %d명', $activeAdminCount))
+        : $fail('활성 관리자 계정이 없습니다.');
+
+    $workweek = (new \DKAnnual\Repository\AppSettingRepository($pdo))->workingWeekdays();
+    $pass('주 근무 요일: ' . implode(',', $workweek));
 } catch (\Throwable $exception) {
     $fail('환경 확인 중 오류: ' . $exception->getMessage());
 }

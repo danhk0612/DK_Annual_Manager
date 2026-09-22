@@ -387,6 +387,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    document.querySelectorAll('[data-confirm-reset]').forEach((form) => {
+        form.addEventListener('submit', (event) => {
+            const input = form.querySelector('input[name="confirmation"]');
+            if (!input || input.value.trim() !== 'RESET') {
+                event.preventDefault();
+                window.alert('확인 입력란에 RESET을 정확히 입력해 주세요.');
+                if (input) {
+                    input.focus();
+                }
+                return;
+            }
+
+            if (!window.confirm('모든 휴가관리 데이터를 삭제하고 재설치를 시작하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                event.preventDefault();
+            }
+        });
+    });
+
     document.querySelectorAll('[data-copy-text]').forEach((button) => {
         button.addEventListener('click', async () => {
             const value = button.dataset.copyText || '';

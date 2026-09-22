@@ -10,6 +10,7 @@ use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Leave\AnnualLeaveService;
 use DKAnnual\Repository\AnnualLeaveLedgerRepository;
+use DKAnnual\Repository\AppSettingRepository;
 use DKAnnual\Repository\HolidayRepository;
 use DKAnnual\Repository\LeaveRequestRepository;
 use DKAnnual\Repository\LeaveTypeRepository;
@@ -25,6 +26,7 @@ final class CalendarController
         private readonly LeaveTypeRepository $leaveTypes,
         private readonly AnnualLeaveLedgerRepository $ledger,
         private readonly AnnualLeaveService $annualLeave,
+        private readonly AppSettingRepository $settings,
         private readonly View $view,
         private readonly Csrf $csrf,
     ) {
@@ -44,9 +46,10 @@ final class CalendarController
         $end = $start->modify('last day of this month');
         $scopeUserId = ($user['role'] ?? null) === 'admin' ? null : (int) $user['id'];
         $year = (int) date('Y');
+        $calendarTitle = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'), (int) $start->format('n'));
 
         return Response::html($this->view->render('calendar', [
-            'title' => '휴가 달력',
+            'title' => $calendarTitle,
             'user' => $user,
             'month' => $month,
             'start' => $start,
@@ -68,6 +71,7 @@ final class CalendarController
             ),
             'leaveTypes' => $this->leaveTypes->active(),
             'annualBalance' => $this->ledger->balanceForUserYear((int) $user['id'], $year),
+            'workingWeekdays' => $this->settings->workingWeekdays(),
             'reasonCategories' => ['개인 사유', '가족 행사', '병원/건강', '업무 관련', '기타'],
             'today' => date('Y-m-d'),
             'csrfToken' => $this->csrf->token(),

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use DKAnnual\Config;
 use DKAnnual\Database;
+use DKAnnual\Setup\SetupService;
 
 if (PHP_SAPI !== 'cli') {
     fwrite(STDERR, "CLI에서만 실행할 수 있습니다.\n");
@@ -31,51 +32,13 @@ require $autoload;
 try {
     $config = new Config($configPath);
     $pdo = Database::connect($config);
-
-    $tables = [
-        'audit_logs',
-        'app_settings',
-        'holidays',
-        'annual_leave_ledger',
-        'leave_request_days',
-        'leave_requests',
-        'leave_types',
-        'users',
-    ];
-
-    $pdo->exec('SET FOREIGN_KEY_CHECKS=0');
-    try {
-        foreach ($tables as $table) {
-            $pdo->exec('DROP TABLE IF EXISTS ' . $table);
-            printf("[DROP] %s\n", $table);
-        }
-    } finally {
-        $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
-    }
-
-    $brandingDir = $root . '/public/uploads/branding';
-    foreach (glob($brandingDir . '/company-logo.*') ?: [] as $file) {
-        @unlink($file);
-    }
-
-    $storageDir = $root . '/storage';
-    if (!is_dir($storageDir) && !mkdir($storageDir, 0755, true) && !is_dir($storageDir)) {
-        throw new RuntimeException('setup storage directory creation failed');
-    }
-    @chmod($storageDir, 0755);
-
-    $setupKey = bin2hex(random_bytes(24));
-    $setupKeyHash = hash('sha256', $setupKey);
-    $setupKeyPath = $storageDir . '/setup.key';
-    if (file_put_contents($setupKeyPath, $setupKeyHash . PHP_EOL, LOCK_EX) === false) {
-        throw new RuntimeException('setup access key write failed');
-    }
-    @chmod($setupKeyPath, 0644);
+    $setup = new SetupService($pdo, $config, $root);
+    $setupKey = $setup->resetInstallation();
 
     $setupPath = '/setup?setup_key=' . $setupKey;
     $appUrl = rtrim((string) $config->get('app.url', ''), '/');
 
-    fwrite(STDOUT, "\n초기화 완료. config/config.php와 Composer 설치 파일은 유지했습니다.\n");
+    fwrite(STDOUT, "완전 초기화를 완료했습니다. config/config.php와 소스코드는 유지했습니다.\n");
     fwrite(STDOUT, "초기 설정 접근 키도 새로 생성했습니다.\n\n");
     fwrite(STDOUT, "경로: " . $setupPath . "\n");
 
@@ -85,6 +48,6 @@ try {
         fwrite(STDOUT, "현재 서비스 주소 뒤에 위 경로를 붙여 접속하세요.\n");
     }
 } catch (Throwable $exception) {
-    fwrite(STDERR, "초기화 실패했습니다. 서버/PHP 로그를 확인하세요. (" . $exception::class . ")\n");
+    fwrite(STDERR, "초기화에 실패했습니다. 서버/PHP 로그를 확인하세요. (" . $exception::class . ")\n");
     exit(1);
 }

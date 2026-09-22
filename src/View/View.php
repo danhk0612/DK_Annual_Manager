@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DKAnnual\View;
 
+use DKAnnual\Auth\Auth;
 use DKAnnual\Config;
 use DKAnnual\Repository\AppSettingRepository;
 use RuntimeException;
@@ -14,6 +15,7 @@ final class View
         private readonly string $templatePath,
         private readonly AppSettingRepository $settings,
         private readonly Config $config,
+        private readonly ?Auth $auth = null,
     ) {
     }
 
@@ -52,6 +54,7 @@ final class View
             $currentPath = '/';
         }
         $currentQuery = (string) (parse_url($requestUri, PHP_URL_QUERY) ?? '');
+        $layoutUser = $this->auth?->user();
 
         extract($data, EXTR_SKIP);
 
