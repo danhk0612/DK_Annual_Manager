@@ -9,6 +9,24 @@ use DateTimeImmutable;
 
 final class LeaveDateCalculator
 {
+    /** @return list<string> */
+    public function calendarDates(DateTimeImmutable $start, DateTimeImmutable $end): array
+    {
+        if ($end < $start) {
+            return [];
+        }
+
+        $dates = [];
+        $cursor = $start;
+
+        while ($cursor <= $end) {
+            $dates[] = $cursor->format('Y-m-d');
+            $cursor = $cursor->add(new DateInterval('P1D'));
+        }
+
+        return $dates;
+    }
+
     /**
      * @param list<string> $holidayDates
      * @param list<int> $workingWeekdays ISO-8601 weekday numbers, Monday=1 ... Sunday=7
