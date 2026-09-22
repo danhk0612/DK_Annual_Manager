@@ -131,6 +131,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        const pendingCancelForm = detailDialog.querySelector('[data-detail-pending-cancel]');
+        const approvedCancelForm = detailDialog.querySelector('[data-detail-approved-cancel]');
+        const pendingCancelId = detailDialog.querySelector('[data-detail-pending-cancel-id]');
+        const approvedCancelId = detailDialog.querySelector('[data-detail-approved-cancel-id]');
+        const cancellationWrap = detailDialog.querySelector('[data-detail-cancellation-wrap]');
+
         document.querySelectorAll('[data-open-request-detail]').forEach((button) => {
             button.addEventListener('click', () => {
                 setText('[data-detail-id]', '#' + (button.dataset.requestId || ''));
@@ -145,6 +151,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 setText('[data-detail-deduction]', button.dataset.requestDeduction || '');
                 setText('[data-detail-reason]', button.dataset.requestReason || '', '입력 없음');
                 setText('[data-detail-review-note]', button.dataset.requestReviewNote || '', '입력 없음');
+
+                const cancellationSource = button.dataset.requestCancellationSource || '';
+                const cancellationSourceLabel = cancellationSource === 'user'
+                    ? '사용자 취소'
+                    : (cancellationSource === 'admin' ? '관리자 취소' : '');
+                const cancellationParts = [
+                    cancellationSourceLabel,
+                    button.dataset.requestCancelledAt || '',
+                    button.dataset.requestCancellationNote ? '사유: ' + button.dataset.requestCancellationNote : '',
+                ].filter(Boolean);
+                if (cancellationWrap) {
+                    cancellationWrap.hidden = cancellationParts.length === 0;
+                }
+                setText('[data-detail-cancellation]', cancellationParts.join(' · '), '입력 없음');
+
+                const owned = button.dataset.requestOwned === '1';
+                const statusCode = button.dataset.requestStatusCode || '';
+                if (pendingCancelForm) {
+                    pendingCancelForm.hidden = !(owned && statusCode === 'pending');
+                }
+                if (approvedCancelForm) {
+                    approvedCancelForm.hidden = !(owned && statusCode === 'approved');
+                }
+                if (pendingCancelId) {
+                    pendingCancelId.value = button.dataset.requestId || '';
+                }
+                if (approvedCancelId) {
+                    approvedCancelId.value = button.dataset.requestId || '';
+                }
+
                 setText('[data-detail-created]', button.dataset.requestCreated || '');
                 detailDialog.showModal();
             });
