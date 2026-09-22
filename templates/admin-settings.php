@@ -8,7 +8,11 @@
 /** @var array<string, mixed>|null $telegramBotInfo */
 /** @var list<array{id:string,title:string,type:string}> $telegramChats */
 /** @var string|null $telegramProbeError */
+/** @var string $telegramClientId */
+/** @var string $telegramRedirectUri */
 /** @var array<string, bool> $credentialStatus */
+/** @var string|null $employeeBotLink */
+/** @var string|null $employeeLoginLink */
 /** @var string $csrfToken */
 /** @var mixed $message */
 /** @var mixed $error */
@@ -16,25 +20,25 @@
 <section class="page-head">
     <div>
         <p class="eyebrow">Settings</p>
-        <h1>환경 설정</h1>
-        <p>브랜딩, 화면 테마와 Telegram 알림 대상을 관리자 화면에서 관리합니다.</p>
+        <h1><i class="bi bi-gear-wide-connected"></i> 환경 설정</h1>
+        <p>브랜딩, Telegram 연결, 직원 초대와 공휴일 API를 한 곳에서 관리합니다.</p>
     </div>
-    <a class="button" href="/admin"><i class="bi bi-speedometer2"></i> 대시보드</a>
+    <a class="button" href="/admin"><i class="bi bi-speedometer2"></i><span>대시보드</span></a>
 </section>
 
 <?php if (is_string($message) && $message !== ''): ?>
-    <div class="notice success"><?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?></div>
+    <div class="notice success"><i class="bi bi-check-circle"></i><span><?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?></span></div>
 <?php endif; ?>
 <?php if (is_string($error) && $error !== ''): ?>
-    <div class="notice error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
+    <div class="notice error"><i class="bi bi-x-circle"></i><span><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></span></div>
 <?php endif; ?>
 
-<div class="settings-grid">
-    <section class="panel">
+<div class="settings-page-grid">
+    <section class="panel settings-card">
         <div class="section-head">
             <div>
                 <p class="eyebrow">Branding</p>
-                <h2><i class="bi bi-palette2"></i> 화면·브랜딩</h2>
+                <h2><i class="bi bi-palette2"></i><span>브랜딩 · 테마</span></h2>
             </div>
         </div>
 
@@ -60,84 +64,93 @@
                 </select>
             </label>
             <div class="form-actions">
-                <button class="button primary" type="submit"><i class="bi bi-check2-circle"></i> 화면 설정 저장</button>
+                <button class="button primary" type="submit"><i class="bi bi-check2-circle"></i><span>화면 설정 저장</span></button>
             </div>
         </form>
 
         <div class="settings-divider"></div>
 
-        <div class="logo-setting">
-            <div class="logo-preview">
+        <div class="logo-upload-card">
+            <div class="logo-preview-large">
                 <?php if ($logoPath !== ''): ?>
                     <img src="<?= htmlspecialchars($logoPath, ENT_QUOTES, 'UTF-8') ?>" alt="현재 회사 로고">
                 <?php else: ?>
                     <img src="/assets/app-icon.svg" alt="기본 앱 아이콘">
                 <?php endif; ?>
             </div>
-            <div class="logo-setting-body">
-                <h3>좌상단 회사 로고</h3>
-                <p>PNG, JPG, WEBP · 최대 2MB. 업로드하지 않으면 기본 캘린더 아이콘을 사용합니다.</p>
-                <form class="upload-row" method="post" action="/admin/settings/logo" enctype="multipart/form-data">
+            <div class="logo-upload-content">
+                <div>
+                    <h3>좌상단 회사 로고</h3>
+                    <p>이미지 비율과 관계없이 헤더 높이에 맞춰 표시하며 가로 비율은 유지합니다.</p>
+                </div>
+                <form class="logo-upload-form" method="post" action="/admin/settings/logo" enctype="multipart/form-data">
                     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                    <input type="file" name="company_logo" accept="image/png,image/jpeg,image/webp" required>
-                    <button class="button" type="submit"><i class="bi bi-upload"></i> 업로드</button>
+                    <label class="file-picker">
+                        <i class="bi bi-image"></i>
+                        <span>PNG / JPG / WEBP · 최대 2MB</span>
+                        <input type="file" name="company_logo" accept="image/png,image/jpeg,image/webp" required>
+                    </label>
+                    <button class="button primary" type="submit"><i class="bi bi-upload"></i><span>로고 업로드</span></button>
                 </form>
                 <?php if ($logoPath !== ''): ?>
                     <form method="post" action="/admin/settings/logo/remove">
                         <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                        <button class="button danger-ghost small" type="submit"><i class="bi bi-arrow-counterclockwise"></i> 기본 아이콘으로 복원</button>
+                        <button class="button danger-ghost small" type="submit"><i class="bi bi-arrow-counterclockwise"></i><span>기본 아이콘으로 복원</span></button>
                     </form>
                 <?php endif; ?>
             </div>
         </div>
     </section>
 
-    <section class="panel">
+    <section class="panel settings-card">
         <div class="section-head">
             <div>
                 <p class="eyebrow">Telegram</p>
-                <h2><i class="bi bi-telegram"></i> Telegram 알림</h2>
+                <h2><i class="bi bi-telegram"></i><span>Telegram 연결</span></h2>
             </div>
-            <a class="button small" href="/admin/settings?probe_telegram=1"><i class="bi bi-arrow-repeat"></i> 봇·채팅 자동 확인</a>
+            <a class="button small" href="/admin/settings?probe_telegram=1"><i class="bi bi-arrow-repeat"></i><span>봇·채팅 자동 확인</span></a>
         </div>
 
         <div class="credential-status-grid">
-            <div class="credential-item">
-                <i class="bi <?= $credentialStatus['client_id'] ? 'bi-check-circle-fill ok' : 'bi-exclamation-circle-fill bad' ?>"></i>
-                <span>Client ID</span>
-            </div>
-            <div class="credential-item">
-                <i class="bi <?= $credentialStatus['client_secret'] ? 'bi-check-circle-fill ok' : 'bi-exclamation-circle-fill bad' ?>"></i>
-                <span>Client Secret</span>
-            </div>
-            <div class="credential-item">
-                <i class="bi <?= $credentialStatus['bot_token'] ? 'bi-check-circle-fill ok' : 'bi-exclamation-circle-fill bad' ?>"></i>
-                <span>Bot Token</span>
-            </div>
-            <div class="credential-item">
-                <i class="bi <?= $credentialStatus['holiday_key'] ? 'bi-check-circle-fill ok' : 'bi-exclamation-circle-fill bad' ?>"></i>
-                <span>공휴일 API</span>
-            </div>
+            <?php foreach ([
+                'client_id' => 'Client ID',
+                'client_secret' => 'Client Secret',
+                'bot_token' => 'Bot Token',
+                'holiday_key' => '공휴일 API',
+            ] as $key => $label): ?>
+                <div class="credential-item">
+                    <i class="bi <?= $credentialStatus[$key] ? 'bi-check-circle-fill ok' : 'bi-exclamation-circle-fill bad' ?>"></i>
+                    <span><?= $label ?></span>
+                </div>
+            <?php endforeach; ?>
         </div>
 
-        <form class="form-grid" method="post" action="/admin/settings/telegram">
+        <form class="form-grid" method="post" action="/admin/settings/telegram-credentials">
             <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
             <label class="span-2">
-                관리자 알림 Chat ID
-                <textarea name="admin_chat_ids" rows="5" placeholder="-1001234567890"><?= htmlspecialchars(implode("\n", $telegramAdminChats), ENT_QUOTES, 'UTF-8') ?></textarea>
+                Client ID
+                <input name="client_id" required value="<?= htmlspecialchars($telegramClientId, ENT_QUOTES, 'UTF-8') ?>">
             </label>
-            <p class="form-hint span-2">한 줄에 하나씩 입력합니다. 그룹/채널 Chat ID는 보통 음수입니다. 현재 <?= $telegramChatsManaged ? '관리자 화면에서 저장한 값' : '기존 config 기본값' ?>을 표시하고 있으며, 한 번 저장하면 이후부터 관리자 화면의 값이 사용됩니다.</p>
+            <label>
+                Client Secret
+                <input type="password" name="client_secret" autocomplete="new-password" placeholder="<?= $credentialStatus['client_secret'] ? '저장됨 · 변경할 때만 입력' : '필수 입력' ?>">
+            </label>
+            <label>
+                Bot Token
+                <input type="password" name="bot_token" autocomplete="new-password" placeholder="<?= $credentialStatus['bot_token'] ? '저장됨 · 변경할 때만 입력' : '필수 입력' ?>">
+            </label>
+            <label class="span-2">
+                Redirect URI
+                <input name="redirect_uri" required value="<?= htmlspecialchars($telegramRedirectUri, ENT_QUOTES, 'UTF-8') ?>">
+            </label>
             <div class="form-actions">
-                <button class="button primary" type="submit"><i class="bi bi-bell-fill"></i> 알림 대상 저장</button>
+                <button class="button primary" type="submit"><i class="bi bi-plug"></i><span>Telegram 연결 저장·확인</span></button>
+                <a class="button" href="https://t.me/BotFather" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i><span>BotFather</span></a>
             </div>
-        </form>
-        <form method="post" action="/admin/settings/telegram/test" class="secondary-action-form">
-            <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-            <button class="button" type="submit"><i class="bi bi-send-check"></i> 현재 대상에 테스트 메시지 보내기</button>
         </form>
 
         <?php if ($telegramProbeError !== null): ?>
-            <div class="notice warning settings-notice"><?= htmlspecialchars($telegramProbeError, ENT_QUOTES, 'UTF-8') ?></div>
+            <div class="notice warning settings-notice"><i class="bi bi-exclamation-triangle"></i><span><?= htmlspecialchars($telegramProbeError, ENT_QUOTES, 'UTF-8') ?></span></div>
         <?php endif; ?>
 
         <?php if ($telegramBotInfo !== null): ?>
@@ -149,47 +162,105 @@
                         <span>@<?= htmlspecialchars((string) $telegramBotInfo['username'], ENT_QUOTES, 'UTF-8') ?></span>
                     <?php endif; ?>
                 </div>
-                <?php if (!empty($telegramBotInfo['username'])): ?>
-                    <a class="button small" href="https://t.me/<?= rawurlencode((string) $telegramBotInfo['username']) ?>" target="_blank" rel="noopener">
-                        <i class="bi bi-box-arrow-up-right"></i> Telegram 열기
-                    </a>
-                <?php endif; ?>
+                <span class="badge approved">연결됨</span>
             </div>
         <?php endif; ?>
 
-        <?php if ($telegramChats !== []): ?>
-            <div class="section-head sub-section-head">
-                <div>
-                    <h3>최근 확인된 채팅</h3>
-                    <p>봇에 최근 메시지가 도착한 채팅을 자동으로 찾았습니다.</p>
-                </div>
+        <div class="settings-divider"></div>
+
+        <form class="form-grid" method="post" action="/admin/settings/telegram">
+            <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+            <label class="span-2">
+                관리자 알림 Chat ID
+                <textarea name="admin_chat_ids" rows="4" placeholder="-1001234567890"><?= htmlspecialchars(implode("\n", $telegramAdminChats), ENT_QUOTES, 'UTF-8') ?></textarea>
+            </label>
+            <p class="form-hint span-2">한 줄에 하나씩 입력합니다. <?= $telegramChatsManaged ? '관리자 설정값을 사용 중입니다.' : '현재는 기존 config 기본값을 표시합니다. 저장 후 관리자 설정값으로 전환됩니다.' ?></p>
+            <div class="form-actions">
+                <button class="button primary" type="submit"><i class="bi bi-bell-fill"></i><span>알림 대상 저장</span></button>
+                <button class="button" type="submit" formaction="/admin/settings/telegram/test"><i class="bi bi-send-check"></i><span>테스트 메시지</span></button>
             </div>
-            <div class="detected-chat-list">
+        </form>
+
+        <?php if ($telegramChats !== []): ?>
+            <div class="detected-chat-list settings-subsection">
+                <h3>최근 확인된 채팅</h3>
                 <?php foreach ($telegramChats as $chat): ?>
                     <div class="detected-chat">
                         <div>
                             <strong><?= htmlspecialchars($chat['title'], ENT_QUOTES, 'UTF-8') ?></strong>
                             <span><?= htmlspecialchars($chat['type'], ENT_QUOTES, 'UTF-8') ?> · <?= htmlspecialchars($chat['id'], ENT_QUOTES, 'UTF-8') ?></span>
                         </div>
-                        <?php if (!in_array($chat['id'], $telegramAdminChats, true)): ?>
+                        <?php if (!in_array($chat['id'], $telegramAdminChats, true) && in_array($chat['type'], ['group', 'supergroup', 'channel'], true)): ?>
                             <form method="post" action="/admin/settings/telegram/add-chat">
                                 <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                                 <input type="hidden" name="chat_id" value="<?= htmlspecialchars($chat['id'], ENT_QUOTES, 'UTF-8') ?>">
-                                <button class="button small" type="submit"><i class="bi bi-plus-lg"></i> 알림 대상 추가</button>
+                                <button class="button small" type="submit"><i class="bi bi-plus-lg"></i><span>추가</span></button>
                             </form>
-                        <?php else: ?>
-                            <span class="badge approved"><i class="bi bi-check2"></i> 등록됨</span>
+                        <?php elseif (in_array($chat['id'], $telegramAdminChats, true)): ?>
+                            <span class="badge approved"><i class="bi bi-check2"></i><span>등록됨</span></span>
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
+    </section>
 
-        <div class="settings-help">
-            <a href="https://t.me/BotFather" target="_blank" rel="noopener"><i class="bi bi-telegram"></i> BotFather 열기</a>
-            <a href="https://www.data.go.kr/" target="_blank" rel="noopener"><i class="bi bi-building"></i> 공공데이터포털 열기</a>
+    <section class="panel settings-card">
+        <div class="section-head">
+            <div>
+                <p class="eyebrow">Employee invite</p>
+                <h2><i class="bi bi-person-plus"></i><span>직원 초대</span></h2>
+            </div>
         </div>
+        <p>직원에게 아래 링크를 전달하면 Telegram 봇 또는 서비스 로그인 페이지로 바로 안내할 수 있습니다.</p>
+        <div class="invite-link-grid">
+            <?php if ($employeeBotLink !== null): ?>
+                <div class="invite-link-card">
+                    <span><i class="bi bi-telegram"></i> Telegram 봇 링크</span>
+                    <code><?= htmlspecialchars($employeeBotLink, ENT_QUOTES, 'UTF-8') ?></code>
+                    <div class="invite-actions">
+                        <button class="button small" type="button" data-copy-text="<?= htmlspecialchars($employeeBotLink, ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-copy"></i><span>복사</span></button>
+                        <a class="button small" href="<?= htmlspecialchars($employeeBotLink, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i><span>열기</span></a>
+                    </div>
+                </div>
+            <?php endif; ?>
+            <?php if ($employeeLoginLink !== null): ?>
+                <div class="invite-link-card">
+                    <span><i class="bi bi-box-arrow-in-right"></i> 서비스 로그인 링크</span>
+                    <code><?= htmlspecialchars($employeeLoginLink, ENT_QUOTES, 'UTF-8') ?></code>
+                    <div class="invite-actions">
+                        <button class="button small" type="button" data-copy-text="<?= htmlspecialchars($employeeLoginLink, ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-copy"></i><span>복사</span></button>
+                        <a class="button small" href="<?= htmlspecialchars($employeeLoginLink, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i><span>열기</span></a>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+        <?php if ($employeeBotLink === null): ?>
+            <p class="form-hint"><i class="bi bi-info-circle"></i> Telegram 봇 링크가 없으면 위에서 <strong>봇·채팅 자동 확인</strong>을 한 번 실행하세요.</p>
+        <?php endif; ?>
+    </section>
 
-        <p class="form-hint security-note"><i class="bi bi-shield-lock"></i> Client Secret, Bot Token, 공휴일 ServiceKey 같은 비밀값은 보안을 위해 서버 설정 파일에 유지하며 이 화면에는 값 자체를 노출하지 않습니다.</p>
+    <section class="panel settings-card">
+        <div class="section-head">
+            <div>
+                <p class="eyebrow">Public holidays</p>
+                <h2><i class="bi bi-calendar2-event"></i><span>공휴일 API</span></h2>
+            </div>
+            <a class="button small" href="https://www.data.go.kr/data/15012690/openapi.do" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i><span>API 페이지</span></a>
+        </div>
+        <p>한국천문연구원 특일 정보 ServiceKey를 관리자 화면에서 변경할 수 있습니다. 기존 키는 화면에 다시 노출하지 않습니다.</p>
+        <form class="form-grid settings-subsection" method="post" action="/admin/settings/holiday-api">
+            <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+            <label class="span-2">
+                ServiceKey
+                <input type="password" name="service_key" autocomplete="new-password" placeholder="<?= $credentialStatus['holiday_key'] ? '저장됨 · 변경할 때만 새 키 입력' : '공공데이터포털 일반 인증키' ?>" required>
+            </label>
+            <div class="form-actions">
+                <button class="button primary" type="submit"><i class="bi bi-cloud-check"></i><span>저장·연결 확인</span></button>
+                <a class="button" href="/admin/holidays"><i class="bi bi-arrow-repeat"></i><span>공휴일 관리·동기화</span></a>
+            </div>
+        </form>
     </section>
 </div>
+
+<p class="settings-security-note"><i class="bi bi-shield-lock"></i><span>Secret/Token/API Key는 관리자 화면에서 변경할 수 있지만 기존 값은 다시 표시하지 않으며 감사 로그에도 실제 값은 기록하지 않습니다.</span></p>
