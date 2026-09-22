@@ -180,6 +180,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (approvedCancelId) {
                     approvedCancelId.value = button.dataset.requestId || '';
                 }
+                if (approvedCancelForm) {
+                    const cancellationInput = approvedCancelForm.querySelector('[name="cancellation_note"]');
+                    if (cancellationInput) {
+                        cancellationInput.value = '';
+                    }
+                }
 
                 setText('[data-detail-created]', button.dataset.requestCreated || '');
                 detailDialog.showModal();
