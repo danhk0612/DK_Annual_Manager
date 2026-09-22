@@ -140,8 +140,11 @@ final class ReportingRepository extends AbstractRepository
         ];
 
         if ($query !== '') {
-            $sql .= " AND (u.name LIKE :query OR u.department LIKE :query OR u.position LIKE :query)";
-            $params['query'] = '%' . $query . '%';
+            $sql .= " AND (u.name LIKE :query_name OR u.department LIKE :query_department OR u.position LIKE :query_position)";
+            $like = '%' . $query . '%';
+            $params['query_name'] = $like;
+            $params['query_department'] = $like;
+            $params['query_position'] = $like;
         }
         if ($status !== '') {
             $sql .= ' AND u.status = :user_status';
