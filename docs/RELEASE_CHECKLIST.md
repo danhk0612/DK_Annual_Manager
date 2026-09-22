@@ -18,7 +18,7 @@ v1.2.1은 v1.2.0 Excel 출력의 styles.xml 문법 오류를 수정하고 XLSX �
 - [x] 승인된 휴가 사용자 취소 시 소유권 검사 + reversal 복원
 - [x] 승인 메타데이터와 취소 메타데이터 분리 보존
 - [x] XLSX ZIP/OOXML 구조 자동 테스트
-- [ ] XLSX 내부 XML/관계 파일 전체 파싱 테스트
+- [x] XLSX 내부 XML/관계 파일 전체 파싱 테스트
 - [x] Excel 기간 경계/사용자 범위 MariaDB 통합 테스트
 - [x] PHP 전체 구문 검사
 
