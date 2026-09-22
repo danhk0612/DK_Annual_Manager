@@ -142,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setText('[data-detail-type]', button.dataset.requestType || '');
                 setText('[data-detail-period]', button.dataset.requestPeriod || '');
                 setText('[data-detail-amount]', button.dataset.requestAmount || '');
+                setText('[data-detail-deduction]', button.dataset.requestDeduction || '');
                 setText('[data-detail-reason]', button.dataset.requestReason || '', '입력 없음');
                 setText('[data-detail-review-note]', button.dataset.requestReviewNote || '', '입력 없음');
                 setText('[data-detail-created]', button.dataset.requestCreated || '');
