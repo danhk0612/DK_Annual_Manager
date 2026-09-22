@@ -95,7 +95,7 @@ $actionLabels = [
                     }
                 }
                 ?>
-                <tr>
+                <tr data-page-item>
                     <td><?= htmlspecialchars((string) $log['created_at'], ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars((string) ($log['actor_name'] ?? '시스템'), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><strong><?= htmlspecialchars($actionLabels[(string) $log['action']] ?? (string) $log['action'], ENT_QUOTES, 'UTF-8') ?></strong></td>
