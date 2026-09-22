@@ -144,17 +144,53 @@ document.addEventListener('DOMContentLoaded', () => {
     const setupPrivateList = document.querySelector('[data-setup-private-list]');
     const setupGroupList = document.querySelector('[data-setup-group-list]');
 
+    const syncDetectedSelection = () => {
+        document.querySelectorAll('[data-detected-chat]').forEach((button) => {
+            const id = button.dataset.chatId || '';
+            const type = button.dataset.chatType || '';
+            const selected = type === 'private'
+                ? Boolean(setupAdminChat && setupAdminChat.value === id)
+                : Boolean(setupGroupChat && setupGroupChat.value === id);
+
+            button.classList.toggle('selected', selected);
+            button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+
+            const action = button.querySelector('.telegram-detected-action');
+            if (action) {
+                action.textContent = selected ? '적용됨' : '선택';
+            }
+        });
+
+        if (setupAdminChat) {
+            setupAdminChat.classList.toggle('selection-applied', setupAdminChat.value.trim() !== '');
+        }
+        if (setupGroupChat) {
+            setupGroupChat.classList.toggle('selection-applied', setupGroupChat.value.trim() !== '');
+        }
+    };
+
     const chooseDetectedChat = (chatId, chatType) => {
+        let target = null;
+        let label = '';
+
         if (chatType === 'private' && setupAdminChat) {
-            setupAdminChat.value = chatId;
-            setupAdminChat.focus();
+            target = setupAdminChat;
+            label = '최초 관리자 Telegram User ID';
+        } else if (['group', 'supergroup', 'channel'].includes(chatType) && setupGroupChat) {
+            target = setupGroupChat;
+            label = '관리자 알림 그룹 Chat ID';
+        }
+
+        if (!target) {
             return;
         }
 
-        if (['group', 'supergroup', 'channel'].includes(chatType) && setupGroupChat) {
-            setupGroupChat.value = chatId;
-            setupGroupChat.focus();
-        }
+        target.value = chatId;
+        target.dispatchEvent(new Event('input', { bubbles: true }));
+        target.dispatchEvent(new Event('change', { bubbles: true }));
+        syncDetectedSelection();
+        setTelegramProbeStatus(label + '에 ' + chatId + ' 값을 적용했습니다.');
+        target.focus();
     };
 
     const bindDetectedChat = (button) => {
@@ -204,6 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         telegramChatResults.hidden = chats.length === 0;
+        syncDetectedSelection();
     };
 
     const rebuildChatDatalists = (chats) => {
@@ -247,6 +284,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (groupChats.length === 1 && setupGroupChat && setupGroupChat.value.trim() === '') {
             setupGroupChat.value = String(groupChats[0].id || '');
         }
+
+        syncDetectedSelection();
     };
 
     const setTelegramProbeStatus = (message, isError = false, isLoading = false) => {
@@ -262,6 +301,14 @@ document.addEventListener('DOMContentLoaded', () => {
             isLoading ? 'bi-arrow-repeat' : (isError ? 'bi-exclamation-triangle' : 'bi-check-circle')
         );
     };
+
+    if (setupAdminChat) {
+        setupAdminChat.addEventListener('input', syncDetectedSelection);
+    }
+    if (setupGroupChat) {
+        setupGroupChat.addEventListener('input', syncDetectedSelection);
+    }
+    syncDetectedSelection();
 
     if (telegramProbeButton) {
         telegramProbeButton.addEventListener('click', async () => {

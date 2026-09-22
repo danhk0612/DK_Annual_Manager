@@ -16,6 +16,9 @@ $isLeaveRequest = $currentPath === '/leave' || $requestShortcut;
 $isLeaveHistory = $currentPath === '/leave/history';
 $isProfile = $currentPath === '/profile';
 $isAdmin = str_starts_with($currentPath, '/admin');
+
+$appCssVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.css') ?: '1');
+$appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js') ?: '1');
 ?>
 <!doctype html>
 <html lang="ko" data-theme="<?= htmlspecialchars($theme, ENT_QUOTES, 'UTF-8') ?>">
@@ -26,9 +29,9 @@ $isAdmin = str_starts_with($currentPath, '/admin');
     <title><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?> · <?= htmlspecialchars($appName, ENT_QUOTES, 'UTF-8') ?></title>
     <link rel="icon" type="image/svg+xml" href="/assets/app-icon.svg">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="/assets/app.css">
+    <link rel="stylesheet" href="/assets/app.css?v=<?= rawurlencode($appCssVersion) ?>">
     <link rel="stylesheet" href="/theme.css">
-    <script src="/assets/app.js" defer></script>
+    <script src="/assets/app.js?v=<?= rawurlencode($appJsVersion) ?>" defer></script>
 </head>
 <body>
 <header class="topbar">
