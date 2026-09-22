@@ -134,6 +134,126 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const bindSimpleDialog = (dialogSelector, openSelector, closeSelector) => {
+        const targetDialog = document.querySelector(dialogSelector);
+        if (!(targetDialog instanceof HTMLDialogElement)) {
+            return null;
+        }
+
+        document.querySelectorAll(openSelector).forEach((button) => {
+            button.addEventListener('click', () => targetDialog.showModal());
+        });
+        targetDialog.querySelectorAll(closeSelector).forEach((button) => {
+            button.addEventListener('click', () => targetDialog.close());
+        });
+        targetDialog.addEventListener('click', (event) => {
+            if (event.target === targetDialog) {
+                targetDialog.close();
+            }
+        });
+
+        return targetDialog;
+    };
+
+    const userDialog = document.querySelector('[data-user-dialog]');
+    if (userDialog instanceof HTMLDialogElement) {
+        const form = userDialog.querySelector('[data-user-form]');
+        const title = userDialog.querySelector('[data-user-dialog-title] span');
+        const submitLabel = userDialog.querySelector('[data-user-submit-label]');
+        const warning = userDialog.querySelector('[data-user-sole-admin-warning]');
+        const fields = {
+            id: userDialog.querySelector('[data-user-id]'),
+            name: userDialog.querySelector('[data-user-name]'),
+            department: userDialog.querySelector('[data-user-department]'),
+            position: userDialog.querySelector('[data-user-position]'),
+            hireDate: userDialog.querySelector('[data-user-hire-date]'),
+            endDate: userDialog.querySelector('[data-user-end-date]'),
+            telegramId: userDialog.querySelector('[data-user-telegram-id]'),
+            role: userDialog.querySelector('[data-user-role]'),
+            status: userDialog.querySelector('[data-user-status]'),
+        };
+
+        const option = (select, value) => select ? select.querySelector('option[value="' + value + '"]') : null;
+
+        document.querySelectorAll('[data-open-user-dialog]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const editing = button.dataset.userMode === 'edit';
+                const soleAdmin = button.dataset.userSoleAdmin === '1';
+
+                if (form) {
+                    form.reset();
+                }
+                if (fields.id) fields.id.value = editing ? (button.dataset.userId || '') : '';
+                if (fields.name) fields.name.value = editing ? (button.dataset.userName || '') : '';
+                if (fields.department) fields.department.value = editing ? (button.dataset.userDepartment || '') : '';
+                if (fields.position) fields.position.value = editing ? (button.dataset.userPosition || '') : '';
+                if (fields.hireDate) fields.hireDate.value = editing ? (button.dataset.userHireDate || '') : '';
+                if (fields.endDate) fields.endDate.value = editing ? (button.dataset.userEndDate || '') : '';
+                if (fields.telegramId) fields.telegramId.value = editing ? (button.dataset.userTelegramId || '') : '';
+                if (fields.role) fields.role.value = editing ? (button.dataset.userRole || 'user') : 'user';
+                if (fields.status) fields.status.value = editing ? (button.dataset.userStatus || 'active') : 'active';
+
+                const userOption = option(fields.role, 'user');
+                const pendingOption = option(fields.status, 'pending');
+                const inactiveOption = option(fields.status, 'inactive');
+                if (userOption) userOption.disabled = soleAdmin;
+                if (pendingOption) pendingOption.disabled = soleAdmin;
+                if (inactiveOption) inactiveOption.disabled = soleAdmin;
+
+                if (warning) warning.hidden = !soleAdmin;
+                if (title) title.textContent = editing ? '직원 수정' : '직원 추가';
+                if (submitLabel) submitLabel.textContent = editing ? '저장' : '추가';
+
+                userDialog.showModal();
+                if (fields.name) fields.name.focus();
+            });
+        });
+
+        userDialog.querySelectorAll('[data-close-user-dialog]').forEach((button) => {
+            button.addEventListener('click', () => userDialog.close());
+        });
+        userDialog.addEventListener('click', (event) => {
+            if (event.target === userDialog) {
+                userDialog.close();
+            }
+        });
+    }
+
+    const annualLeaveDialog = document.querySelector('[data-annual-leave-dialog]');
+    if (annualLeaveDialog instanceof HTMLDialogElement) {
+        annualLeaveDialog.querySelectorAll('[data-close-annual-leave-dialog]').forEach((button) => {
+            button.addEventListener('click', () => annualLeaveDialog.close());
+        });
+        annualLeaveDialog.addEventListener('click', (event) => {
+            if (event.target === annualLeaveDialog) {
+                annualLeaveDialog.close();
+            }
+        });
+        if (annualLeaveDialog.dataset.autoOpen === '1') {
+            annualLeaveDialog.showModal();
+        }
+    }
+
+    bindSimpleDialog(
+        '[data-holiday-sync-dialog]',
+        '[data-open-holiday-sync-dialog]',
+        '[data-close-holiday-sync-dialog]'
+    );
+    bindSimpleDialog(
+        '[data-holiday-add-dialog]',
+        '[data-open-holiday-add-dialog]',
+        '[data-close-holiday-add-dialog]'
+    );
+
+    document.querySelectorAll('[data-confirm-message]').forEach((form) => {
+        form.addEventListener('submit', (event) => {
+            const message = form.dataset.confirmMessage || '계속 진행하시겠습니까?';
+            if (!window.confirm(message)) {
+                event.preventDefault();
+            }
+        });
+    });
+
     const completedSetupSteps = Array.from(document.querySelectorAll('.setup-step.complete'));
 
     completedSetupSteps.forEach((step) => {
