@@ -50,9 +50,9 @@ $submitLabel = '휴가 등록 · 즉시 승인';
             <div class="empty-state">승인 대기 중인 신청이 없습니다.</div>
         <?php endif; ?>
 
-        <div class="approval-list">
+        <div class="approval-list" data-paginate data-page-size="10">
         <?php foreach ($requests as $item): ?>
-            <article class="approval-card" id="request-<?= (int) $item['id'] ?>">
+            <article class="approval-card" id="request-<?= (int) $item['id'] ?>" data-page-item>
                 <div class="approval-summary">
                     <div>
                         <span class="muted">#<?= (int) $item['id'] ?></span>
@@ -78,18 +78,28 @@ $submitLabel = '휴가 등록 · 즉시 승인';
                     <span class="badge pending">승인 대기</span>
                 </div>
 
-                <form class="inline-review-form" method="post" action="/admin/requests/review">
-                    <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                    <input type="hidden" name="request_id" value="<?= (int) $item['id'] ?>">
-                    <label>
-                        관리자 메모
-                        <input name="review_note" maxlength="1000" placeholder="선택 입력">
-                    </label>
-                    <div class="form-actions">
-                        <button class="button primary" type="submit" name="action" value="approve">승인</button>
-                        <button class="button danger-ghost" type="submit" name="action" value="reject">반려</button>
-                    </div>
-                </form>
+                <div class="form-actions approval-card-actions">
+                    <button
+                        class="button primary"
+                        type="button"
+                        data-open-review-dialog
+                        data-review-id="<?= (int) $item['id'] ?>"
+                        data-review-action="approve"
+                        data-review-user="<?= htmlspecialchars((string) $item['user_name'], ENT_QUOTES, 'UTF-8') ?>"
+                        data-review-type="<?= htmlspecialchars((string) $item['leave_type_name'] . $halfDayLabel, ENT_QUOTES, 'UTF-8') ?>"
+                        data-review-period="<?= htmlspecialchars((string) $item['start_date'] . ' ~ ' . (string) $item['end_date'], ENT_QUOTES, 'UTF-8') ?>"
+                    >승인</button>
+                    <button
+                        class="button danger-ghost"
+                        type="button"
+                        data-open-review-dialog
+                        data-review-id="<?= (int) $item['id'] ?>"
+                        data-review-action="reject"
+                        data-review-user="<?= htmlspecialchars((string) $item['user_name'], ENT_QUOTES, 'UTF-8') ?>"
+                        data-review-type="<?= htmlspecialchars((string) $item['leave_type_name'] . $halfDayLabel, ENT_QUOTES, 'UTF-8') ?>"
+                        data-review-period="<?= htmlspecialchars((string) $item['start_date'] . ' ~ ' . (string) $item['end_date'], ENT_QUOTES, 'UTF-8') ?>"
+                    >반려</button>
+                </div>
             </article>
         <?php endforeach; ?>
         </div>
@@ -111,13 +121,13 @@ $submitLabel = '휴가 등록 · 즉시 승인';
     <div class="section-head">
         <div>
             <p class="eyebrow">Approved</p>
-            <h2>최근 승인 내역</h2>
+            <h2>전체 승인 목록</h2>
         </div>
         <span class="count-badge"><?= count($approvedRequests) ?>건</span>
     </div>
 
     <div class="table-wrap">
-        <table class="data-table">
+        <table class="data-table" data-paginate data-page-size="20">
             <thead>
             <tr>
                 <th>직원</th>
@@ -137,19 +147,22 @@ $submitLabel = '휴가 등록 · 즉시 승인';
                 $halfDayPeriod = (string) ($item['half_day_period'] ?? '');
                 $halfDayLabel = $halfDayPeriod === 'am' ? ' · 오전' : ($halfDayPeriod === 'pm' ? ' · 오후' : '');
                 ?>
-                <tr id="request-<?= (int) $item['id'] ?>">
+                <tr id="request-<?= (int) $item['id'] ?>" data-page-item>
                     <td><strong><?= htmlspecialchars((string) $item['user_name'], ENT_QUOTES, 'UTF-8') ?></strong></td>
                     <td><?= htmlspecialchars((string) $item['leave_type_name'], ENT_QUOTES, 'UTF-8') ?><?= $halfDayLabel ?></td>
                     <td><?= htmlspecialchars((string) $item['start_date'], ENT_QUOTES, 'UTF-8') ?> ~ <?= htmlspecialchars((string) $item['end_date'], ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= number_format((float) $item['requested_amount'], 1) ?></td>
                     <td><?= htmlspecialchars((string) ($item['reason'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                     <td>
-                        <form class="cancel-approved-form" method="post" action="/admin/requests/cancel-approved">
-                            <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                            <input type="hidden" name="request_id" value="<?= (int) $item['id'] ?>">
-                            <input name="cancellation_note" maxlength="1000" placeholder="취소 사유">
-                            <button class="button small danger-ghost" type="submit">승인 취소</button>
-                        </form>
+                        <button
+                            class="button small danger-ghost"
+                            type="button"
+                            data-open-admin-cancel-dialog
+                            data-cancel-id="<?= (int) $item['id'] ?>"
+                            data-cancel-user="<?= htmlspecialchars((string) $item['user_name'], ENT_QUOTES, 'UTF-8') ?>"
+                            data-cancel-type="<?= htmlspecialchars((string) $item['leave_type_name'] . $halfDayLabel, ENT_QUOTES, 'UTF-8') ?>"
+                            data-cancel-period="<?= htmlspecialchars((string) $item['start_date'] . ' ~ ' . (string) $item['end_date'], ENT_QUOTES, 'UTF-8') ?>"
+                        >승인 취소</button>
                     </td>
                 </tr>
             <?php endforeach; ?>
@@ -157,3 +170,55 @@ $submitLabel = '휴가 등록 · 즉시 승인';
         </table>
     </div>
 </section>
+
+
+<dialog class="modal-dialog compact-dialog" data-review-dialog>
+    <div class="modal-card">
+        <div class="section-head modal-head">
+            <div>
+                <p class="eyebrow">Review leave</p>
+                <h2 data-review-title>휴가 승인</h2>
+                <p data-review-summary></p>
+            </div>
+            <button class="icon-button" type="button" data-close-review-dialog aria-label="닫기"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <form class="form-grid" method="post" action="/admin/requests/review" data-review-form>
+            <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+            <input type="hidden" name="request_id" value="" data-review-request-id>
+            <input type="hidden" name="action" value="" data-review-action-input>
+            <label class="span-2">
+                관리자 메모
+                <input name="review_note" maxlength="1000" placeholder="선택 입력">
+            </label>
+            <div class="form-actions span-2">
+                <button class="button primary" type="submit" data-review-submit>처리</button>
+                <button class="button" type="button" data-close-review-dialog>취소</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<dialog class="modal-dialog compact-dialog" data-admin-cancel-dialog>
+    <div class="modal-card">
+        <div class="section-head modal-head">
+            <div>
+                <p class="eyebrow">Cancel approved leave</p>
+                <h2>승인 휴가 취소</h2>
+                <p data-admin-cancel-summary></p>
+            </div>
+            <button class="icon-button" type="button" data-close-admin-cancel-dialog aria-label="닫기"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <form class="form-grid" method="post" action="/admin/requests/cancel-approved">
+            <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+            <input type="hidden" name="request_id" value="" data-admin-cancel-id>
+            <label class="span-2">
+                취소 사유
+                <input name="cancellation_note" maxlength="1000" placeholder="선택 입력">
+            </label>
+            <div class="form-actions span-2">
+                <button class="button danger-ghost" type="submit">승인 취소</button>
+                <button class="button" type="button" data-close-admin-cancel-dialog>닫기</button>
+            </div>
+        </form>
+    </div>
+</dialog>
