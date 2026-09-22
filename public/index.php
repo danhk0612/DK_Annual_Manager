@@ -168,7 +168,7 @@ $adminSettings = new AdminSettingsController(
     $session,
     $root . '/public',
 );
-$adminUsers = new AdminUserController($users, $annualLeave, $auth, $audit, $view, $csrf);
+$adminUsers = new AdminUserController($users, $ledger, $annualLeave, $auth, $audit, $view, $csrf);
 $adminAnnualLeave = new AdminAnnualLeaveController($users, $ledger, $annualLeave, $auth, $audit, $view, $csrf);
 $adminRequests = new AdminLeaveRequestController(
     $leaveRequests,
