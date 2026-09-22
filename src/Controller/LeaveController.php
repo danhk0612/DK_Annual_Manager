@@ -72,14 +72,26 @@ final class LeaveController
         }
 
         $isAdmin = ($user['role'] ?? null) === 'admin';
+        $query = trim((string) $request->input('q', ''));
+        $status = trim((string) $request->input('status', ''));
+        $yearInput = trim((string) $request->input('year', ''));
+        $year = ctype_digit($yearInput) && (int) $yearInput >= 2000 && (int) $yearInput <= 2100
+            ? (int) $yearInput
+            : null;
 
         return Response::html($this->view->render('leave-history', [
             'title' => $isAdmin ? '전체 휴가 신청 내역' : '휴가 신청 내역',
-            'requests' => $isAdmin
-                ? $this->requests->allForAdmin()
-                : $this->requests->forUser((int) $user['id']),
+            'requests' => $this->requests->searchHistory(
+                $isAdmin ? null : (int) $user['id'],
+                $query,
+                $status,
+                $year,
+            ),
             'isAdmin' => $isAdmin,
             'currentUserId' => (int) $user['id'],
+            'query' => $query,
+            'selectedStatus' => $status,
+            'selectedYear' => $year,
             'csrfToken' => $this->csrf->token(),
             'message' => $request->input('message'),
             'error' => $request->input('error'),
