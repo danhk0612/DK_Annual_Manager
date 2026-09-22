@@ -11,6 +11,7 @@ use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Repository\AppSettingRepository;
 use DKAnnual\Repository\AuditLogRepository;
+use DKAnnual\Repository\LeaveRequestRepository;
 use DKAnnual\Security\Csrf;
 use DKAnnual\Session\Session;
 use DKAnnual\Setup\SetupService;
@@ -27,6 +28,7 @@ final class AdminSettingsController
         private readonly TelegramBotClient $telegramBot,
         private readonly Auth $auth,
         private readonly AuditLogRepository $audit,
+        private readonly LeaveRequestRepository $leaveRequests,
         private readonly View $view,
         private readonly Csrf $csrf,
         private readonly SetupService $setup,
@@ -99,10 +101,46 @@ final class AdminSettingsController
             'employeeBotLink' => $botUsername !== '' ? 'https://t.me/' . rawurlencode($botUsername) . '?start=employee' : null,
             'employeeLoginLink' => $appUrl !== '' ? $appUrl . '/login' : null,
             'workingWeekdays' => $this->settings->workingWeekdays(),
+            'closedLeaveHistoryCount' => $this->leaveRequests->closedHistoryCount(),
             'csrfToken' => $this->csrf->token(),
             'message' => $request->input('message'),
             'error' => $request->input('error'),
         ]));
+    }
+
+    public function purgeClosedLeaveHistory(Request $request): Response
+    {
+        $actor = $this->auth->user();
+        if ($actor === null) {
+            return Response::redirect('/login');
+        }
+
+        try {
+            $result = $this->leaveRequests->purgeClosedHistory();
+            $this->audit->record(
+                (int) $actor['id'],
+                'leave.closed_history_purged',
+                'leave_history',
+                null,
+                $result,
+                $this->ip($request),
+            );
+
+            $message = sprintf(
+                '종료된 휴가 기록 %d건을 정리했습니다. 휴가일 %d건, 원장 %d건, 관련 감사로그 %d건을 함께 제거했습니다.',
+                $result['requests'],
+                $result['days'],
+                $result['ledger'],
+                $result['audit'],
+            );
+
+            return Response::redirect('/admin/settings?message=' . rawurlencode($message));
+        } catch (Throwable $exception) {
+            error_log('[DK Annual Settings] Closed leave history purge failed: ' . $exception::class);
+            return Response::redirect('/admin/settings?error=' . rawurlencode(
+                '취소·반려 휴가 기록 정리에 실패했습니다. 서버 오류 로그를 확인해 주세요.'
+            ));
+        }
     }
 
     public function saveAppearance(Request $request): Response
