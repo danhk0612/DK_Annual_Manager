@@ -110,14 +110,54 @@ final class LeaveRequestRepository extends AbstractRepository
     /** @return list<array<string, mixed>> */
     public function allForAdmin(): array
     {
-        $statement = $this->pdo->query(
-            'SELECT r.*, u.name AS user_name, u.department, '
+        return $this->searchHistory(null);
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function searchHistory(
+        ?int $userId,
+        string $query = '',
+        string $status = '',
+        ?int $year = null,
+    ): array {
+        $sql = 'SELECT r.*, u.name AS user_name, u.department, '
             . 't.code AS leave_code, t.name AS leave_type_name '
             . 'FROM leave_requests r '
             . 'INNER JOIN users u ON u.id = r.user_id '
             . 'INNER JOIN leave_types t ON t.id = r.leave_type_id '
-            . 'ORDER BY r.created_at DESC, r.id DESC'
-        );
+            . 'WHERE 1=1 ';
+        $params = [];
+
+        if ($userId !== null) {
+            $sql .= 'AND r.user_id = :user_id ';
+            $params['user_id'] = $userId;
+        }
+
+        $query = trim($query);
+        if ($query !== '') {
+            $sql .= 'AND (u.name LIKE :q_user OR u.department LIKE :q_department '
+                . 'OR t.name LIKE :q_type OR r.reason LIKE :q_reason OR r.review_note LIKE :q_review) ';
+            $like = '%' . $query . '%';
+            $params['q_user'] = $like;
+            $params['q_department'] = $like;
+            $params['q_type'] = $like;
+            $params['q_reason'] = $like;
+            $params['q_review'] = $like;
+        }
+
+        if (in_array($status, ['pending', 'approved', 'rejected', 'cancelled'], true)) {
+            $sql .= 'AND r.status = :status ';
+            $params['status'] = $status;
+        }
+
+        if ($year !== null && $year >= 2000 && $year <= 2100) {
+            $sql .= 'AND YEAR(r.start_date) = :leave_year ';
+            $params['leave_year'] = $year;
+        }
+
+        $sql .= 'ORDER BY r.created_at DESC, r.id DESC';
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute($params);
 
         return $statement->fetchAll();
     }
