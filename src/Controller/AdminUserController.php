@@ -106,6 +106,19 @@ final class AdminUserController
                 return Response::redirect('/admin/users?error=' . rawurlencode('직원을 찾을 수 없습니다.'));
             }
 
+            $removesActiveAdmin = ($existing['role'] ?? null) === 'admin'
+                && ($existing['status'] ?? null) === 'active'
+                && ($role !== 'admin' || $status !== 'active');
+
+            if ($removesActiveAdmin && $this->users->activeAdminCount($id) === 0) {
+                return Response::redirect('/admin/users?edit=' . $id . '&error=' . rawurlencode(
+                    '활성 관리자가 1명뿐일 때는 해당 계정을 사용자로 변경하거나 비활성화할 수 없습니다. 다른 관리자를 먼저 지정해 주세요.'
+                ));
+            }
+
+            $roleOrStatusChanged = ($existing['role'] ?? null) !== $role
+                || ($existing['status'] ?? null) !== $status;
+
             $this->users->updateManaged(
                 $id,
                 $name,
@@ -135,7 +148,17 @@ final class AdminUserController
                 'role' => $role,
                 'status' => $status,
             ], $this->ip($request));
-            return Response::redirect('/admin/users?message=' . rawurlencode('직원 정보를 저장했습니다.'));
+
+            if ($roleOrStatusChanged && $actorId === $id) {
+                $this->auth->logout();
+                return Response::redirect('/login?message=' . rawurlencode('권한 또는 계정 상태가 변경되어 다시 로그인해야 합니다.'));
+            }
+
+            return Response::redirect('/admin/users?message=' . rawurlencode(
+                $roleOrStatusChanged
+                    ? '직원 정보를 저장했습니다. 권한/상태가 변경된 계정은 다음 요청에서 자동 로그아웃됩니다.'
+                    : '직원 정보를 저장했습니다.'
+            ));
         } catch (PDOException $exception) {
             if ($exception->getCode() === '23000') {
                 return Response::redirect('/admin/users?error=' . rawurlencode('이미 연결된 Telegram User ID입니다.'));
