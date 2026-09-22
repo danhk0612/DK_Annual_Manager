@@ -33,7 +33,7 @@ final class HolidayRepository extends AbstractRepository
     public function entriesBetween(string $startDate, string $endDate): array
     {
         $statement = $this->pdo->prepare(
-            'SELECT holiday_date, name, source FROM holidays '
+            'SELECT holiday_date, name, source, is_public_holiday FROM holidays '
             . 'WHERE holiday_date BETWEEN :start_date AND :end_date '
             . 'ORDER BY holiday_date ASC, name ASC'
         );
