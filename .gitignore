@@ -6,4 +6,7 @@
 .DS_Store
 Thumbs.db
 
-/public/uploads/
+/public/uploads/*
+!/public/uploads/branding/
+/public/uploads/branding/*
+!/public/uploads/branding/.gitkeep
