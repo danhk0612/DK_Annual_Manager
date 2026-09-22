@@ -14,15 +14,19 @@ $title = isset($title) && is_string($title) ? $title : 'DK Annual Manager';
 </head>
 <body>
 <header class="topbar">
-    <a class="brand" href="/">DK Annual Manager</a>
-    <nav class="topnav">
-        <a href="/">홈</a>
-        <a href="/calendar">달력</a>
-        <a href="/leave">휴가 신청</a>
-        <a href="/leave/history">신청 내역</a>
-        <a href="/profile">내 정보</a>
-        <a href="/admin">관리</a>
-    </nav>
+    <div class="topbar-inner">
+        <a class="brand" href="/">
+            <span class="brand-mark">DK</span>
+            <span>Annual Manager</span>
+        </a>
+        <nav class="topnav" aria-label="주 메뉴">
+            <a href="/calendar">달력</a>
+            <a href="/calendar?request=1" class="nav-primary">휴가 신청</a>
+            <a href="/leave/history">신청 내역</a>
+            <a href="/profile">내 정보</a>
+            <a href="/admin">관리</a>
+        </nav>
+    </div>
 </header>
 <main class="container">
     <?= $content ?>
