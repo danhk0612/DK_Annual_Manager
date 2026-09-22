@@ -89,6 +89,21 @@ final class TelegramBotClient
         return array_values($chats);
     }
 
+    /** @return array<string, mixed> */
+    public function getChat(int|string $chatId): array
+    {
+        $response = $this->http->get($this->apiUrl('getChat'), [
+            'query' => ['chat_id' => $chatId],
+        ]);
+        $payload = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+
+        if (!is_array($payload) || ($payload['ok'] ?? false) !== true || !is_array($payload['result'] ?? null)) {
+            throw new RuntimeException('Telegram getChat response was invalid.');
+        }
+
+        return $payload['result'];
+    }
+
     public function sendMessage(int|string $chatId, string $text): void
     {
         $this->http->post($this->apiUrl('sendMessage'), [
