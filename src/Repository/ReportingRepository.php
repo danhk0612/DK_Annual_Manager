@@ -316,9 +316,8 @@ final class ReportingRepository extends AbstractRepository
     }
 
     /** @return list<array<string, mixed>> */
-    public function approvedLeavesOnDate(string $date, int $limit = 12): array
+    public function approvedLeavesOnDate(string $date): array
     {
-        $limit = max(1, min(30, $limit));
         $statement = $this->pdo->prepare(
             "SELECT r.id, r.start_date, r.end_date, r.requested_amount, r.half_day_period,
                     d.amount AS today_amount,
@@ -329,8 +328,7 @@ final class ReportingRepository extends AbstractRepository
              INNER JOIN leave_types lt ON lt.id = r.leave_type_id
              WHERE r.status = 'approved'
                AND d.leave_date = :leave_date
-             ORDER BY u.name ASC, r.start_date ASC, r.id ASC
-             LIMIT " . $limit
+             ORDER BY u.name ASC, r.start_date ASC, r.id ASC"
         );
         $statement->execute(['leave_date' => $date]);
 
@@ -342,15 +340,18 @@ final class ReportingRepository extends AbstractRepository
     {
         $limit = max(1, min(30, $limit));
         $statement = $this->pdo->prepare(
-            "SELECT DISTINCT r.id, r.start_date, r.end_date, r.requested_amount, r.half_day_period,
+            "SELECT r.id, r.start_date, r.end_date, r.requested_amount, r.half_day_period,
+                    MIN(d.leave_date) AS first_leave_date,
                     u.name AS user_name, u.department, lt.name AS leave_type_name
              FROM leave_requests r
              INNER JOIN leave_request_days d ON d.leave_request_id = r.id
              INNER JOIN users u ON u.id = r.user_id
              INNER JOIN leave_types lt ON lt.id = r.leave_type_id
              WHERE r.status = 'approved'
-               AND d.leave_date BETWEEN :from_date AND :to_date
-             ORDER BY r.start_date ASC, u.name ASC, r.id ASC
+             GROUP BY r.id, r.start_date, r.end_date, r.requested_amount, r.half_day_period,
+                      u.name, u.department, lt.name
+             HAVING MIN(d.leave_date) BETWEEN :from_date AND :to_date
+             ORDER BY first_leave_date ASC, u.name ASC, r.id ASC
              LIMIT " . $limit
         );
         $statement->execute([
