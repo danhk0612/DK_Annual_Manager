@@ -136,8 +136,7 @@ $maxMonthly = max(1.0, ...array_values($monthlyMap));
         </div>
         <div class="quick-grid">
             <a class="quick-action" href="/admin/requests"><i class="bi bi-check2-square"></i><strong>휴가 승인</strong><span>승인·취소·대리 신청</span></a>
-            <a class="quick-action" href="/admin/users"><i class="bi bi-people"></i><strong>직원 관리</strong><span>부서·직책·권한</span></a>
-            <a class="quick-action" href="/admin/annual-leave"><i class="bi bi-calendar2-range"></i><strong>연차 관리</strong><span>발생·고정·조정</span></a>
+            <a class="quick-action" href="/admin/users"><i class="bi bi-people"></i><strong>직원 관리</strong><span>직원·연차·권한</span></a>
             <a class="quick-action" href="/admin/holidays"><i class="bi bi-calendar2-event"></i><strong>공휴일</strong><span>공휴일·회사 휴무</span></a>
             <a class="quick-action" href="/admin/reports"><i class="bi bi-bar-chart-line"></i><strong>휴가 집계</strong><span>검색·필터·그래프</span></a>
             <a class="quick-action" href="/admin/settings"><i class="bi bi-gear"></i><strong>환경 설정</strong><span>브랜딩·Telegram·테마</span></a>
