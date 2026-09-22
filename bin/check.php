@@ -67,7 +67,7 @@ try {
 
     $setup = new SetupService($pdo, $config, $root);
     if (!$setup->schemaReady()) {
-        $fail('DB schema가 초기화되지 않았습니다. 브라우저에서 /setup 을 열어 DB 초기화를 진행하세요.');
+        $fail('DB schema가 준비되지 않았습니다. 브라우저에서 /setup 을 열어 DB 스키마 생성을 진행하세요.');
         printf("\n모드: %s\n", $production ? 'production' : 'standard');
         printf("결과: FAIL %d / WARN %d\n", $failures, $warnings);
         exit(1);
@@ -116,6 +116,10 @@ try {
         ['users', 'department'],
         ['users', 'position'],
         ['leave_requests', 'half_day_period'],
+        ['leave_requests', 'cancelled_by'],
+        ['leave_requests', 'cancelled_at'],
+        ['leave_requests', 'cancellation_source'],
+        ['leave_requests', 'cancellation_note'],
     ] as [$table, $column]) {
         $columnStatement->execute(['table_name' => $table, 'column_name' => $column]);
         (int) $columnStatement->fetchColumn() === 1
