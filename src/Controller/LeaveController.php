@@ -138,7 +138,7 @@ final class LeaveController
         if ($leaveType === null || $start === null || $end === null || $end < $start) {
             return $this->redirectError('휴가 종류와 신청 기간을 확인해 주세요.', $returnTo);
         }
-        if (!in_array($reasonCategory, $this->reasonCategories(), true)) {
+        if (!$isAdminProxy && !in_array($reasonCategory, $this->reasonCategories(), true)) {
             return $this->redirectError('신청 사유를 선택해 주세요.', $returnTo);
         }
 
@@ -154,46 +154,60 @@ final class LeaveController
             $halfDayPeriod = '';
         }
 
-        $holidayDates = $this->holidays->datesBetween(
-            $start->format('Y-m-d'),
-            $end->format('Y-m-d'),
-        );
-        $workingWeekdays = $this->settings->workingWeekdays();
-        $leaveDates = $this->dates->workingDates(
-            $start,
-            $end,
-            $holidayDates,
-            $workingWeekdays,
-        );
-
         $adminDateOverride = false;
-        if ($leaveDates === []) {
-            $allowHistoricalException = ($actor['role'] ?? null) === 'admin'
-                && (string) $request->input('admin_date_exception', '0') === '1'
-                && (int) $leaveType['deducts_annual_leave'] === 0
-                && $start->format('Y-m-d') === $end->format('Y-m-d');
 
-            if ($allowHistoricalException) {
-                $leaveDates = [$start->format('Y-m-d')];
-                $adminDateOverride = true;
-            } else {
-                return $this->redirectError(
-                    $this->noWorkingDateMessage($start, $end, $workingWeekdays),
-                    $returnTo,
-                );
+        if ($isAdminProxy) {
+            // Administrator proxy entry is an authoritative record. Use the
+            // selected calendar dates exactly as entered and skip workday,
+            // holiday and overlap eligibility checks.
+            $leaveDates = $this->dates->calendarDates($start, $end);
+        } else {
+            $holidayDates = $this->holidays->datesBetween(
+                $start->format('Y-m-d'),
+                $end->format('Y-m-d'),
+            );
+            $workingWeekdays = $this->settings->workingWeekdays();
+            $leaveDates = $this->dates->workingDates(
+                $start,
+                $end,
+                $holidayDates,
+                $workingWeekdays,
+            );
+
+            if ($leaveDates === []) {
+                $allowHistoricalException = ($actor['role'] ?? null) === 'admin'
+                    && (string) $request->input('admin_date_exception', '0') === '1'
+                    && (int) $leaveType['deducts_annual_leave'] === 0
+                    && $start->format('Y-m-d') === $end->format('Y-m-d');
+
+                if ($allowHistoricalException) {
+                    $leaveDates = [$start->format('Y-m-d')];
+                    $adminDateOverride = true;
+                } else {
+                    return $this->redirectError(
+                        $this->noWorkingDateMessage($start, $end, $workingWeekdays),
+                        $returnTo,
+                    );
+                }
             }
-        }
 
-        if ($this->requests->hasOpenDays((int) $subject['id'], $leaveDates)) {
-            return $this->redirectError('이미 신청 중이거나 승인된 날짜가 포함되어 있습니다.', $returnTo);
+            if ($this->requests->hasOpenDays((int) $subject['id'], $leaveDates)) {
+                return $this->redirectError('이미 신청 중이거나 승인된 날짜가 포함되어 있습니다.', $returnTo);
+            }
         }
 
         $dailyAmount = (float) $leaveType['default_amount'];
         $requestedAmount = count($leaveDates) * $dailyAmount;
-        $reason = $reasonCategory . ($reasonDetail !== '' ? ' - ' . $reasonDetail : '');
+        $reason = '';
+        if (in_array($reasonCategory, $this->reasonCategories(), true)) {
+            $reason = $reasonCategory . ($reasonDetail !== '' ? ' - ' . $reasonDetail : '');
+        } elseif ($reasonDetail !== '') {
+            $reason = $reasonDetail;
+        }
+        $reason = $reason !== '' ? $reason : null;
 
         $warnings = [];
-        if ((int) $leaveType['deducts_annual_leave'] === 1) {
+        if (!$isAdminProxy && (int) $leaveType['deducts_annual_leave'] === 1) {
             $amountByYear = [];
             foreach ($leaveDates as $leaveDate) {
                 $year = (int) substr($leaveDate, 0, 4);
@@ -238,6 +252,7 @@ final class LeaveController
             'half_day_period' => $halfDayPeriod !== '' ? $halfDayPeriod : null,
             'balance_warning' => $balanceWarning,
             'admin_date_exception' => $adminDateOverride,
+            'admin_direct_entry' => $isAdminProxy,
         ], $this->ip($request));
 
         if ($isAdminProxy) {
