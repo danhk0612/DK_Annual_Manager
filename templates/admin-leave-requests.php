@@ -14,6 +14,7 @@ $returnTo = '/admin/requests';
 $targetUsers = $users;
 $annualBalance = null;
 $allowAdminDateException = true;
+$submitLabel = '휴가 등록 · 즉시 승인';
 ?>
 <section class="page-head">
     <div>
@@ -100,7 +101,7 @@ $allowAdminDateException = true;
                 <h2>직원 대신 휴가 등록</h2>
             </div>
         </div>
-        <p class="form-hint">직원이 직접 신청하기 어려운 경우 관리자가 동일한 신청 절차로 대신 등록합니다. 일정 변경은 기존 승인 취소 후 새 일정으로 등록하는 방식으로 이력을 보존합니다.</p>
+        <p class="form-hint">관리자가 직원 대신 등록한 휴가는 승인 대기 없이 즉시 승인됩니다. 연차/반차는 승인과 동시에 원장에 반영되며, 일정 변경은 기존 승인 취소 후 새 일정으로 다시 등록해 이력을 보존합니다.</p>
         <?php require __DIR__ . '/_leave-form.php'; ?>
     </section>
 </div>
