@@ -142,6 +142,7 @@
             <label class="span-2">
                 Redirect URI
                 <input name="redirect_uri" required value="<?= htmlspecialchars($telegramRedirectUri, ENT_QUOTES, 'UTF-8') ?>">
+                <span class="form-hint">현재 접속 호스트를 기준으로 자동 계산합니다. 리버스 프록시 외부 주소와 다를 때만 수정하세요.</span>
             </label>
             <div class="form-actions">
                 <button class="button primary" type="submit"><i class="bi bi-plug"></i><span>Telegram 연결 저장·확인</span></button>
