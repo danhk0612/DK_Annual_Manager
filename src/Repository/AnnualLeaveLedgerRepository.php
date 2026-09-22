@@ -109,7 +109,7 @@ final class AnnualLeaveLedgerRepository extends AbstractRepository
         $statement = $this->pdo->prepare(
             "SELECT COALESCE(SUM(amount), 0) FROM annual_leave_ledger "
             . "WHERE user_id = :user_id AND leave_year = :leave_year "
-            . "AND transaction_type <> 'usage' "
+            . "AND transaction_type NOT IN ('usage', 'reversal') "
             . "AND (ledger_key IS NULL OR ledger_key <> :override_key)"
         );
         $statement->execute([
@@ -126,7 +126,7 @@ final class AnnualLeaveLedgerRepository extends AbstractRepository
         $statement = $this->pdo->prepare(
             "SELECT COALESCE(SUM(amount), 0) FROM annual_leave_ledger "
             . "WHERE user_id = :user_id AND leave_year = :leave_year "
-            . "AND transaction_type <> 'usage'"
+            . "AND transaction_type NOT IN ('usage', 'reversal')"
         );
         $statement->execute([
             'user_id' => $userId,
