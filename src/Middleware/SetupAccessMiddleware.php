@@ -27,12 +27,12 @@ final class SetupAccessMiddleware implements MiddlewareInterface
         if ($expected === null) {
             return Response::html($this->deniedHtml(
                 '초기 설정 키가 없습니다.',
-                'NAS 터미널에서 php84 bin/setup-key.php 를 실행한 뒤 출력된 URL로 접속하세요.',
+                '서버의 PHP CLI 환경에서 php bin/setup-key.php 를 실행한 뒤 출력된 URL로 접속하세요.',
             ), 503);
         }
 
         $provided = trim((string) $request->input('setup_key', ''));
-        if ($provided !== '' && hash_equals($expected, $provided)) {
+        if ($provided !== '' && hash_equals($expected, hash('sha256', $provided))) {
             $this->session->set('setup_authorized', true);
             $this->session->regenerate();
 
@@ -45,7 +45,7 @@ final class SetupAccessMiddleware implements MiddlewareInterface
 
         return Response::html($this->deniedHtml(
             '초기 설정 접근이 잠겨 있습니다.',
-            'NAS 터미널에서 php84 bin/setup-key.php 를 실행하고 출력된 /setup?setup_key=... 주소를 사용하세요.',
+            '서버의 PHP CLI 환경에서 php bin/setup-key.php 를 실행하고 출력된 /setup?setup_key=... 주소를 사용하세요.',
         ), 403);
     }
 
