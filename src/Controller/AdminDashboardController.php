@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DKAnnual\Controller;
 
+use DateTimeImmutable;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Repository\AuditLogRepository;
@@ -22,12 +23,20 @@ final class AdminDashboardController
     public function index(Request $request): Response
     {
         $year = (int) date('Y');
+        $today = new DateTimeImmutable('today');
 
         return Response::html($this->view->render('admin', [
-            'title' => '관리자',
+            'title' => '관리자 대시보드',
             'year' => $year,
             'metrics' => $this->reports->dashboardMetrics($year),
-            'recentAudit' => $this->audit->recent(10),
+            'pendingPreview' => $this->reports->pendingRequestPreview(6),
+            'upcomingLeaves' => $this->reports->upcomingApprovedLeaves(
+                $today->format('Y-m-d'),
+                $today->modify('+14 days')->format('Y-m-d'),
+                8,
+            ),
+            'monthlyTotals' => $this->reports->monthlyApprovedTotals($year),
+            'recentAudit' => $this->audit->recent(8),
         ]));
     }
 }
