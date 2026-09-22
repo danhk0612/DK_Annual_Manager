@@ -37,7 +37,7 @@ final class AnnualLeaveLedgerRepository extends AbstractRepository
         string $transactionType,
         float $amount,
         ?string $note,
-        int $createdBy,
+        ?int $createdBy,
     ): int {
         $statement = $this->pdo->prepare(
             'INSERT INTO annual_leave_ledger '
@@ -69,6 +69,56 @@ final class AnnualLeaveLedgerRepository extends AbstractRepository
         ]);
 
         return $statement->rowCount();
+    }
+
+    public function setOverrideAdjustment(
+        int $userId,
+        int $leaveYear,
+        float $amount,
+        string $note,
+        ?int $createdBy,
+    ): void {
+        $ledgerKey = sprintf('override:%d:%d', $userId, $leaveYear);
+        $statement = $this->pdo->prepare(
+            "INSERT INTO annual_leave_ledger "
+            . "(user_id, leave_year, transaction_type, amount, ledger_key, note, created_by) "
+            . "VALUES (:user_id, :leave_year, 'adjustment', :amount, :ledger_key, :note, :created_by) "
+            . "ON DUPLICATE KEY UPDATE amount = VALUES(amount), note = VALUES(note), "
+            . "created_by = VALUES(created_by), created_at = CURRENT_TIMESTAMP"
+        );
+        $statement->execute([
+            'user_id' => $userId,
+            'leave_year' => $leaveYear,
+            'amount' => $amount,
+            'ledger_key' => $ledgerKey,
+            'note' => $note,
+            'created_by' => $createdBy,
+        ]);
+    }
+
+    public function deleteOverrideAdjustment(int $userId, int $leaveYear): void
+    {
+        $statement = $this->pdo->prepare(
+            'DELETE FROM annual_leave_ledger WHERE ledger_key = :ledger_key'
+        );
+        $statement->execute(['ledger_key' => sprintf('override:%d:%d', $userId, $leaveYear)]);
+    }
+
+    public function nonUsageTotalExcludingOverride(int $userId, int $leaveYear): float
+    {
+        $statement = $this->pdo->prepare(
+            "SELECT COALESCE(SUM(amount), 0) FROM annual_leave_ledger "
+            . "WHERE user_id = :user_id AND leave_year = :leave_year "
+            . "AND transaction_type <> 'usage' "
+            . "AND (ledger_key IS NULL OR ledger_key <> :override_key)"
+        );
+        $statement->execute([
+            'user_id' => $userId,
+            'leave_year' => $leaveYear,
+            'override_key' => sprintf('override:%d:%d', $userId, $leaveYear),
+        ]);
+
+        return (float) $statement->fetchColumn();
     }
 
     public function nonUsageTotalForUserYear(int $userId, int $leaveYear): float
