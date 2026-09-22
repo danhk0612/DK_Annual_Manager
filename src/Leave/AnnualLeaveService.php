@@ -101,13 +101,17 @@ final class AnnualLeaveService
         $baseTotal = $this->ledger->nonUsageTotalExcludingOverride($userId, $year);
         $delta = round($target - $baseTotal, 2);
 
-        $this->ledger->setOverrideAdjustment(
-            $userId,
-            $year,
-            $delta,
-            sprintf('%d년 총 연차 %.2f일 고정', $year, $target),
-            $createdBy,
-        );
+        if (abs($delta) < 0.01) {
+            $this->ledger->deleteOverrideAdjustment($userId, $year);
+        } else {
+            $this->ledger->setOverrideAdjustment(
+                $userId,
+                $year,
+                $delta,
+                sprintf('%d년 총 연차 %.2f일 고정', $year, $target),
+                $createdBy,
+            );
+        }
 
         return $delta;
     }
