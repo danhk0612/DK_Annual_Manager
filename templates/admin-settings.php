@@ -131,6 +131,10 @@
                 <button class="button primary" type="submit"><i class="bi bi-bell-fill"></i> 알림 대상 저장</button>
             </div>
         </form>
+        <form method="post" action="/admin/settings/telegram/test" class="secondary-action-form">
+            <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+            <button class="button" type="submit"><i class="bi bi-send-check"></i> 현재 대상에 테스트 메시지 보내기</button>
+        </form>
 
         <?php if ($telegramProbeError !== null): ?>
             <div class="notice warning settings-notice"><?= htmlspecialchars($telegramProbeError, ENT_QUOTES, 'UTF-8') ?></div>
