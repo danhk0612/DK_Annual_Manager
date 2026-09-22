@@ -15,7 +15,7 @@ final class ReportingRepository extends AbstractRepository
         $ledger = $this->pdo->prepare(
             "SELECT
                 COALESCE(SUM(CASE WHEN transaction_type = 'grant' THEN amount ELSE 0 END), 0) AS granted,
-                COALESCE(-SUM(CASE WHEN transaction_type = 'usage' THEN amount ELSE 0 END), 0) AS used,
+                COALESCE(-SUM(CASE WHEN transaction_type IN ('usage', 'reversal') THEN amount ELSE 0 END), 0) AS used,
                 COALESCE(SUM(amount), 0) AS balance
              FROM annual_leave_ledger
              WHERE leave_year = :leave_year"
