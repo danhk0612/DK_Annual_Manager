@@ -84,7 +84,7 @@ final class AnnualLeaveLedgerRepository extends AbstractRepository
             . "(user_id, leave_year, transaction_type, amount, ledger_key, note, created_by) "
             . "VALUES (:user_id, :leave_year, 'adjustment', :amount, :ledger_key, :note, :created_by) "
             . "ON DUPLICATE KEY UPDATE amount = VALUES(amount), note = VALUES(note), "
-            . "created_by = VALUES(created_by), created_at = CURRENT_TIMESTAMP"
+            . "created_by = VALUES(created_by)"
         );
         $statement->execute([
             'user_id' => $userId,
