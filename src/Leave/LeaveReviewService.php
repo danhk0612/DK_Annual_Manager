@@ -87,9 +87,10 @@ final class LeaveReviewService
 
             if ((int) $request['deducts_annual_leave'] === 1) {
                 $usageStatement = $this->pdo->prepare(
-                    'SELECT YEAR(leave_date) AS leave_year, SUM(amount) AS amount '
-                    . 'FROM leave_request_days WHERE leave_request_id = :request_id '
-                    . 'GROUP BY YEAR(leave_date) ORDER BY leave_year ASC'
+                    "SELECT leave_year, -SUM(amount) AS amount "
+                    . "FROM annual_leave_ledger "
+                    . "WHERE reference_request_id = :request_id AND transaction_type = 'usage' "
+                    . "GROUP BY leave_year ORDER BY leave_year ASC"
                 );
                 $usageStatement->execute(['request_id' => $requestId]);
 
