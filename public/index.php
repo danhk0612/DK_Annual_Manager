@@ -195,13 +195,14 @@ $leave = new LeaveController(
     $leaveRequests,
     $annualLeave,
     $ledger,
+    $settings,
     new LeaveDateCalculator(),
     $notifications,
     $audit,
     $view,
     $csrf,
 );
-$calendar = new CalendarController($auth, $leaveRequests, $holidays, $leaveTypes, $ledger, $annualLeave, $view, $csrf);
+$calendar = new CalendarController($auth, $leaveRequests, $holidays, $leaveTypes, $ledger, $annualLeave, $settings, $view, $csrf);
 
 $requireAuth = new RequireAuthMiddleware($auth);
 $requireAdmin = new RequireAdminMiddleware($auth);
