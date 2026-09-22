@@ -160,12 +160,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        const hashTarget = window.location.hash.startsWith('#request-')
-            ? document.querySelector(window.location.hash)
-            : null;
-        if (hashTarget && hashTarget.matches('[data-open-request-detail]')) {
-            hashTarget.scrollIntoView({ block: 'center' });
-            hashTarget.click();
+        const focusRequest = new URLSearchParams(window.location.search).get('focus_request');
+        const focusSelector = focusRequest && /^\d+$/.test(focusRequest)
+            ? '#request-' + focusRequest
+            : (window.location.hash.startsWith('#request-') ? window.location.hash : '');
+        const focusTarget = focusSelector !== '' ? document.querySelector(focusSelector) : null;
+        if (focusTarget) {
+            focusTarget.scrollIntoView({ block: 'center' });
+            if (focusTarget.matches('[data-open-request-detail]')) {
+                focusTarget.click();
+            }
         }
     }
 
