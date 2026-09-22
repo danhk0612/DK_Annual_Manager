@@ -45,7 +45,7 @@ final class LeaveNotificationService
         );
 
         $buttons = [];
-        $url = $this->webUrl('/admin/requests#request-' . (int) $request['id']);
+        $url = $this->webUrl('/admin/requests?focus_request=' . (int) $request['id'] . '#request-' . (int) $request['id']);
         if ($url !== null) {
             $buttons[] = ['text' => '신청 확인 · 승인', 'url' => $url];
         }
@@ -85,8 +85,8 @@ final class LeaveNotificationService
         $buttons = [];
         $month = substr((string) ($request['start_date'] ?? ''), 0, 7);
         $path = preg_match('/^\d{4}-\d{2}$/', $month) === 1
-            ? '/calendar?month=' . rawurlencode($month) . '#request-' . (int) $request['id']
-            : '/leave/history#request-' . (int) $request['id'];
+            ? '/calendar?month=' . rawurlencode($month) . '&focus_request=' . (int) $request['id'] . '#request-' . (int) $request['id']
+            : '/leave/history?focus_request=' . (int) $request['id'] . '#request-' . (int) $request['id'];
         $url = $this->webUrl($path);
         if ($url !== null) {
             $buttons[] = ['text' => '휴가 상세 보기', 'url' => $url];
