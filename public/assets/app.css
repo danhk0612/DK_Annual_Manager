@@ -1044,8 +1044,9 @@ progress::-moz-progress-bar {
         gap: 10px;
     }
 
-    .cancel-approved-form {
-        min-width: 220px;
+    .cancel-approved-form,
+    .detail-approved-cancel-form {
+        min-width: 0;
         grid-template-columns: 1fr;
     }
 
