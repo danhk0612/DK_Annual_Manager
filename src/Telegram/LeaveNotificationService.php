@@ -44,7 +44,13 @@ final class LeaveNotificationService
             $balanceWarning !== '' ? "\n주의: " . $balanceWarning : '',
         );
 
-        return $this->sendToMany($targets, $text);
+        $buttons = [];
+        $url = $this->webUrl('/admin/requests#request-' . (int) $request['id']);
+        if ($url !== null) {
+            $buttons[] = ['text' => '신청 확인 · 승인', 'url' => $url];
+        }
+
+        return $this->sendToMany($targets, $text, $buttons);
     }
 
     /** @param array<string, mixed> $request */
@@ -76,8 +82,18 @@ final class LeaveNotificationService
             $reviewNote !== '' ? "\n관리자 메모: " . $reviewNote : '',
         );
 
+        $buttons = [];
+        $month = substr((string) ($request['start_date'] ?? ''), 0, 7);
+        $path = preg_match('/^\d{4}-\d{2}$/', $month) === 1
+            ? '/calendar?month=' . rawurlencode($month) . '#request-' . (int) $request['id']
+            : '/leave/history#request-' . (int) $request['id'];
+        $url = $this->webUrl($path);
+        if ($url !== null) {
+            $buttons[] = ['text' => '휴가 상세 보기', 'url' => $url];
+        }
+
         try {
-            $this->bot->sendMessage((int) $telegramUserId, $text);
+            $this->bot->sendMessage((int) $telegramUserId, $text, $buttons);
             return true;
         } catch (Throwable) {
             return false;
@@ -156,13 +172,16 @@ final class LeaveNotificationService
         return null;
     }
 
-    /** @param list<int|string> $targets */
-    private function sendToMany(array $targets, string $text): int
+    /**
+     * @param list<int|string> $targets
+     * @param list<array{text:string,url:string}> $buttons
+     */
+    private function sendToMany(array $targets, string $text, array $buttons = []): int
     {
         $sent = 0;
         foreach ($targets as $target) {
             try {
-                $this->bot->sendMessage($target, $text);
+                $this->bot->sendMessage($target, $text, $buttons);
                 $sent++;
             } catch (Throwable) {
                 // Notification failure must not roll back a leave request or review.
@@ -170,5 +189,30 @@ final class LeaveNotificationService
         }
 
         return $sent;
+    }
+
+    private function webUrl(string $path): ?string
+    {
+        $configured = rtrim(trim((string) $this->config->get('app.url', '')), '/');
+        if ($configured !== '' && filter_var($configured, FILTER_VALIDATE_URL) !== false) {
+            $scheme = strtolower((string) parse_url($configured, PHP_URL_SCHEME));
+            if (in_array($scheme, ['https', 'http'], true)) {
+                return $configured . $path;
+            }
+        }
+
+        $redirectUri = trim((string) $this->config->get('telegram.redirect_uri', ''));
+        if (filter_var($redirectUri, FILTER_VALIDATE_URL) === false) {
+            return null;
+        }
+
+        $scheme = strtolower((string) parse_url($redirectUri, PHP_URL_SCHEME));
+        $host = (string) parse_url($redirectUri, PHP_URL_HOST);
+        $port = parse_url($redirectUri, PHP_URL_PORT);
+        if (!in_array($scheme, ['https', 'http'], true) || $host === '') {
+            return null;
+        }
+
+        return $scheme . '://' . $host . ($port !== null ? ':' . $port : '') . $path;
     }
 }
