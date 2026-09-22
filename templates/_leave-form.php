@@ -8,6 +8,7 @@
 /** @var float|null $annualBalance */
 /** @var bool|null $allowAdminDateException */
 /** @var string|null $submitLabel */
+/** @var bool|null $adminDirectEntry */
 
 $returnTo = isset($returnTo) && is_string($returnTo) ? $returnTo : '/leave';
 $targetUsers = isset($targetUsers) && is_array($targetUsers) ? $targetUsers : [];
@@ -16,6 +17,7 @@ $allowAdminDateException = isset($allowAdminDateException) ? (bool) $allowAdminD
 $submitLabel = isset($submitLabel) && is_string($submitLabel) && $submitLabel !== ''
     ? $submitLabel
     : '휴가 신청';
+$adminDirectEntry = isset($adminDirectEntry) ? (bool) $adminDirectEntry : false;
 ?>
 <form class="form-grid leave-form" method="post" action="/leave/create" data-leave-form>
     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
@@ -109,7 +111,7 @@ $submitLabel = isset($submitLabel) && is_string($submitLabel) && $submitLabel !=
         <input name="reason_detail" maxlength="500" placeholder="필요한 경우 추가 내용을 입력하세요.">
     </label>
 
-    <?php if ($allowAdminDateException): ?>
+    <?php if ($allowAdminDateException && !$adminDirectEntry): ?>
         <label class="span-2 admin-date-exception" data-admin-date-exception-wrap hidden>
             <span class="check-row">
                 <input type="checkbox" name="admin_date_exception" value="1" data-admin-date-exception>
