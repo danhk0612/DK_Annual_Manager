@@ -12,6 +12,7 @@ $actionLabels = [
     'leave.request_approved' => '휴가 승인',
     'leave.request_rejected' => '휴가 반려',
     'leave.request_approval_cancelled' => '휴가 승인 취소',
+    'leave.closed_history_purged' => '종료 휴가 기록 정리',
     'annual_leave.synced' => '연차 발생 동기화',
     'annual_leave.adjusted' => '연차 원장 조정',
     'annual_leave.total_override_set' => '총 연차 고정',
