@@ -165,3 +165,16 @@ CLI setup key 생성
 ## 재설치
 
 관리자 환경설정과 CLI `bin/reset-install.php` 모두 `SetupService::resetInstallation()`을 사용한다. 서비스 테이블과 업로드 브랜딩 파일을 제거하고 새로운 Setup Key를 생성한다. 웹에서 실행한 경우 현재 브라우저 세션에 Setup 접근 권한을 유지하여 즉시 설치 마법사로 이동한다.
+
+## Excel 내보내기
+
+Excel 출력은 `ReportingRepository::leaveExportRows()`가 실제 휴가 날짜(`leave_request_days`) 기준으로 대상/기간 데이터를 조회하고, `LeaveExportService`가 사용자용/관리자용 열 구성을 만든 뒤 `XlsxWriter`가 OOXML XLSX 파일을 생성한다.
+
+`XlsxWriter`는 외부 spreadsheet 패키지나 서버 Zip 확장에 의존하지 않고 저장 방식 ZIP 컨테이너와 필요한 OOXML 파트를 직접 생성한다. 사용자 입력 텍스트는 inline string cell로 기록해 `=`, `+`, `-`, `@` 등으로 시작하는 값도 수식으로 실행하지 않는다.
+
+다운로드 엔드포인트:
+
+- 사용자: `GET /profile/export`
+- 관리자: `GET /admin/reports/export`
+
+두 엔드포인트 모두 기존 인증/관리자 middleware 뒤에서만 동작한다.
