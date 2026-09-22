@@ -16,6 +16,13 @@ final class AnnualLeaveService
     }
 
     /** @param array<string, mixed> $user */
+    public function resyncAccruals(array $user, DateTimeImmutable $asOf, ?int $createdBy): int
+    {
+        $this->ledger->deleteAutomaticGrantsForUser((int) $user['id']);
+        return $this->syncAccruals($user, $asOf, $createdBy);
+    }
+
+    /** @param array<string, mixed> $user */
     public function syncAccruals(array $user, DateTimeImmutable $asOf, ?int $createdBy): int
     {
         $hireDateValue = $user['hire_date'] ?? null;
