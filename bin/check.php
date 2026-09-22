@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use DKAnnual\Config;
 use DKAnnual\Database;
+use DKAnnual\Migration\MigrationRunner;
 use DKAnnual\Setup\SetupService;
 
 if (PHP_SAPI !== 'cli') {
@@ -67,7 +68,7 @@ try {
 
     $requiredTables = [
         'users', 'leave_types', 'leave_requests', 'leave_request_days',
-        'annual_leave_ledger', 'holidays', 'app_settings', 'audit_logs',
+        'annual_leave_ledger', 'holidays', 'app_settings', 'audit_logs', 'schema_migrations',
     ];
     $tableStatement = $pdo->prepare(
         'SELECT COUNT(*) FROM information_schema.tables '
@@ -78,6 +79,18 @@ try {
         (int) $tableStatement->fetchColumn() === 1
             ? $pass('DB table: ' . $table)
             : $fail('DB table이 없습니다: ' . $table);
+    }
+
+    $migrationTableStatement = $pdo->prepare(
+        'SELECT COUNT(*) FROM information_schema.tables '
+        . "WHERE table_schema = DATABASE() AND table_name = 'schema_migrations'"
+    );
+    $migrationTableStatement->execute();
+    if ((int) $migrationTableStatement->fetchColumn() === 1) {
+        $pendingMigrations = (new MigrationRunner($pdo, $root . '/database/migrations'))->pending();
+        $pendingMigrations === []
+            ? $pass('DB migrations 최신')
+            : $fail('미적용 DB migration: ' . implode(', ', $pendingMigrations));
     }
 
     $columnStatement = $pdo->prepare(
