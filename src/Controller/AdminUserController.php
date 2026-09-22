@@ -9,6 +9,7 @@ use DKAnnual\Auth\Auth;
 use DKAnnual\Http\Request;
 use DKAnnual\Http\Response;
 use DKAnnual\Leave\AnnualLeaveService;
+use DKAnnual\Repository\AnnualLeaveLedgerRepository;
 use DKAnnual\Repository\AuditLogRepository;
 use DKAnnual\Repository\UserRepository;
 use DKAnnual\Security\Csrf;
@@ -19,6 +20,7 @@ final class AdminUserController
 {
     public function __construct(
         private readonly UserRepository $users,
+        private readonly AnnualLeaveLedgerRepository $ledger,
         private readonly AnnualLeaveService $annualLeave,
         private readonly Auth $auth,
         private readonly AuditLogRepository $audit,
@@ -29,17 +31,77 @@ final class AdminUserController
 
     public function index(Request $request): Response
     {
+        $users = $this->users->all();
         $editUser = null;
         $editId = $request->input('edit');
         if (is_string($editId) && ctype_digit($editId)) {
             $editUser = $this->users->findById((int) $editId);
         }
 
+        $year = $this->selectedYear($request);
+        $annualLeaveSummaries = [];
+        foreach ($users as $user) {
+            $userId = (int) $user['id'];
+            $total = $this->ledger->nonUsageTotalForUserYear($userId, $year);
+            $balance = $this->ledger->balanceForUserYear($userId, $year);
+            $annualLeaveSummaries[$userId] = [
+                'used' => round($total - $balance, 2),
+                'total' => $total,
+                'balance' => $balance,
+            ];
+        }
+
+        $selectedAnnualUser = null;
+        $entries = [];
+        $balance = 0.0;
+        $totalEntitlement = 0.0;
+        $overrideAmount = null;
+        $leaveUserId = $this->requiredPositiveInt($request->input('leave_user_id'));
+        if ($leaveUserId !== null) {
+            foreach ($users as $user) {
+                if ((int) $user['id'] === $leaveUserId) {
+                    $selectedAnnualUser = $user;
+                    break;
+                }
+            }
+        }
+
+        if ($selectedAnnualUser !== null) {
+            if (!empty($selectedAnnualUser['hire_date'])) {
+                $actor = $this->auth->user();
+                $this->annualLeave->syncAccruals(
+                    $selectedAnnualUser,
+                    new DateTimeImmutable('today'),
+                    $actor !== null ? (int) $actor['id'] : null,
+                );
+            }
+
+            $selectedUserId = (int) $selectedAnnualUser['id'];
+            $entries = $this->ledger->entriesForUserYear($selectedUserId, $year);
+            $balance = $this->ledger->balanceForUserYear($selectedUserId, $year);
+            $totalEntitlement = $this->ledger->nonUsageTotalForUserYear($selectedUserId, $year);
+            $overrideAmount = $this->annualLeave->overrideAmount($selectedUserId, $year);
+            $annualLeaveSummaries[$selectedUserId] = [
+                'used' => round($totalEntitlement - $balance, 2),
+                'total' => $totalEntitlement,
+                'balance' => $balance,
+            ];
+        }
+
         return Response::html($this->view->render('admin-users', [
             'title' => '직원 관리',
-            'users' => $this->users->all(),
+            'users' => $users,
             'editUser' => $editUser,
             'activeAdminCount' => $this->users->activeAdminCount(),
+            'year' => $year,
+            'annualLeaveSummaries' => $annualLeaveSummaries,
+            'selectedAnnualUser' => $selectedAnnualUser,
+            'entries' => $entries,
+            'balance' => $balance,
+            'totalEntitlement' => $totalEntitlement,
+            'overrideAmount' => $overrideAmount,
+            'manageAnnualLeaveOpen' => $selectedAnnualUser !== null
+                && (string) $request->input('manage_leave', '') === '1',
             'csrfToken' => $this->csrf->token(),
             'message' => $request->input('message'),
             'error' => $request->input('error'),
@@ -167,6 +229,22 @@ final class AdminUserController
 
             throw $exception;
         }
+    }
+
+    private function selectedYear(Request $request): int
+    {
+        $year = $this->requiredPositiveInt($request->input('year'));
+        return $year !== null && $year >= 2000 && $year <= 2100 ? $year : (int) date('Y');
+    }
+
+    private function requiredPositiveInt(mixed $value): ?int
+    {
+        if (!is_string($value) && !is_int($value)) {
+            return null;
+        }
+
+        $string = (string) $value;
+        return ctype_digit($string) && (int) $string > 0 ? (int) $string : null;
     }
 
     private function optionalText(mixed $value, int $maxLength): ?string

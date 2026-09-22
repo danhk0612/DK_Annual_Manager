@@ -30,43 +30,27 @@ final class AdminAnnualLeaveController
 
     public function index(Request $request): Response
     {
-        $users = $this->users->all();
-        $selectedUser = $this->selectedUser($request, $users);
-        $year = $this->selectedYear($request);
-
-        $entries = [];
-        $balance = 0.0;
-        $totalEntitlement = 0.0;
-        $overrideAmount = null;
-        if ($selectedUser !== null) {
-            if (!empty($selectedUser['hire_date'])) {
-                $actor = $this->auth->user();
-                $this->annualLeave->syncAccruals(
-                    $selectedUser,
-                    new DateTimeImmutable('today'),
-                    $actor !== null ? (int) $actor['id'] : null,
-                );
-            }
-            $entries = $this->ledger->entriesForUserYear((int) $selectedUser['id'], $year);
-            $balance = $this->ledger->balanceForUserYear((int) $selectedUser['id'], $year);
-            $totalEntitlement = $this->ledger->nonUsageTotalForUserYear((int) $selectedUser['id'], $year);
-            $overrideAmount = $this->annualLeave->overrideAmount((int) $selectedUser['id'], $year);
+        $query = [];
+        $userId = $this->requiredPositiveInt($request->input('user_id'));
+        if ($userId !== null) {
+            $query['leave_user_id'] = $userId;
+            $query['manage_leave'] = '1';
         }
 
-        return Response::html($this->view->render('admin-annual-leave', [
-            'title' => '연차 관리',
-            'users' => $users,
-            'selectedUser' => $selectedUser,
-            'year' => $year,
-            'entries' => $entries,
-            'balance' => $balance,
-            'totalEntitlement' => $totalEntitlement,
-            'overrideAmount' => $overrideAmount,
-            'manageOpen' => $selectedUser !== null && (string) $request->input('manage', '') === '1',
-            'csrfToken' => $this->csrf->token(),
-            'message' => $request->input('message'),
-            'error' => $request->input('error'),
-        ]));
+        $year = $this->selectedYear($request);
+        $query['year'] = $year;
+
+        $message = $request->input('message');
+        if (is_string($message) && $message !== '') {
+            $query['message'] = $message;
+        }
+
+        $error = $request->input('error');
+        if (is_string($error) && $error !== '') {
+            $query['error'] = $error;
+        }
+
+        return Response::redirect('/admin/users?' . http_build_query($query));
     }
 
     public function sync(Request $request): Response
@@ -98,9 +82,9 @@ final class AdminAnnualLeaveController
         );
 
         return Response::redirect(
-            '/admin/annual-leave?user_id=' . $userId
+            '/admin/users?leave_user_id=' . $userId
             . '&year=' . (int) date('Y')
-            . '&manage=1'
+            . '&manage_leave=1'
             . '&message=' . rawurlencode(sprintf('발생 원장 %d건을 추가했습니다.', $count))
         );
     }
@@ -153,9 +137,9 @@ final class AdminAnnualLeaveController
         ], $this->ip($request));
 
         return Response::redirect(
-            '/admin/annual-leave?user_id=' . $userId
+            '/admin/users?leave_user_id=' . $userId
             . '&year=' . $year
-            . '&manage=1'
+            . '&manage_leave=1'
             . '&message=' . rawurlencode('연차 원장을 조정했습니다.')
         );
     }
@@ -195,9 +179,9 @@ final class AdminAnnualLeaveController
         ], $this->ip($request));
 
         return Response::redirect(
-            '/admin/annual-leave?user_id=' . $userId
+            '/admin/users?leave_user_id=' . $userId
             . '&year=' . $year
-            . '&manage=1'
+            . '&manage_leave=1'
             . '&message=' . rawurlencode(sprintf('총 연차를 %.1f일로 설정했습니다.', $target))
         );
     }
@@ -224,9 +208,9 @@ final class AdminAnnualLeaveController
         ], $this->ip($request));
 
         return Response::redirect(
-            '/admin/annual-leave?user_id=' . $userId
+            '/admin/users?leave_user_id=' . $userId
             . '&year=' . $year
-            . '&manage=1'
+            . '&manage_leave=1'
             . '&message=' . rawurlencode('총 연차 고정을 해제하고 자동 계산값으로 복귀했습니다.')
         );
     }
@@ -266,17 +250,17 @@ final class AdminAnnualLeaveController
     {
         $query = [];
         if ($userId !== null) {
-            $query['user_id'] = $userId;
+            $query['leave_user_id'] = $userId;
         }
         if ($year !== null) {
             $query['year'] = $year;
         }
         if ($userId !== null) {
-            $query['manage'] = '1';
+            $query['manage_leave'] = '1';
         }
         $query['error'] = $message;
 
-        return Response::redirect('/admin/annual-leave?' . http_build_query($query));
+        return Response::redirect('/admin/users?' . http_build_query($query));
     }
 
     private function ip(Request $request): ?string
