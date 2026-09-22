@@ -23,6 +23,19 @@ final class SetupService
         'audit_logs',
     ];
 
+    /** @var list<string> */
+    private const RESET_TABLES = [
+        'audit_logs',
+        'app_settings',
+        'holidays',
+        'annual_leave_ledger',
+        'leave_request_days',
+        'leave_requests',
+        'leave_types',
+        'users',
+        'schema_migrations',
+    ];
+
     public function __construct(
         private readonly PDO $pdo,
         private readonly Config $config,
@@ -170,24 +183,24 @@ final class SetupService
 
     public function resetInstallation(): string
     {
-        $tables = [
-            'audit_logs',
-            'app_settings',
-            'holidays',
-            'annual_leave_ledger',
-            'leave_request_days',
-            'leave_requests',
-            'leave_types',
-            'users',
-        ];
-
         $this->pdo->exec('SET FOREIGN_KEY_CHECKS=0');
         try {
-            foreach ($tables as $table) {
+            foreach (self::RESET_TABLES as $table) {
                 $this->pdo->exec('DROP TABLE IF EXISTS ' . $table);
             }
         } finally {
             $this->pdo->exec('SET FOREIGN_KEY_CHECKS=1');
+        }
+
+        $statement = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM information_schema.tables '
+            . 'WHERE table_schema = DATABASE() AND table_name = :table_name'
+        );
+        foreach (self::RESET_TABLES as $table) {
+            $statement->execute(['table_name' => $table]);
+            if ((int) $statement->fetchColumn() !== 0) {
+                throw new RuntimeException('service data reset verification failed');
+            }
         }
 
         $brandingDir = $this->rootPath . '/public/uploads/branding';

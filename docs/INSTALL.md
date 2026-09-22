@@ -148,7 +148,7 @@ php bin/setup-key.php
 
 설치 마법사는 다음 순서로 진행한다.
 
-1. DB schema 생성
+1. DB schema 생성(기존 데이터를 삭제하는 초기화가 아니라 최신 테이블 구조 생성)
 2. Telegram Bot/OIDC 연결
 3. 최근 Telegram 채팅에서 회사 공용 그룹과 최초 관리자 계정 선택
 4. 최초 관리자 Telegram 로그인
@@ -186,7 +186,7 @@ php bin/reset-install.php --confirm=RESET-INSTALL
 php bin/reset-install.php --confirm=RESET-INSTALL
 ```
 
-이 명령은 DB 접속용 `config/config.php`와 소스코드는 유지하고 서비스 DB 테이블, app_settings, 휴가 데이터, 업로드 회사 로고를 초기화한 뒤 새로운 Setup URL을 출력한다.
+이 명령은 DB 접속용 `config/config.php`와 소스코드는 유지하고 서비스 DB 테이블, migration 이력, app_settings, 휴가 신청/연차 데이터, 업로드 회사 로고를 모두 삭제한 뒤 새로운 Setup URL을 출력한다. 삭제 직후 서비스 테이블이 실제로 제거됐는지도 검증하며, 검증에 실패하면 초기화 실패로 처리한다.
 
 ## 주 근무 요일
 

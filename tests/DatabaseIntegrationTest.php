@@ -93,6 +93,74 @@ PHP);
         }
     }
 
+    public function testCompleteResetRemovesLeaveRequestsAndAllServiceTables(): void
+    {
+        $this->pdo->exec(
+            "INSERT INTO users (name, role, status) VALUES "
+            . "('관리자', 'admin', 'active'), ('직원', 'user', 'active')"
+        );
+        $userId = (int) $this->pdo->query("SELECT id FROM users WHERE name = '직원'")->fetchColumn();
+        $leaveTypeId = (int) $this->pdo->query("SELECT id FROM leave_types WHERE code = 'V'")->fetchColumn();
+
+        $requests = new LeaveRequestRepository($this->pdo);
+        $requests->create(
+            $userId,
+            $leaveTypeId,
+            '2026-09-24',
+            '2026-09-24',
+            1.0,
+            null,
+            '초기화 검증',
+            ['2026-09-24'],
+            1.0,
+        );
+        self::assertSame(1, (int) $this->pdo->query('SELECT COUNT(*) FROM leave_requests')->fetchColumn());
+
+        $testRoot = sys_get_temp_dir() . '/dkannual-reset-' . bin2hex(random_bytes(6));
+        mkdir($testRoot . '/database', 0777, true);
+        mkdir($testRoot . '/storage', 0777, true);
+        mkdir($testRoot . '/public/uploads/branding', 0777, true);
+        copy(dirname(__DIR__) . '/database/schema.sql', $testRoot . '/database/schema.sql');
+
+        $setup = new SetupService(
+            $this->pdo,
+            new Config($this->configPath),
+            $testRoot,
+        );
+        $setup->resetInstallation();
+
+        foreach ([
+            'audit_logs',
+            'app_settings',
+            'holidays',
+            'annual_leave_ledger',
+            'leave_request_days',
+            'leave_requests',
+            'leave_types',
+            'users',
+            'schema_migrations',
+        ] as $table) {
+            $statement = $this->pdo->prepare(
+                'SELECT COUNT(*) FROM information_schema.tables '
+                . 'WHERE table_schema = DATABASE() AND table_name = :table_name'
+            );
+            $statement->execute(['table_name' => $table]);
+            self::assertSame(0, (int) $statement->fetchColumn(), $table . ' should be removed by complete reset');
+        }
+
+        $setup->initializeSchema();
+        self::assertSame(0, (int) $this->pdo->query('SELECT COUNT(*) FROM leave_requests')->fetchColumn());
+
+        @unlink($testRoot . '/storage/setup.key');
+        @unlink($testRoot . '/database/schema.sql');
+        @rmdir($testRoot . '/public/uploads/branding');
+        @rmdir($testRoot . '/public/uploads');
+        @rmdir($testRoot . '/public');
+        @rmdir($testRoot . '/storage');
+        @rmdir($testRoot . '/database');
+        @rmdir($testRoot);
+    }
+
     public function testApprovalAndCancellationUpdateAnnualLeaveLedgerAtomically(): void
     {
         $this->pdo->exec(

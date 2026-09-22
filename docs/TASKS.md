@@ -485,3 +485,18 @@
 - [ ] main 병합
 - [ ] main CI 통과
 - [ ] v1.0.0 GitHub Release 자동 생성 확인
+
+## T26. v1.0.1 재설치 완전 초기화 핫픽스
+
+상태: 구현 완료 / CI·자동 Release 대기
+
+- [x] 완전 초기화 대상에 schema_migrations 포함
+- [x] 초기화 직후 모든 서비스 테이블 제거 여부 검증
+- [x] 휴가 신청 데이터가 있는 MariaDB에서 완전 초기화 회귀 테스트
+- [x] 재설치 후 leave_requests 0건 검증
+- [x] 설치 Step 1 명칭을 DB 초기화 → DB 스키마 생성으로 명확화
+- [x] 스키마 생성과 완전 초기화의 차이를 설치 화면/문서에 명시
+- [x] VERSION 1.0.1 및 릴리스 노트
+- [ ] hotfix PR CI 통과
+- [ ] main 병합 및 main CI 통과
+- [ ] v1.0.1 GitHub Release 자동 생성 확인
