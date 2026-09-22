@@ -125,6 +125,28 @@ try {
     trim((string) $config->get('holiday_api.service_key', '')) !== ''
         ? $pass('공휴일 API 서비스키 설정')
         : $warn('공휴일 API 서비스키가 비어 있습니다.');
+
+    $brandingUploadDir = $root . '/public/uploads/branding';
+    if (!is_dir($brandingUploadDir)) {
+        $fail('브랜딩 업로드 폴더가 없습니다: public/uploads/branding');
+    } elseif (!is_writable($brandingUploadDir)) {
+        $warn('브랜딩 업로드 폴더가 현재 CLI 사용자에게 쓰기 불가입니다. Web Station/PHP-FPM 실행 계정도 쓰기 가능한지 확인하세요.');
+    } else {
+        $pass('브랜딩 업로드 폴더 쓰기 가능');
+    }
+
+    $managedChatStatement = $pdo->prepare(
+        "SELECT setting_value FROM app_settings WHERE setting_key = 'telegram.admin_chat_ids' LIMIT 1"
+    );
+    $managedChatStatement->execute();
+    $managedChats = $managedChatStatement->fetchColumn();
+    if ($managedChats !== false) {
+        $pass('Telegram 관리자 알림 대상: 관리자 설정 사용');
+    } elseif (is_array($config->get('telegram.admin_chat_ids', [])) && $config->get('telegram.admin_chat_ids', []) !== []) {
+        $pass('Telegram 관리자 알림 대상: config 기본값 사용');
+    } else {
+        $warn('Telegram 관리자 알림 대상이 비어 있습니다.');
+    }
 } catch (\Throwable $exception) {
     $fail('환경 확인 중 오류: ' . $exception->getMessage());
 }
