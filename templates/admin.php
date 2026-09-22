@@ -2,6 +2,7 @@
 /** @var int $year */
 /** @var array<string, int|float> $metrics */
 /** @var list<array<string, mixed>> $pendingPreview */
+/** @var list<array<string, mixed>> $currentLeaves */
 /** @var list<array<string, mixed>> $upcomingLeaves */
 /** @var list<array{month_number:int, amount:float}> $monthlyTotals */
 /** @var list<array<string, mixed>> $recentAudit */
@@ -16,7 +17,7 @@ $maxMonthly = max(1.0, ...array_values($monthlyMap));
     <div>
         <p class="eyebrow">Administration</p>
         <h1>관리자 대시보드</h1>
-        <p>승인 대기, 예정 휴가, 연차 현황과 운영 설정을 한 화면에서 확인합니다.</p>
+        <p>승인 대기, 현재 휴가 중인 직원, 예정 휴가, 연차 현황과 운영 설정을 한 화면에서 확인합니다.</p>
     </div>
     <div class="page-actions">
         <a class="button primary" href="/admin/requests"><i class="bi bi-check2-square"></i> 승인 처리</a>
@@ -94,6 +95,45 @@ $maxMonthly = max(1.0, ...array_values($monthlyMap));
     <section class="panel dashboard-card">
         <div class="section-head">
             <div>
+                <p class="eyebrow">Today</p>
+                <h2><i class="bi bi-person-walking"></i> 현재 휴가 중</h2>
+            </div>
+            <a class="button small" href="/calendar">달력 보기</a>
+        </div>
+
+        <div class="compact-list">
+            <?php if ($currentLeaves === []): ?>
+                <div class="empty-state"><i class="bi bi-person-check"></i><span>오늘 휴가 중인 직원이 없습니다.</span></div>
+            <?php endif; ?>
+            <?php foreach ($currentLeaves as $item): ?>
+                <?php
+                $half = (string) ($item['half_day_period'] ?? '');
+                $halfLabel = $half === 'am' ? ' · 오전' : ($half === 'pm' ? ' · 오후' : '');
+                $startDate = (string) ($item['start_date'] ?? '');
+                $endDate = (string) ($item['end_date'] ?? '');
+                $dateLabel = $startDate === $endDate ? $startDate : $startDate . ' ~ ' . $endDate;
+                ?>
+                <div class="compact-list-item">
+                    <div>
+                        <strong><?= htmlspecialchars((string) $item['user_name'], ENT_QUOTES, 'UTF-8') ?></strong>
+                        <span>
+                            <?= htmlspecialchars((string) ($item['department'] ?? ''), ENT_QUOTES, 'UTF-8') ?>
+                            <?= !empty($item['department']) ? ' · ' : '' ?>
+                            <?= htmlspecialchars((string) $item['leave_type_name'], ENT_QUOTES, 'UTF-8') ?><?= $halfLabel ?>
+                        </span>
+                    </div>
+                    <div class="list-meta">
+                        <span><?= htmlspecialchars($dateLabel, ENT_QUOTES, 'UTF-8') ?></span>
+                        <strong>오늘 <?= number_format((float) ($item['today_amount'] ?? 0), 1) ?>일</strong>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <section class="panel dashboard-card">
+        <div class="section-head">
+            <div>
                 <p class="eyebrow">Next 14 days</p>
                 <h2><i class="bi bi-calendar-week"></i> 다가오는 휴가</h2>
             </div>
@@ -102,7 +142,7 @@ $maxMonthly = max(1.0, ...array_values($monthlyMap));
 
         <div class="compact-list">
             <?php if ($upcomingLeaves === []): ?>
-                <div class="empty-state"><i class="bi bi-calendar2-x"></i><span>앞으로 14일 내 승인된 휴가가 없습니다.</span></div>
+                <div class="empty-state"><i class="bi bi-calendar2-x"></i><span>내일부터 14일 이내 예정된 승인 휴가가 없습니다.</span></div>
             <?php endif; ?>
             <?php foreach ($upcomingLeaves as $item): ?>
                 <?php
@@ -119,7 +159,7 @@ $maxMonthly = max(1.0, ...array_values($monthlyMap));
                         </span>
                     </div>
                     <div class="list-meta">
-                        <span><?= htmlspecialchars((string) $item['start_date'], ENT_QUOTES, 'UTF-8') ?></span>
+                        <span><?= htmlspecialchars((string) ($item['first_leave_date'] ?? $item['start_date']), ENT_QUOTES, 'UTF-8') ?></span>
                         <strong><?= number_format((float) $item['requested_amount'], 1) ?>일</strong>
                     </div>
                 </div>

@@ -553,7 +553,7 @@
 
 ## T29. v1.2.1 XLSX 스타일 XML · 출력 카드 간격 핫픽스
 
-상태: 구현 완료 / PR CI 통과 / main·자동 Release 대기
+상태: 완료
 
 - [x] XLSX styles.xml 잘못된 bottom 종료 태그 수정
 - [x] 생성된 XLSX 내부 XML/관계 파일 전체 파싱 테스트 추가
@@ -562,5 +562,24 @@
 - [x] 관리자 휴가 집계 Excel 출력 하단 안내문 간격 개선
 - [x] VERSION 1.2.1 및 릴리스 노트
 - [x] feature PR CI 통과
+- [x] main 병합 및 main CI 통과
+- [x] v1.2.1 GitHub Release 자동 생성 확인
+
+## T30. v1.3.0 관리자 대시보드 현재 휴가
+
+상태: 구현 완료 / PR CI 통과 / main·자동 Release 대기
+
+- [x] 관리자 대시보드에 현재 휴가 중 영역 추가
+- [x] 오늘 실제 leave_request_days가 존재하는 approved 휴가만 조회
+- [x] 현재 휴가 직원명/부서/휴가종류/반차/기간/오늘 일수 표시
+- [x] 현재 휴가 목록은 임의 개수 제한 없이 표시
+- [x] 다가오는 휴가 기준을 실제 첫 휴가일 기준으로 변경
+- [x] 다가오는 휴가를 내일부터 14일 이내로 조정
+- [x] 오늘 진행 중인 다일 휴가가 다가오는 휴가에 중복되지 않도록 처리
+- [x] 대시보드 4영역 대화면 4열 / 중간 2열 / 모바일 1열 배치
+- [x] MariaDB 현재/다가오는 휴가 분리 회귀 테스트 추가
+- [x] README/요구사항/집계 문서 갱신
+- [x] VERSION 1.3.0 및 릴리스 노트
+- [x] feature PR CI 통과
 - [ ] main 병합 및 main CI 통과
-- [ ] v1.2.1 GitHub Release 자동 생성 확인
+- [ ] v1.3.0 GitHub Release 자동 생성 확인
