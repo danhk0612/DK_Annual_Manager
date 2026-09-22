@@ -159,6 +159,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 detailDialog.close();
             }
         });
+
+        const hashTarget = window.location.hash.startsWith('#request-')
+            ? document.querySelector(window.location.hash)
+            : null;
+        if (hashTarget && hashTarget.matches('[data-open-request-detail]')) {
+            hashTarget.scrollIntoView({ block: 'center' });
+            hashTarget.click();
+        }
     }
 
     const bindSimpleDialog = (dialogSelector, openSelector, closeSelector) => {
