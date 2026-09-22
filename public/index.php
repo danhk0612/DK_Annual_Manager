@@ -165,6 +165,7 @@ $adminSettings = new AdminSettingsController(
     $telegramBot,
     $auth,
     $audit,
+    $leaveRequests,
     $view,
     $csrf,
     $setupService,
@@ -239,6 +240,7 @@ $router->get('/admin/audit', [$adminAudit, 'index'], [$requireAdmin]);
 $router->get('/admin/settings', [$adminSettings, 'index'], [$requireAdmin]);
 $router->post('/admin/settings/appearance', [$adminSettings, 'saveAppearance'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/workweek', [$adminSettings, 'saveWorkweek'], [$requireAdmin, $verifyCsrf]);
+$router->post('/admin/settings/purge-closed-leave-history', [$adminSettings, 'purgeClosedLeaveHistory'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/reset-install', [$adminSettings, 'resetInstallation'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/telegram-credentials', [$adminSettings, 'saveTelegramCredentials'], [$requireAdmin, $verifyCsrf]);
 $router->post('/admin/settings/telegram', [$adminSettings, 'saveTelegram'], [$requireAdmin, $verifyCsrf]);
