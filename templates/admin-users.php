@@ -341,7 +341,7 @@ $formatLeaveDays = static function (float $value): string {
                         <tr><td colspan="5" class="muted">원장 내역이 없습니다.</td></tr>
                     <?php endif; ?>
                     <?php foreach ($entries as $entry): ?>
-                        <tr>
+                        <tr data-page-item>
                             <td><?= htmlspecialchars((string) $entry['created_at'], ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= htmlspecialchars((string) $entry['transaction_type'], ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= number_format((float) $entry['amount'], 2) ?></td>
