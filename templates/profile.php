@@ -101,7 +101,7 @@
     <p class="form-hint">기간을 걸쳐 신청한 휴가는 실제 휴가 날짜를 기준으로 선택 기간에 해당하는 일수를 함께 표시합니다.</p>
 </section>
 
-<div class="content-grid two-column">
+<div class="content-grid two-column profile-account-grid">
     <section class="panel">
         <div class="section-head">
             <div>
