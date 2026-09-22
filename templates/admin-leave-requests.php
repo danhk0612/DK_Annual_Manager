@@ -13,6 +13,7 @@
 $returnTo = '/admin/requests';
 $targetUsers = $users;
 $annualBalance = null;
+$allowAdminDateException = true;
 ?>
 <section class="page-head">
     <div>
