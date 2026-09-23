@@ -13,6 +13,7 @@
 - 해당 신청의 `leave_request_days`
 - 해당 신청을 참조하는 `annual_leave_ledger`
 - 해당 신청 ID를 가리키는 개별 Audit Log
+- 승인 전 취소 등으로 신청 본체가 이미 삭제된 고아 `leave_request` Audit Log
 
 보존 대상:
 
