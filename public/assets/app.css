@@ -1006,6 +1006,55 @@ progress::-moz-progress-bar {
     color: var(--text);
 }
 
+
+.pagination-controls.pagination-compact {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+}
+
+.pagination-controls.pagination-compact .pagination-summary-full,
+.pagination-controls.pagination-compact .pagination-size-label,
+.pagination-controls.pagination-compact .pagination-button-label {
+    display: none;
+}
+
+.pagination-controls.pagination-compact .pagination-summary-compact {
+    display: inline;
+    white-space: nowrap;
+}
+
+.pagination-controls.pagination-compact label {
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.pagination-controls.pagination-compact select {
+    min-width: 58px;
+    padding-inline: 8px 24px;
+}
+
+.pagination-controls.pagination-compact .pagination-buttons {
+    width: auto;
+    margin-left: auto;
+    gap: 4px;
+    justify-content: flex-end;
+}
+
+.pagination-controls.pagination-compact .pagination-buttons .button {
+    width: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0;
+    justify-content: center;
+}
+
+.pagination-controls.pagination-compact .pagination-page {
+    min-width: 38px;
+    white-space: nowrap;
+}
+
 .approval-card {
     padding: 16px;
     border: 1px solid var(--border);
@@ -1192,7 +1241,8 @@ progress::-moz-progress-bar {
 }
 
 @media (max-width: 420px) {
-    .pagination-controls {
+    .pagination-controls,
+    .pagination-controls.pagination-compact {
         grid-template-columns: auto minmax(0, 1fr);
     }
 
