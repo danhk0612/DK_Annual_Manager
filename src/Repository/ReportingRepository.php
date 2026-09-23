@@ -216,6 +216,72 @@ final class ReportingRepository extends AbstractRepository
     }
 
     /**
+     * Date-granular export source used for workbook statistics and audit-friendly detail sheets.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function leaveExportDayRows(
+        ?int $userId = null,
+        ?string $startDate = null,
+        ?string $endDate = null,
+    ): array {
+        $sql = "SELECT
+                    r.id,
+                    r.user_id,
+                    u.name AS user_name,
+                    u.department,
+                    u.position,
+                    u.status AS user_status,
+                    u.hire_date,
+                    lt.code AS leave_code,
+                    lt.name AS leave_type_name,
+                    lt.deducts_annual_leave,
+                    r.half_day_period,
+                    r.start_date,
+                    r.end_date,
+                    r.requested_amount,
+                    r.status,
+                    r.reason,
+                    r.created_at,
+                    r.reviewed_at,
+                    r.review_note,
+                    reviewer.name AS reviewed_by_name,
+                    r.cancelled_at,
+                    r.cancellation_source,
+                    r.cancellation_note,
+                    canceller.name AS cancelled_by_name,
+                    d.leave_date,
+                    d.amount AS day_amount
+                FROM leave_request_days d
+                INNER JOIN leave_requests r ON r.id = d.leave_request_id
+                INNER JOIN users u ON u.id = r.user_id
+                INNER JOIN leave_types lt ON lt.id = r.leave_type_id
+                LEFT JOIN users reviewer ON reviewer.id = r.reviewed_by
+                LEFT JOIN users canceller ON canceller.id = r.cancelled_by
+                WHERE 1 = 1";
+
+        $params = [];
+
+        if ($userId !== null) {
+            $sql .= ' AND r.user_id = :user_id';
+            $params['user_id'] = $userId;
+        }
+
+        if ($startDate !== null && $endDate !== null) {
+            $sql .= ' AND d.leave_date BETWEEN :start_date AND :end_date';
+            $params['start_date'] = $startDate;
+            $params['end_date'] = $endDate;
+        }
+
+        $sql .= ' ORDER BY d.leave_date ASC, u.name ASC, r.id ASC';
+
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute($params);
+
+        return $statement->fetchAll();
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     public function leaveExportRows(
