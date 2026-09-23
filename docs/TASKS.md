@@ -602,6 +602,7 @@
 - [x] 환경 설정에 취소·반려 휴가 기록 영구 정리 기능 추가
 - [x] pending / approved 휴가 기록 정리 대상에서 제외
 - [x] 종료 휴가의 leave_request_days / annual_leave_ledger / 개별 Audit Log 함께 제거
+- [x] 이미 삭제된 신청의 고아 leave_request Audit Log 정리
 - [x] 정리 작업 트랜잭션 처리 및 요약 Audit Log 기록
 - [x] 관리자 직접 등록·즉시 승인 시 Telegram 알림 미발송
 - [x] 입사일 미등록 사용자의 휴가 신청 서버 차단
