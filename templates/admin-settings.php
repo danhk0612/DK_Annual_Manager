@@ -308,7 +308,7 @@
             </div>
             <span class="count-badge"><?= (int) $closedLeaveHistoryCount ?>건</span>
         </div>
-        <p>승인 대기와 승인 상태는 그대로 보존하고, 취소·반려된 휴가 기록과 연결된 휴가일·원장·해당 신청 감사로그를 영구 제거합니다.</p>
+        <p>승인 대기와 승인 상태는 그대로 보존하고, 취소·반려된 휴가 기록과 연결된 휴가일·원장·감사로그 및 이미 삭제된 신청의 고아 감사로그를 영구 제거합니다.</p>
         <div class="form-actions settings-subsection">
             <button class="button danger-ghost" type="button" data-open-closed-history-dialog <?= $closedLeaveHistoryCount < 1 ? 'disabled' : '' ?>>
                 <i class="bi bi-trash3"></i><span>취소·반려 기록 정리</span>
