@@ -226,11 +226,6 @@ final class LeaveRequestRepository extends AbstractRepository
                 . "WHERE r.status IN ('cancelled', 'rejected')"
             )->fetchColumn();
 
-            if ($requests === 0) {
-                $this->pdo->commit();
-                return ['requests' => 0, 'days' => 0, 'ledger' => 0, 'audit' => 0];
-            }
-
             $ledgerDelete = $this->pdo->exec(
                 "DELETE FROM annual_leave_ledger "
                 . "WHERE reference_request_id IN ("
