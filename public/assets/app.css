@@ -976,6 +976,10 @@ progress::-moz-progress-bar {
     font-size: 12px;
 }
 
+.pagination-summary-compact {
+    display: none;
+}
+
 .pagination-controls label,
 .pagination-buttons {
     display: inline-flex;
@@ -1000,6 +1004,55 @@ progress::-moz-progress-bar {
     text-align: center;
     font-weight: 750;
     color: var(--text);
+}
+
+
+.pagination-controls.pagination-compact {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    gap: 8px;
+    align-items: center;
+}
+
+.pagination-controls.pagination-compact .pagination-summary-full,
+.pagination-controls.pagination-compact .pagination-size-label,
+.pagination-controls.pagination-compact .pagination-button-label {
+    display: none;
+}
+
+.pagination-controls.pagination-compact .pagination-summary-compact {
+    display: inline;
+    white-space: nowrap;
+}
+
+.pagination-controls.pagination-compact label {
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.pagination-controls.pagination-compact select {
+    min-width: 58px;
+    padding-inline: 8px 24px;
+}
+
+.pagination-controls.pagination-compact .pagination-buttons {
+    width: auto;
+    margin-left: auto;
+    gap: 4px;
+    justify-content: flex-end;
+}
+
+.pagination-controls.pagination-compact .pagination-buttons .button {
+    width: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0;
+    justify-content: center;
+}
+
+.pagination-controls.pagination-compact .pagination-page {
+    min-width: 38px;
+    white-space: nowrap;
 }
 
 .approval-card {
@@ -1137,18 +1190,68 @@ progress::-moz-progress-bar {
     }
 }
 
-@media (max-width: 560px) {
+@media (max-width: 640px) {
     .pagination-controls {
-        align-items: stretch;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: auto auto minmax(0, 1fr);
+        gap: 8px;
+        align-items: center;
+    }
+
+    .pagination-summary-full,
+    .pagination-size-label,
+    .pagination-button-label {
+        display: none;
+    }
+
+    .pagination-summary-compact {
+        display: inline;
+        white-space: nowrap;
+    }
+
+    .pagination-controls label {
+        gap: 4px;
+        white-space: nowrap;
+    }
+
+    .pagination-controls select {
+        min-width: 58px;
+        padding-inline: 8px 24px;
     }
 
     .pagination-buttons {
-        width: 100%;
-        margin-left: 0;
-        justify-content: space-between;
+        width: auto;
+        margin-left: auto;
+        gap: 4px;
+        justify-content: flex-end;
     }
 
+    .pagination-buttons .button {
+        width: 34px;
+        min-width: 34px;
+        min-height: 34px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .pagination-page {
+        min-width: 38px;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 420px) {
+    .pagination-controls,
+    .pagination-controls.pagination-compact {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .pagination-summary {
+        display: none;
+    }
+}
+
+@media (max-width: 560px) {
     body { font-size: 14px; }
 
     .panel,
@@ -2899,7 +3002,6 @@ input.selection-applied {
 }
 
 .danger-zone-card {
-    grid-column: 1 / -1;
     border-color: color-mix(in srgb, var(--danger) 28%, var(--border));
 }
 

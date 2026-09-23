@@ -629,12 +629,29 @@
 
 ## T33. v1.4.1 hidden 경고 표시 핫픽스
 
-상태: 구현 완료 / PR CI 통과 / main·자동 Release 대기
+상태: 완료
 
 - [x] `hidden` 속성이 컴포넌트 CSS보다 항상 우선하도록 공통 규칙 추가
 - [x] 관리자 직접 휴가 등록의 입사일 경고가 정상 직원에게 노출되는 UI 오류 수정
 - [x] 동일한 hidden + styled component 조합의 재발 방지
 - [x] VERSION 1.4.1 및 릴리스 노트
 - [x] hotfix PR CI 통과
+- [x] main 병합 및 main CI 통과
+- [x] v1.4.1 GitHub Release 자동 생성 확인
+
+## T34. v1.4.2 설정 그리드 · 좁은 페이징 핫픽스
+
+상태: 구현 완료 / PR CI 통과 / main·자동 Release 대기
+
+- [x] 종료 기록 정리 카드와 재설치 카드를 같은 2열 행에 배치
+- [x] 재설치 카드의 전체 폭 강제 `grid-column: 1 / -1` 제거
+- [x] 1100px 이하에서는 기존대로 설정 카드를 1열로 자동 전환
+- [x] 목록이 10건 이하이면 불필요한 페이징 UI 미표시
+- [x] 좁은 카드의 실제 폭을 ResizeObserver로 감지해 페이징 자동 축약
+- [x] 축약형에서 이전/다음 버튼을 아이콘 전용으로 표시
+- [x] 축약형에서 건수/페이지당 문구 최소화
+- [x] 모바일에서도 동일한 축약형 동작 유지
+- [x] VERSION 1.4.2 및 릴리스 노트
+- [x] hotfix PR CI 통과
 - [ ] main 병합 및 main CI 통과
-- [ ] v1.4.1 GitHub Release 자동 생성 확인
+- [ ] v1.4.2 GitHub Release 자동 생성 확인
