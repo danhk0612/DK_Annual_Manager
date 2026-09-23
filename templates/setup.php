@@ -103,10 +103,34 @@ $appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js')
             </div>
             <p>Bot Token과 Login용 Client ID/Secret의 발급 자체는 Telegram에서 진행해야 합니다. 이 화면은 필요한 주소를 현재 접속 호스트에서 자동 계산하고, 입력값을 즉시 검증합니다.</p>
             <div class="setup-mini-steps">
-                <span><b>1</b> BotFather에서 <code>/newbot</code>으로 Bot 생성 → <strong>Bot Token</strong> 복사</span>
-                <span><b>2</b> BotFather App 실행 → <strong>Login Widget</strong> 열기</span>
-                <span><b>3</b> <strong>Client ID</strong>와 <strong>Client Secret</strong> 복사</span>
-                <span><b>4</b> Login Widget의 <strong>Redirect URI</strong>에 아래 자동 감지 값을 등록</span>
+                <div class="setup-mini-step">
+                    <span class="setup-mini-step-number">1</span>
+                    <div class="setup-mini-step-content">
+                        <strong>Bot 생성</strong>
+                        <p>BotFather에서 <code>/newbot</code>을 실행한 뒤 <strong>Bot Token</strong>을 복사합니다.</p>
+                    </div>
+                </div>
+                <div class="setup-mini-step">
+                    <span class="setup-mini-step-number">2</span>
+                    <div class="setup-mini-step-content">
+                        <strong>Login Widget 열기</strong>
+                        <p>BotFather App에서 해당 Bot을 열고 <strong>Login Widget</strong> 메뉴로 이동합니다.</p>
+                    </div>
+                </div>
+                <div class="setup-mini-step">
+                    <span class="setup-mini-step-number">3</span>
+                    <div class="setup-mini-step-content">
+                        <strong>Client 정보 복사</strong>
+                        <p><strong>Client ID</strong>와 <strong>Client Secret</strong> 값을 복사합니다.</p>
+                    </div>
+                </div>
+                <div class="setup-mini-step">
+                    <span class="setup-mini-step-number">4</span>
+                    <div class="setup-mini-step-content">
+                        <strong>Redirect URI 등록</strong>
+                        <p>Login Widget의 <strong>Redirect URI</strong>에 아래 자동 감지 값을 등록합니다.</p>
+                    </div>
+                </div>
             </div>
             <div class="setup-links">
                 <a class="button primary" href="https://t.me/BotFather" target="_blank" rel="noopener"><i class="bi bi-telegram"></i><span>BotFather 열기</span></a>
