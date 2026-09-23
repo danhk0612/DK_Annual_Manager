@@ -300,7 +300,7 @@
             </div>
         </form>
     </section>
-    <section class="panel settings-card">
+    <section class="panel settings-card settings-card-wide">
         <div class="section-head">
             <div>
                 <p class="eyebrow">Data cleanup</p>
