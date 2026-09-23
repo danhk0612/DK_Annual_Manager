@@ -420,7 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('[data-paginate]').forEach((container) => {
         const items = Array.from(container.querySelectorAll('[data-page-item]'));
-        if (items.length === 0) {
+        if (items.length <= 10) {
             return;
         }
 
@@ -508,6 +508,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         container.insertAdjacentElement('afterend', controls);
+
+        const syncCompactPagination = () => {
+            controls.classList.toggle('pagination-compact', controls.getBoundingClientRect().width < 520);
+        };
+        if ('ResizeObserver' in window) {
+            const paginationResizeObserver = new ResizeObserver(syncCompactPagination);
+            paginationResizeObserver.observe(controls);
+        }
+        window.requestAnimationFrame(syncCompactPagination);
+
         render();
 
         if (focusItem) {
