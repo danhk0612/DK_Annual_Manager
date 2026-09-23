@@ -21,8 +21,9 @@ v1.4.0은 취소·반려 휴가 기록 정리, 입사일/과거일 신청 보호
 - [x] XLSX 내부 XML/관계 파일 전체 파싱 테스트
 - [x] Excel 기간 경계/사용자 범위 MariaDB 통합 테스트
 - [x] 현재 휴가/다가오는 휴가 분리 MariaDB 통합 테스트
-- [ ] 종료 휴가 기록 정리 MariaDB 통합 테스트
+- [x] 종료 휴가 기록 정리 MariaDB 통합 테스트
 - [x] PHP 전체 구문 검사
+- [x] JavaScript 문법 검사 (`node --check public/assets/app.js`)
 
 ## 설치 검증
 
