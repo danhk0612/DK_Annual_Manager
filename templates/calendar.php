@@ -63,6 +63,7 @@ $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'
 $selectedCalendarYear = (int) $start->format('Y');
 $selectedCalendarMonth = (int) $start->format('n');
 $calendarMaxYear = (int) date('Y') + 3;
+$canRequestLeave = trim((string) ($user['hire_date'] ?? '')) !== '';
 $atCalendarMin = $month === '2000-01';
 $atCalendarMax = $month === sprintf('%04d-12', $calendarMaxYear);
 ?>
@@ -87,10 +88,14 @@ $atCalendarMax = $month === sprintf('%04d-12', $calendarMaxYear);
         <p><?= $isAdmin ? '전 직원의 휴가 일정과 신청 상태를 한 화면에서 확인합니다.' : '내 휴가 일정과 신청 상태를 한 화면에서 확인합니다.' ?></p>
     </div>
     <div class="page-actions">
-        <button class="button primary" type="button" data-open-leave-dialog><i class="bi bi-plus-circle"></i> 휴가 신청</button>
+        <button class="button primary" type="button" data-open-leave-dialog <?= $canRequestLeave ? '' : 'disabled' ?>><i class="bi bi-plus-circle"></i> 휴가 신청</button>
         <a class="button" href="/leave/history"><i class="bi bi-list-check"></i> <?= $isAdmin ? '전체 신청 내역' : '신청 내역' ?></a>
     </div>
 </section>
+
+<?php if (!$canRequestLeave): ?>
+    <div class="notice warning"><i class="bi bi-exclamation-triangle"></i> 입사일이 등록되지 않아 휴가를 신청할 수 없습니다. 내 정보에서 입사일을 먼저 입력해 주세요.</div>
+<?php endif; ?>
 
 <?php if (is_string($message) && $message !== ''): ?>
     <div class="notice success"><i class="bi bi-check-circle"></i> <?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?></div>
@@ -187,7 +192,7 @@ $atCalendarMax = $month === sprintf('%04d-12', $calendarMaxYear);
                 ?>
                     <div class="<?= implode(' ', $dayClasses) ?>">
                         <div class="day-number">
-                            <?php if ($isWorkingWeekday && !$isPublicHoliday && !$isCompanyHoliday): ?>
+                            <?php if ($canRequestLeave && $isWorkingWeekday && !$isPublicHoliday && !$isCompanyHoliday): ?>
                                 <button
                                     class="calendar-date-trigger"
                                     type="button"
