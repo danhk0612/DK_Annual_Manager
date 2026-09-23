@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use DKAnnual\Config;
+use DKAnnual\Export\LeaveExportService;
+use DKAnnual\Export\XlsxWriter;
 use DKAnnual\Leave\LeaveReviewService;
 use DKAnnual\Migration\MigrationRunner;
 use DKAnnual\Repository\LeaveRequestRepository;
@@ -312,6 +314,43 @@ PHP);
 
         $allUsersSeptember = $reports->leaveExportRows(null, '2026-09-01', '2026-09-30');
         self::assertCount(2, $allUsersSeptember);
+
+        $dayRows = $reports->leaveExportDayRows($userA, '2026-09-01', '2026-09-30');
+        self::assertCount(1, $dayRows);
+        self::assertSame('2026-09-30', $dayRows[0]['leave_date']);
+        self::assertSame(1.0, (float) $dayRows[0]['day_amount']);
+
+        $export = (new LeaveExportService($reports, new XlsxWriter()))->create(
+            null,
+            '전체 사용자',
+            'all',
+            2026,
+            9,
+            true,
+            'integration-report',
+        );
+
+        self::assertStringEndsWith('-all.xlsx', $export['filename']);
+        self::assertStringStartsWith("PK\x03\x04", $export['content']);
+        foreach ([
+            '요약',
+            '연도별 통계',
+            '월별 통계',
+            '휴가종류 통계',
+            '직원별 통계',
+            '부서별 통계',
+            '연차 현황',
+            '검토 필요',
+            '신청 기록',
+            '일자별 기록',
+            '연도 2026',
+            '월 2026-09',
+            '월 2026-10',
+            '직원 직원A',
+            '직원 직원B',
+        ] as $expected) {
+            self::assertStringContainsString($expected, $export['content']);
+        }
     }
 
     public function testCurrentAndUpcomingDashboardLeavesDoNotOverlap(): void

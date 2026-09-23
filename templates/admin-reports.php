@@ -89,7 +89,7 @@ $maxGraph = max(1.0, ...array_values($graphTotals));
         <div>
             <p class="eyebrow">Excel export</p>
             <h2><i class="bi bi-file-earmark-excel"></i><span>휴가 집계 엑셀 출력</span></h2>
-            <p>특정 사용자 또는 전체 사용자의 휴가 신청 내역을 원하는 기간으로 내려받습니다.</p>
+            <p>선택한 대상과 기간을 통계·연차 현황·상세 기록·검토 항목까지 포함한 단일 Excel 보고서로 내려받습니다.</p>
         </div>
     </div>
 
@@ -130,7 +130,7 @@ $maxGraph = max(1.0, ...array_values($graphTotals));
             <button class="button primary" type="submit"><i class="bi bi-download"></i><span>엑셀 다운로드</span></button>
         </div>
     </form>
-    <p class="form-hint">내보내기 파일에는 신청 상태, 휴가 종류, 원래 신청 일수, 선택 기간 내 실제 일수, 승인 정보와 취소 정보가 포함됩니다.</p>
+    <p class="form-hint">전체 사용자 출력에는 직원별 통계와 직원별 분리 시트가 추가되며, 연/월별 기록·일자별 원본·승인 대기/소급 입력/중복 승인 검토 항목도 함께 제공합니다.</p>
 </section>
 
 <section class="panel">

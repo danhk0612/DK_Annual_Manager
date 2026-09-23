@@ -33,14 +33,62 @@ final class XlsxWriterTest extends TestCase
         self::assertStringContainsString('=FORMULA가 아닌 문자열', $xlsx);
         self::assertStringContainsString("PK\x05\x06", $xlsx);
 
-        $entries = $this->assertZipStructure($xlsx);
+        $entries = $this->assertZipStructure($xlsx, 6);
         $this->assertXmlEntriesAreWellFormed($entries);
+    }
+
+    public function testBuildWorkbookCreatesMultipleStyledSheets(): void
+    {
+        $writer = new XlsxWriter();
+        $xlsx = $writer->buildWorkbook([
+            [
+                'name' => '요약',
+                'rows' => [
+                    ['보고서', null, null],
+                    ['설명', null, null],
+                    [],
+                    ['항목', '값', '비고'],
+                    ['승인일수', 2.5, '정상'],
+                ],
+                'row_styles' => [0 => 'title', 1 => 'note', 3 => 'header'],
+                'cell_styles' => ['B5' => 'number', 'C5' => 'status_approved'],
+                'column_widths' => [18, 12, 20],
+                'freeze_rows' => 4,
+                'merge_cells' => ['A1:C1', 'A2:C2'],
+                'auto_filter' => 'A4:C5',
+            ],
+            [
+                'name' => '월 2026-09',
+                'rows' => [
+                    ['월별 기록'],
+                    [],
+                    ['날짜', '일수'],
+                    [46283, 1.0],
+                ],
+                'row_styles' => [0 => 'title', 2 => 'header'],
+                'cell_styles' => ['A4' => 'date', 'B4' => 'number'],
+                'freeze_rows' => 3,
+            ],
+        ]);
+
+        self::assertStringContainsString('요약', $xlsx);
+        self::assertStringContainsString('월 2026-09', $xlsx);
+        self::assertStringContainsString('xl/worksheets/sheet2.xml', $xlsx);
+
+        $entries = $this->assertZipStructure($xlsx, 7);
+        $this->assertXmlEntriesAreWellFormed($entries);
+
+        self::assertArrayHasKey('xl/worksheets/sheet2.xml', $entries);
+        self::assertStringContainsString('<autoFilter ref="A4:C5"/>', $entries['xl/worksheets/sheet1.xml']);
+        self::assertStringContainsString('<mergeCell ref="A1:C1"/>', $entries['xl/worksheets/sheet1.xml']);
+        self::assertStringContainsString('state="frozen"', $entries['xl/worksheets/sheet1.xml']);
+        self::assertStringContainsString('numFmtId="166" formatCode="0.0"', $entries['xl/styles.xml']);
     }
 
     /**
      * @return array<string, string>
      */
-    private function assertZipStructure(string $zip): array
+    private function assertZipStructure(string $zip, int $expectedEntries): array
     {
         $eocd = strrpos($zip, "PK\x05\x06");
         self::assertNotFalse($eocd);
@@ -48,8 +96,8 @@ final class XlsxWriterTest extends TestCase
         $end = unpack('Vsignature/vdisk/vcentral_disk/ventries_disk/ventries/Vcentral_size/Vcentral_offset/vcomment_length', substr($zip, $eocd, 22));
         self::assertIsArray($end);
         self::assertSame(0x06054b50, $end['signature']);
-        self::assertSame(6, $end['entries']);
-        self::assertSame(6, $end['entries_disk']);
+        self::assertSame($expectedEntries, $end['entries']);
+        self::assertSame($expectedEntries, $end['entries_disk']);
         self::assertSame($eocd - $end['central_size'], $end['central_offset']);
 
         $position = 0;
@@ -76,7 +124,7 @@ final class XlsxWriterTest extends TestCase
             $localCount++;
         }
 
-        self::assertSame(6, $localCount);
+        self::assertSame($expectedEntries, $localCount);
         self::assertSame($end['central_offset'], $position);
         self::assertSame("PK\x01\x02", substr($zip, $end['central_offset'], 4));
 

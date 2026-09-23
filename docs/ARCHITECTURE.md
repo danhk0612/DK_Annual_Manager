@@ -168,9 +168,21 @@ CLI setup key 생성
 
 ## Excel 내보내기
 
-Excel 출력은 `ReportingRepository::leaveExportRows()`가 실제 휴가 날짜(`leave_request_days`) 기준으로 대상/기간 데이터를 조회하고, `LeaveExportService`가 사용자용/관리자용 열 구성을 만든 뒤 `XlsxWriter`가 OOXML XLSX 파일을 생성한다.
+Excel 출력은 `ReportingRepository::leaveExportDayRows()`가 실제 휴가 날짜(`leave_request_days`) 단위 원본을 조회하고, `LeaveExportService`가 이 원본에서 신청 단위·연도·월·휴가종류·직원·부서 통계를 파생해 다중 시트 보고서를 구성한다.
 
-`XlsxWriter`는 외부 spreadsheet 패키지나 서버 Zip 확장에 의존하지 않고 저장 방식 ZIP 컨테이너와 필요한 OOXML 파트를 직접 생성한다. 사용자 입력 텍스트는 inline string cell로 기록해 `=`, `+`, `-`, `@` 등으로 시작하는 값도 수식으로 실행하지 않는다.
+`LeaveExportService`는 다음 역할을 담당한다.
+
+- 실제 휴가일 기준 신청 단위 재그룹
+- 승인 일수 / 연차 차감 일수 / 비차감 일수 집계
+- 연도별·월별·휴가종류별 통계
+- 관리자용 직원별·부서별 통계
+- 연차 원장 기반 연차 현황·순사용·소진율
+- 승인 대기 / 소급 입력 / 동일 일자 중복 승인 검토 항목 생성
+- 연도별·연월별·관리자 전체 출력의 직원별 상세 시트 생성
+
+`XlsxWriter`는 외부 spreadsheet 패키지나 서버 Zip 확장에 의존하지 않고 저장 방식 ZIP 컨테이너와 필요한 OOXML 파트를 직접 생성한다. v1.5.0부터 다중 worksheet, 셀 스타일, 날짜/일수 서식, 병합셀, 고정행/열, 자동 필터, 열 너비를 지원한다.
+
+사용자 입력 텍스트는 inline string cell로 기록해 `=`, `+`, `-`, `@` 등으로 시작하는 값도 수식으로 실행하지 않는다. 테스트는 ZIP central directory와 생성된 모든 XML/relationship 파일의 well-formed 여부를 검증한다.
 
 다운로드 엔드포인트:
 
