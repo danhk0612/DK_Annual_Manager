@@ -41,6 +41,7 @@ final class LeaveExportService
 
         if ($includeEmployeeColumns) {
             $sheets[] = $this->employeeStatisticsSheet($dayRows);
+            $sheets[] = $this->departmentStatisticsSheet($dayRows);
         }
 
         $sheets[] = $this->annualLeaveBalanceSheet($userId, $year, $includeEmployeeColumns);
@@ -187,6 +188,7 @@ final class LeaveExportService
         $rows[] = ['휴가종류 통계', '휴가 종류별 승인 사용량과 신청건수', null, null, null, null, null, null];
         if ($isAdmin) {
             $rows[] = ['직원별 통계', '직원별 사용량과 상태별 신청건수', null, null, null, null, null, null];
+            $rows[] = ['부서별 통계', '부서별 승인 사용량과 신청건수', null, null, null, null, null, null];
         }
         $rows[] = ['연차 현황', '선택 연도의 발생·이월·조정·사용·잔여 확인', null, null, null, null, null, null];
         if ($isAdmin) {
@@ -203,7 +205,7 @@ final class LeaveExportService
             10 => 'section',
             11 => 'header',
         ];
-        $sectionIndex = count($rows) - ($isAdmin ? 10 : 8);
+        $sectionIndex = count($rows) - ($isAdmin ? 11 : 8);
         $rowStyles[$sectionIndex] = 'section';
 
         $cellStyles = [
@@ -424,12 +426,99 @@ final class LeaveExportService
         return $this->statisticsSheet('직원별 통계', '직원별 휴가 통계', $headers, $data, [16, 16, 14, 12, 12, 12, 13, 12, 12, 10, 10]);
     }
 
+    /** @param list<array<string,mixed>> $dayRows @return array<string,mixed> */
+    private function departmentStatisticsSheet(array $dayRows): array
+    {
+        $buckets = [];
+
+        foreach ($dayRows as $row) {
+            $department = trim((string) ($row['department'] ?? ''));
+            if ($department === '') {
+                $department = '미지정';
+            }
+
+            if (!isset($buckets[$department])) {
+                $buckets[$department] = [
+                    'users' => [],
+                    'request_ids' => [],
+                    'approved_ids' => [],
+                    'approved_days' => 0.0,
+                    'deducted_days' => 0.0,
+                    'non_deducted_days' => 0.0,
+                    'pending_ids' => [],
+                    'rejected_ids' => [],
+                    'cancelled_ids' => [],
+                ];
+            }
+
+            $userId = (int) ($row['user_id'] ?? 0);
+            if ($userId > 0) {
+                $buckets[$department]['users'][$userId] = true;
+            }
+
+            $requestId = (int) ($row['id'] ?? 0);
+            $status = (string) ($row['status'] ?? '');
+            $buckets[$department]['request_ids'][$requestId] = true;
+
+            if ($status === 'approved') {
+                $buckets[$department]['approved_ids'][$requestId] = true;
+                $amount = (float) ($row['day_amount'] ?? 0);
+                $buckets[$department]['approved_days'] += $amount;
+
+                if ((int) ($row['deducts_annual_leave'] ?? 0) === 1) {
+                    $buckets[$department]['deducted_days'] += $amount;
+                } else {
+                    $buckets[$department]['non_deducted_days'] += $amount;
+                }
+            } elseif ($status === 'pending') {
+                $buckets[$department]['pending_ids'][$requestId] = true;
+            } elseif ($status === 'rejected') {
+                $buckets[$department]['rejected_ids'][$requestId] = true;
+            } elseif ($status === 'cancelled') {
+                $buckets[$department]['cancelled_ids'][$requestId] = true;
+            }
+        }
+
+        uasort(
+            $buckets,
+            static fn (array $a, array $b): int => $b['approved_days'] <=> $a['approved_days'],
+        );
+
+        $headers = ['부서', '대상직원', '신청건수', '승인건수', '승인일수', '연차차감일', '비차감일', '승인대기', '반려', '취소'];
+        $data = [];
+        foreach ($buckets as $department => $bucket) {
+            $data[] = [
+                $department,
+                count($bucket['users']),
+                count($bucket['request_ids']),
+                count($bucket['approved_ids']),
+                $bucket['approved_days'],
+                $bucket['deducted_days'],
+                $bucket['non_deducted_days'],
+                count($bucket['pending_ids']),
+                count($bucket['rejected_ids']),
+                count($bucket['cancelled_ids']),
+            ];
+        }
+
+        return $this->statisticsSheet(
+            '부서별 통계',
+            '부서별 휴가 통계',
+            $headers,
+            $data,
+            [18, 12, 12, 12, 12, 13, 12, 12, 10, 10],
+            '부서가 비어 있는 사용자는 미지정으로 묶습니다. 승인일수는 실제 휴가 날짜 기준입니다.',
+        );
+    }
+
     /** @return array<string,mixed> */
     private function annualLeaveBalanceSheet(?int $userId, int $year, bool $isAdmin): array
     {
         if (!$isAdmin && $userId !== null) {
             $summary = $this->reports->userAnnualSummary($userId, $year);
-            $headers = ['연도', '발생', '이월', '조정', '복원', '사용', '순사용', '잔여', '총가용'];
+            $headers = ['연도', '발생', '이월', '조정', '복원', '사용', '순사용', '잔여', '총가용', '소진율'];
+            $total = (float) ($summary['total'] ?? 0);
+            $netUsed = (float) ($summary['net_used'] ?? 0);
             $data = [[
                 $year,
                 (float) ($summary['granted'] ?? 0),
@@ -437,9 +526,10 @@ final class LeaveExportService
                 (float) ($summary['adjustment'] ?? 0),
                 (float) ($summary['reversal'] ?? 0),
                 (float) ($summary['used'] ?? 0),
-                (float) ($summary['net_used'] ?? 0),
+                $netUsed,
                 (float) ($summary['balance'] ?? 0),
-                (float) ($summary['total'] ?? 0),
+                $total,
+                $total > 0 ? round(($netUsed / $total) * 100, 1) . '%' : '0.0%',
             ]];
 
             return $this->statisticsSheet(
@@ -447,7 +537,7 @@ final class LeaveExportService
                 $year . '년 연차 현황',
                 $headers,
                 $data,
-                [10, 11, 11, 11, 11, 11, 11, 11, 11],
+                [10, 11, 11, 11, 11, 11, 11, 11, 11, 11],
                 '연차 원장 기준입니다. 비차감 휴가(공가·병가 등)는 연차 사용량에 포함되지 않습니다.',
             );
         }
@@ -460,7 +550,7 @@ final class LeaveExportService
             ));
         }
 
-        $headers = ['직원', '부서', '직책', '상태', '입사일', '발생', '이월', '조정', '복원', '사용', '순사용', '잔여', '총가용'];
+        $headers = ['직원', '부서', '직책', '상태', '입사일', '발생', '이월', '조정', '복원', '사용', '순사용', '잔여', '총가용', '소진율'];
         $data = [];
         foreach ($rows as $row) {
             $used = (float) ($row['used'] ?? 0);
@@ -481,6 +571,7 @@ final class LeaveExportService
                 $netUsed,
                 $balance,
                 $balance + $netUsed,
+                ($balance + $netUsed) > 0 ? round(($netUsed / ($balance + $netUsed)) * 100, 1) . '%' : '0.0%',
             ];
         }
 
@@ -489,7 +580,7 @@ final class LeaveExportService
             $year . '년 직원별 연차 현황',
             $headers,
             $data,
-            [16, 15, 14, 11, 12, 11, 11, 11, 11, 11, 11, 11, 11],
+            [16, 15, 14, 11, 12, 11, 11, 11, 11, 11, 11, 11, 11, 11],
             '연차 원장 기준입니다. 상태 열은 계정 상태이며, 휴가 신청 상태와는 별개입니다.',
         );
     }
