@@ -69,7 +69,7 @@
         <div>
             <p class="eyebrow">Excel export</p>
             <h2><i class="bi bi-file-earmark-excel"></i><span>내 휴가 엑셀 출력</span></h2>
-            <p>내 휴가 신청 내역을 연간, 월간 또는 전체 기간으로 내려받습니다.</p>
+            <p>내 휴가를 요약·연/월 통계·기간별 상세·일자별 원본으로 정리한 단일 Excel 보고서로 내려받습니다.</p>
         </div>
     </div>
 
@@ -98,7 +98,7 @@
             <button class="button primary" type="submit"><i class="bi bi-download"></i><span>엑셀 다운로드</span></button>
         </div>
     </form>
-    <p class="form-hint">기간을 걸쳐 신청한 휴가는 실제 휴가 날짜를 기준으로 선택 기간에 해당하는 일수를 함께 표시합니다.</p>
+    <p class="form-hint">보고서에는 요약, 연도·월·휴가종류 통계, 연차 현황, 신청 기록, 실제 휴가일 원본과 연/월별 분리 시트가 포함됩니다.</p>
 </section>
 
 <div class="content-grid two-column profile-account-grid">
