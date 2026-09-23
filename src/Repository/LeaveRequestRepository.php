@@ -237,15 +237,16 @@ final class LeaveRequestRepository extends AbstractRepository
                 . "SELECT id FROM leave_requests WHERE status IN ('cancelled', 'rejected')"
                 . ")"
             );
-            $auditDelete = $this->pdo->exec(
-                "DELETE FROM audit_logs "
-                . "WHERE target_type = 'leave_request' "
-                . "AND target_id IN ("
-                . "SELECT id FROM leave_requests WHERE status IN ('cancelled', 'rejected')"
-                . ")"
-            );
             $requestDelete = $this->pdo->exec(
                 "DELETE FROM leave_requests WHERE status IN ('cancelled', 'rejected')"
+            );
+            $auditDelete = $this->pdo->exec(
+                "DELETE a FROM audit_logs a "
+                . "LEFT JOIN leave_requests r "
+                . "ON r.id = a.target_id AND a.target_type = 'leave_request' "
+                . "WHERE a.target_type = 'leave_request' "
+                . "AND a.target_id IS NOT NULL "
+                . "AND r.id IS NULL"
             );
 
             $this->pdo->commit();
