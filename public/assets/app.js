@@ -451,22 +451,26 @@ document.addEventListener('DOMContentLoaded', () => {
         const controls = document.createElement('div');
         controls.className = 'pagination-controls';
         controls.innerHTML = [
-            '<span class="pagination-summary"></span>',
-            '<label>페이지당 <select class="pagination-size">',
+            '<span class="pagination-summary">',
+            '<span class="pagination-summary-full"></span>',
+            '<span class="pagination-summary-compact" aria-hidden="true"></span>',
+            '</span>',
+            '<label><span class="pagination-size-label">페이지당</span> <select class="pagination-size" aria-label="페이지당 표시 수">',
             '<option value="10">10</option>',
             '<option value="20">20</option>',
             '<option value="50">50</option>',
             '<option value="100">100</option>',
-            '</select>건</label>',
+            '</select><span class="pagination-size-unit">건</span></label>',
             '<div class="pagination-buttons">',
-            '<button class="button small" type="button" data-page-prev><i class="bi bi-chevron-left"></i><span>이전</span></button>',
+            '<button class="button small" type="button" data-page-prev aria-label="이전 페이지" title="이전 페이지"><i class="bi bi-chevron-left"></i><span class="pagination-button-label">이전</span></button>',
             '<span class="pagination-page"></span>',
-            '<button class="button small" type="button" data-page-next><span>다음</span><i class="bi bi-chevron-right"></i></button>',
+            '<button class="button small" type="button" data-page-next aria-label="다음 페이지" title="다음 페이지"><span class="pagination-button-label">다음</span><i class="bi bi-chevron-right"></i></button>',
             '</div>',
         ].join('');
 
         const sizeSelect = controls.querySelector('.pagination-size');
-        const summary = controls.querySelector('.pagination-summary');
+        const summaryFull = controls.querySelector('.pagination-summary-full');
+        const summaryCompact = controls.querySelector('.pagination-summary-compact');
         const pageLabel = controls.querySelector('.pagination-page');
         const prev = controls.querySelector('[data-page-prev]');
         const next = controls.querySelector('[data-page-next]');
@@ -482,8 +486,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.hidden = index < start || index >= end;
             });
 
-            summary.textContent = items.length + '건 중 ' + (start + 1) + '–' + end + '건';
-            pageLabel.textContent = page + ' / ' + totalPages;
+            summaryFull.textContent = items.length + '건 중 ' + (start + 1) + '–' + end + '건';
+            summaryCompact.textContent = (start + 1) + '–' + end + ' / ' + items.length;
+            pageLabel.textContent = page + '/' + totalPages;
             prev.disabled = page <= 1;
             next.disabled = page >= totalPages;
         };
