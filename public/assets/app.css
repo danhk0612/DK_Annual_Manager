@@ -2147,10 +2147,6 @@ h3 > .bi {
     min-width: 0;
 }
 
-.settings-card-wide {
-    grid-column: 1 / -1;
-}
-
 .settings-page-grid > .panel + .panel {
     margin-top: 0;
 }
@@ -2956,7 +2952,6 @@ input.selection-applied {
 }
 
 .danger-zone-card {
-    grid-column: 1 / -1;
     border-color: color-mix(in srgb, var(--danger) 28%, var(--border));
 }
 
