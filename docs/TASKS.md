@@ -597,7 +597,7 @@
 
 ## T32. v1.4.0 관리자 정리 · 휴가 신청 · 목록 UX 개선
 
-상태: 구현 완료 / PR CI 통과 / main·자동 Release 대기
+상태: 완료
 
 - [x] 환경 설정에 취소·반려 휴가 기록 영구 정리 기능 추가
 - [x] pending / approved 휴가 기록 정리 대상에서 제외
@@ -624,5 +624,17 @@
 - [x] README/요구사항/집계 문서 갱신
 - [x] VERSION 1.4.0 및 릴리스 노트
 - [x] feature PR CI 통과
+- [x] main 병합 및 main CI 통과
+- [x] v1.4.0 GitHub Release 자동 생성 확인
+
+## T33. v1.4.1 hidden 경고 표시 핫픽스
+
+상태: 구현 완료 / CI·자동 Release 대기
+
+- [x] `hidden` 속성이 컴포넌트 CSS보다 항상 우선하도록 공통 규칙 추가
+- [x] 관리자 직접 휴가 등록의 입사일 경고가 정상 직원에게 노출되는 UI 오류 수정
+- [x] 동일한 hidden + styled component 조합의 재발 방지
+- [x] VERSION 1.4.1 및 릴리스 노트
+- [ ] hotfix PR CI 통과
 - [ ] main 병합 및 main CI 통과
-- [ ] v1.4.0 GitHub Release 자동 생성 확인
+- [ ] v1.4.1 GitHub Release 자동 생성 확인
