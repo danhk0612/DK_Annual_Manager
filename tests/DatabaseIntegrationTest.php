@@ -430,6 +430,7 @@ PHP);
         foreach ([$pendingId, $approvedId, $rejectedId, $cancelledId] as $id) {
             $auditInsert->execute(['actor' => $adminId, 'target' => $id]);
         }
+        $auditInsert->execute(['actor' => $adminId, 'target' => 999999]);
 
         self::assertSame(2, $requests->closedHistoryCount());
 
@@ -438,7 +439,7 @@ PHP);
         self::assertSame(2, $result['requests']);
         self::assertSame(2, $result['days']);
         self::assertSame(2, $result['ledger']);
-        self::assertSame(2, $result['audit']);
+        self::assertSame(3, $result['audit']);
         self::assertSame(0, $requests->closedHistoryCount());
 
         $remaining = $this->pdo->query(
