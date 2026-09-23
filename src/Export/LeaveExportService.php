@@ -167,7 +167,7 @@ final class LeaveExportService
             ['핵심 지표', null, null, null, null, null, null, null],
             ['총 신청', count($requestRows), '승인 휴가일', $approvedDays, '연차 차감일', $deductedDays, '비차감 휴가일', $nonDeductedDays],
             ['승인 대기', $statusCounts['pending'], '승인', $statusCounts['approved'], '반려', $statusCounts['rejected'], '취소', $statusCounts['cancelled']],
-            ['대상 직원', count(array_filter(array_keys($users), static fn (int $id): bool => $id > 0)), '실제 휴가일 행', count($dayRows), null, null, null, null],
+            ['기록 포함 직원', count(array_filter(array_keys($users), static fn (int $id): bool => $id > 0)), '실제 휴가일 행', count($dayRows), null, null, null, null],
             [],
             ['휴가 종류별 승인 사용', null, null, null, null, null, null, null],
             ['휴가 종류', '승인 사용일', null, null, null, null, null, null],
