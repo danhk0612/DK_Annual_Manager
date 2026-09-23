@@ -515,9 +515,11 @@ final class LeaveExportService
 
         $lastColumn = $this->columnName(count($headers));
         $cellStyles = [];
-        for ($row = 5; $row <= 4 + count($data); $row++) {
-            for ($column = 1; $column <= count($headers); $column++) {
-                $cellStyles[$this->columnName($column) . $row] = $column >= 2 ? 'number' : 'data';
+        foreach ($data as $rowIndex => $dataRow) {
+            $excelRow = $rowIndex + 5;
+            foreach ($dataRow as $columnIndex => $value) {
+                $style = is_int($value) ? 'integer' : (is_float($value) ? 'number' : 'data');
+                $cellStyles[$this->columnName($columnIndex + 1) . $excelRow] = $style;
             }
         }
 
@@ -696,10 +698,10 @@ final class LeaveExportService
             $offset = $includeEmployeeColumns ? 3 : 0;
             $cellStyles[$this->columnName($offset + 1) . $excelRow] = 'date';
             $cellStyles[$this->columnName($offset + 2) . $excelRow] = 'number';
-            $cellStyles[$this->columnName($offset + 8) . $excelRow] = $this->statusStyle((string) ($record['status'] ?? ''));
+            $cellStyles[$this->columnName($offset + 7) . $excelRow] = $this->statusStyle((string) ($record['status'] ?? ''));
+            $cellStyles[$this->columnName($offset + 9) . $excelRow] = 'date';
             $cellStyles[$this->columnName($offset + 10) . $excelRow] = 'date';
-            $cellStyles[$this->columnName($offset + 11) . $excelRow] = 'date';
-            $cellStyles[$this->columnName($offset + 12) . $excelRow] = 'data_wrap';
+            $cellStyles[$this->columnName($offset + 11) . $excelRow] = 'data_wrap';
 
             for ($column = 1; $column <= count($headers); $column++) {
                 $ref = $this->columnName($column) . $excelRow;
