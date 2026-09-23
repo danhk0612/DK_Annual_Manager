@@ -79,7 +79,7 @@ $historyReturnTo = '/leave/history' . ($returnQuery !== [] ? '?' . http_build_qu
     </div>
 
     <div class="table-wrap">
-        <table class="data-table">
+        <table class="data-table" data-paginate data-page-size="20">
             <thead>
             <tr>
                 <th>신청일</th>
@@ -106,7 +106,7 @@ $historyReturnTo = '/leave/history' . ($returnQuery !== [] ? '?' . http_build_qu
                     ? '사용자 취소'
                     : ($cancellationSource === 'admin' ? '관리자 취소' : '');
                 ?>
-                <tr id="request-<?= (int) $item['id'] ?>">
+                <tr id="request-<?= (int) $item['id'] ?>" data-page-item>
                     <td><?= htmlspecialchars((string) $item['created_at'], ENT_QUOTES, 'UTF-8') ?></td>
                     <?php if ($isAdmin): ?>
                         <td>
@@ -136,13 +136,13 @@ $historyReturnTo = '/leave/history' . ($returnQuery !== [] ? '?' . http_build_qu
                                 <button class="button small danger-ghost" type="submit"><i class="bi bi-trash3"></i><span>신청 취소</span></button>
                             </form>
                         <?php elseif ($item['status'] === 'approved' && $isOwnRequest): ?>
-                            <form class="cancel-approved-form" method="post" action="/leave/cancel-approved" data-confirm-message="승인된 휴가를 취소하시겠습니까? 차감된 연차는 자동 복원되고 관리자에게 알림이 전송됩니다.">
-                                <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
-                                <input type="hidden" name="request_id" value="<?= (int) $item['id'] ?>">
-                                <input type="hidden" name="return_to" value="<?= htmlspecialchars($historyReturnTo, ENT_QUOTES, 'UTF-8') ?>">
-                                <input name="cancellation_note" maxlength="1000" placeholder="취소 사유 (선택)">
-                                <button class="button small danger-ghost" type="submit"><i class="bi bi-calendar-x"></i><span>승인 휴가 취소</span></button>
-                            </form>
+                            <button
+                                class="button small danger-ghost"
+                                type="button"
+                                data-open-user-cancel-dialog
+                                data-cancel-id="<?= (int) $item['id'] ?>"
+                                data-cancel-summary="<?= htmlspecialchars((string) $item['leave_type_name'] . $halfDayLabel . ' · ' . (string) $item['start_date'] . ' ~ ' . (string) $item['end_date'], ENT_QUOTES, 'UTF-8') ?>"
+                            ><i class="bi bi-calendar-x"></i><span>승인 휴가 취소</span></button>
                         <?php elseif ($isAdmin && $item['status'] === 'pending'): ?>
                             <a class="button small" href="/admin/requests"><i class="bi bi-check2-square"></i><span>처리</span></a>
                         <?php else: ?>
@@ -155,3 +155,30 @@ $historyReturnTo = '/leave/history' . ($returnQuery !== [] ? '?' . http_build_qu
         </table>
     </div>
 </section>
+
+
+<dialog class="modal-dialog compact-dialog" data-user-cancel-dialog>
+    <div class="modal-card">
+        <div class="section-head modal-head">
+            <div>
+                <p class="eyebrow">Cancel approved leave</p>
+                <h2>승인 휴가 취소</h2>
+                <p data-user-cancel-summary></p>
+            </div>
+            <button class="icon-button" type="button" data-close-user-cancel-dialog aria-label="닫기"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <form class="form-grid" method="post" action="/leave/cancel-approved" data-confirm-message="승인된 휴가를 취소하시겠습니까? 차감된 연차는 자동 복원되고 관리자에게 알림이 전송됩니다.">
+            <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+            <input type="hidden" name="request_id" value="" data-user-cancel-id>
+            <input type="hidden" name="return_to" value="<?= htmlspecialchars($historyReturnTo, ENT_QUOTES, 'UTF-8') ?>">
+            <label class="span-2">
+                취소 사유
+                <input name="cancellation_note" maxlength="1000" placeholder="선택 입력">
+            </label>
+            <div class="form-actions span-2">
+                <button class="button danger-ghost" type="submit">승인 휴가 취소</button>
+                <button class="button" type="button" data-close-user-cancel-dialog>닫기</button>
+            </div>
+        </form>
+    </div>
+</dialog>

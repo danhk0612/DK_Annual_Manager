@@ -166,7 +166,7 @@ $maxGraph = max(1.0, ...array_values($graphTotals));
     </div>
 
     <div class="table-wrap">
-        <table class="data-table">
+        <table class="data-table" data-paginate data-page-size="20">
             <thead>
             <tr>
                 <th>직원</th>
@@ -187,7 +187,7 @@ $maxGraph = max(1.0, ...array_values($graphTotals));
                 <tr><td colspan="11" class="muted">조건에 맞는 직원이 없습니다.</td></tr>
             <?php endif; ?>
             <?php foreach ($annualSummary as $row): ?>
-                <tr>
+                <tr data-page-item>
                     <td><strong><?= htmlspecialchars((string) $row['name'], ENT_QUOTES, 'UTF-8') ?></strong></td>
                     <td><?= htmlspecialchars((string) ($row['department'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars((string) ($row['position'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>

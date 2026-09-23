@@ -47,9 +47,8 @@ final class AuditLogRepository extends AbstractRepository
     }
 
     /** @return list<array<string, mixed>> */
-    public function search(string $query = '', string $action = '', int $limit = 200): array
+    public function search(string $query = '', string $action = '', ?int $limit = null): array
     {
-        $limit = max(1, min($limit, 500));
         $sql = 'SELECT a.id, a.action, a.target_type, a.target_id, a.details_json, a.ip_address, a.created_at, '
             . 'u.name AS actor_name '
             . 'FROM audit_logs a LEFT JOIN users u ON u.id = a.actor_user_id '
@@ -77,7 +76,10 @@ final class AuditLogRepository extends AbstractRepository
             $params['filter_action'] = $action;
         }
 
-        $sql .= 'ORDER BY a.id DESC LIMIT ' . $limit;
+        $sql .= 'ORDER BY a.id DESC';
+        if ($limit !== null) {
+            $sql .= ' LIMIT ' . max(1, min($limit, 500));
+        }
         $statement = $this->pdo->prepare($sql);
         $statement->execute($params);
 

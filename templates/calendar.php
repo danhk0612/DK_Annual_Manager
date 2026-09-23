@@ -62,13 +62,17 @@ $weekdayLabels = [7 => '일', 1 => '월', 2 => '화', 3 => '수', 4 => '목', 5 
 $calendarHeading = sprintf('%d년 %d월 휴가 현황', (int) $start->format('Y'), (int) $start->format('n'));
 $selectedCalendarYear = (int) $start->format('Y');
 $selectedCalendarMonth = (int) $start->format('n');
+$calendarMaxYear = (int) date('Y') + 3;
+$canRequestLeave = trim((string) ($user['hire_date'] ?? '')) !== '';
+$atCalendarMin = $month === '2000-01';
+$atCalendarMax = $month === sprintf('%04d-12', $calendarMaxYear);
 ?>
 <section class="page-head">
     <div>
         <p class="eyebrow"><?= $isAdmin ? 'Team calendar' : 'My calendar' ?></p>
         <form class="calendar-title-selector" method="get" action="/calendar" data-calendar-period-form aria-label="달력 연도와 월 선택">
             <select name="year" aria-label="연도">
-                <?php for ($calendarYear = 2000; $calendarYear <= 2100; $calendarYear++): ?>
+                <?php for ($calendarYear = 2000; $calendarYear <= $calendarMaxYear; $calendarYear++): ?>
                     <option value="<?= $calendarYear ?>" <?= $calendarYear === $selectedCalendarYear ? 'selected' : '' ?>><?= $calendarYear ?></option>
                 <?php endfor; ?>
             </select>
@@ -84,10 +88,14 @@ $selectedCalendarMonth = (int) $start->format('n');
         <p><?= $isAdmin ? '전 직원의 휴가 일정과 신청 상태를 한 화면에서 확인합니다.' : '내 휴가 일정과 신청 상태를 한 화면에서 확인합니다.' ?></p>
     </div>
     <div class="page-actions">
-        <button class="button primary" type="button" data-open-leave-dialog><i class="bi bi-plus-circle"></i> 휴가 신청</button>
+        <button class="button primary" type="button" data-open-leave-dialog <?= $canRequestLeave ? '' : 'disabled' ?>><i class="bi bi-plus-circle"></i> 휴가 신청</button>
         <a class="button" href="/leave/history"><i class="bi bi-list-check"></i> <?= $isAdmin ? '전체 신청 내역' : '신청 내역' ?></a>
     </div>
 </section>
+
+<?php if (!$canRequestLeave): ?>
+    <div class="notice warning"><i class="bi bi-exclamation-triangle"></i> 입사일이 등록되지 않아 휴가를 신청할 수 없습니다. 내 정보에서 입사일을 먼저 입력해 주세요.</div>
+<?php endif; ?>
 
 <?php if (is_string($message) && $message !== ''): ?>
     <div class="notice success"><i class="bi bi-check-circle"></i> <?= htmlspecialchars($message, ENT_QUOTES, 'UTF-8') ?></div>
@@ -101,9 +109,17 @@ $selectedCalendarMonth = (int) $start->format('n');
 
 <div class="calendar-toolbar">
     <div class="calendar-nav">
-        <a class="button" href="/calendar?month=<?= $previous ?>"><i class="bi bi-chevron-left"></i> 이전 달</a>
+        <?php if ($atCalendarMin): ?>
+            <button class="button" type="button" disabled><i class="bi bi-chevron-left"></i> 이전 달</button>
+        <?php else: ?>
+            <a class="button" href="/calendar?month=<?= $previous ?>"><i class="bi bi-chevron-left"></i> 이전 달</a>
+        <?php endif; ?>
         <a class="button primary" href="/calendar?month=<?= date('Y-m') ?>"><i class="bi bi-calendar-event"></i> 이번 달</a>
-        <a class="button" href="/calendar?month=<?= $next ?>">다음 달 <i class="bi bi-chevron-right"></i></a>
+        <?php if ($atCalendarMax): ?>
+            <button class="button" type="button" disabled>다음 달 <i class="bi bi-chevron-right"></i></button>
+        <?php else: ?>
+            <a class="button" href="/calendar?month=<?= $next ?>">다음 달 <i class="bi bi-chevron-right"></i></a>
+        <?php endif; ?>
     </div>
     <div class="calendar-toolbar-stats">
         <?php if (!$isAdmin): ?>
@@ -119,7 +135,15 @@ $selectedCalendarMonth = (int) $start->format('n');
         <div class="calendar-scroll">
             <div class="calendar-grid weekday-head">
                 <?php foreach ($weekdayLabels as $weekdayNumber => $weekday): ?>
-                    <div class="<?= in_array($weekdayNumber, $workingWeekdays, true) ? '' : 'non-working-weekday' ?>"><?= $weekday ?></div>
+                    <?php
+                    $weekdayClasses = [];
+                    if (!in_array($weekdayNumber, $workingWeekdays, true)) {
+                        $weekdayClasses[] = 'non-working-weekday';
+                        if ($weekdayNumber === 6) { $weekdayClasses[] = 'weekend-saturday'; }
+                        if ($weekdayNumber === 7) { $weekdayClasses[] = 'weekend-sunday'; }
+                    }
+                    ?>
+                    <div class="<?= implode(' ', $weekdayClasses) ?>"><?= $weekday ?></div>
                 <?php endforeach; ?>
             </div>
 
@@ -149,6 +173,12 @@ $selectedCalendarMonth = (int) $start->format('n');
                     $dayClasses = ['calendar-day'];
                     if ($isNonWorkingDay) {
                         $dayClasses[] = 'non-working-day';
+                        if ($weekdayNumber === 6) {
+                            $dayClasses[] = 'weekend-saturday';
+                        }
+                        if ($weekdayNumber === 7) {
+                            $dayClasses[] = 'weekend-sunday';
+                        }
                     }
                     if ($isPublicHoliday) {
                         $dayClasses[] = 'public-holiday';
@@ -162,7 +192,7 @@ $selectedCalendarMonth = (int) $start->format('n');
                 ?>
                     <div class="<?= implode(' ', $dayClasses) ?>">
                         <div class="day-number">
-                            <?php if ($isWorkingWeekday && !$isPublicHoliday && !$isCompanyHoliday): ?>
+                            <?php if ($canRequestLeave && $isWorkingWeekday && !$isPublicHoliday && !$isCompanyHoliday): ?>
                                 <button
                                     class="calendar-date-trigger"
                                     type="button"
@@ -249,7 +279,7 @@ $selectedCalendarMonth = (int) $start->format('n');
             <?php if ($monthlyRequests === []): ?>
                 <div class="empty-state"><i class="bi bi-calendar2-check"></i><span>이달 신청 내역이 없습니다.</span></div>
             <?php else: ?>
-                <div class="month-request-list">
+                <div class="month-request-list" data-paginate data-page-size="10">
                     <?php foreach ($monthlyRequests as $item): ?>
                         <?php
                         $halfDayPeriod = (string) ($item['half_day_period'] ?? '');
@@ -267,6 +297,7 @@ $selectedCalendarMonth = (int) $start->format('n');
                             type="button"
                             id="request-<?= (int) $item['id'] ?>"
                             class="month-request-item <?= $deductionClass ?>"
+                            data-page-item
                             data-open-request-detail
                             data-request-id="<?= (int) $item['id'] ?>"
                             data-request-user="<?= htmlspecialchars((string) $item['user_name'], ENT_QUOTES, 'UTF-8') ?>"

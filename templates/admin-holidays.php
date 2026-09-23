@@ -57,7 +57,7 @@ $sourceLabels = [
     <?php endif; ?>
 
     <div class="table-wrap">
-        <table class="data-table">
+        <table class="data-table" data-paginate data-page-size="20">
             <thead>
             <tr>
                 <th>날짜</th>
@@ -74,7 +74,7 @@ $sourceLabels = [
             <?php endif; ?>
             <?php foreach ($holidays as $holiday): ?>
                 <?php $source = (string) $holiday['source']; ?>
-                <tr>
+                <tr data-page-item>
                     <td><strong><?= htmlspecialchars((string) $holiday['holiday_date'], ENT_QUOTES, 'UTF-8') ?></strong></td>
                     <td><?= htmlspecialchars((string) $holiday['name'], ENT_QUOTES, 'UTF-8') ?></td>
                     <td><span class="badge neutral"><?= htmlspecialchars($sourceLabels[$source] ?? $source, ENT_QUOTES, 'UTF-8') ?></span></td>

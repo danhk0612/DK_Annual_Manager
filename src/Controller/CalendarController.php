@@ -86,10 +86,12 @@ final class CalendarController
         $year = filter_var($request->input('year'), FILTER_VALIDATE_INT);
         $monthNumber = filter_var($request->input('month_number'), FILTER_VALIDATE_INT);
 
+        $maxYear = (int) date('Y') + 3;
+
         if (
             $year !== false
             && $year >= 2000
-            && $year <= 2100
+            && $year <= $maxYear
             && $monthNumber !== false
             && $monthNumber >= 1
             && $monthNumber <= 12
@@ -107,6 +109,12 @@ final class CalendarController
         }
 
         $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value . '-01');
-        return $date !== false && $date->format('Y-m') === $value ? $value : date('Y-m');
+        if ($date === false || $date->format('Y-m') !== $value) {
+            return date('Y-m');
+        }
+
+        $year = (int) $date->format('Y');
+        $maxYear = (int) date('Y') + 3;
+        return $year >= 2000 && $year <= $maxYear ? $value : date('Y-m');
     }
 }

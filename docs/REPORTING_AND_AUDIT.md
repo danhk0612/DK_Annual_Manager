@@ -73,3 +73,22 @@
 - **다가오는 휴가**: 실제 첫 휴가일(`MIN(leave_request_days.leave_date)`)이 내일부터 14일 후까지인 `approved` 신청만 표시한다.
 - 이미 오늘 휴가 중인 다일 신청은 다가오는 휴가에 중복 표시하지 않는다.
 - 승인 대기, 반려, 취소 상태는 두 목록 모두 대상이 아니다.
+
+## 종료된 휴가 기록 정리
+
+관리자는 환경 설정에서 더 이상 운영 중인 휴가가 아닌 `cancelled` / `rejected` 기록을 영구 정리할 수 있다.
+
+정리 대상:
+
+- `leave_requests.status IN ('cancelled', 'rejected')`
+- 해당 신청의 `leave_request_days`
+- 해당 신청을 참조하는 `annual_leave_ledger`
+- `target_type='leave_request'`이고 삭제 대상 신청 ID를 가리키는 Audit Log
+- 승인 전 취소 등으로 신청 본체가 이미 삭제되어 대상이 없는 고아 `leave_request` Audit Log
+
+보존 대상:
+
+- `pending`
+- `approved`
+
+정리 작업은 하나의 DB 트랜잭션으로 수행하며, 완료 후 개별 삭제 대상과 무관한 요약 Audit Log `leave.closed_history_purged`를 남긴다.

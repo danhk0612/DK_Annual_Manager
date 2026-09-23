@@ -12,6 +12,7 @@ $actionLabels = [
     'leave.request_approved' => '휴가 승인',
     'leave.request_rejected' => '휴가 반려',
     'leave.request_approval_cancelled' => '휴가 승인 취소',
+    'leave.closed_history_purged' => '종료 휴가 기록 정리',
     'annual_leave.synced' => '연차 발생 동기화',
     'annual_leave.adjusted' => '연차 원장 조정',
     'annual_leave.total_override_set' => '총 연차 고정',
@@ -34,7 +35,7 @@ $actionLabels = [
     <div>
         <p class="eyebrow">Audit Log</p>
         <h1><i class="bi bi-clock-history"></i><span>변경 이력</span></h1>
-        <p>주요 데이터 변경 작업을 검색하고 최근 200건까지 확인합니다.</p>
+        <p>주요 데이터 변경 작업을 검색하고 전체 변경 이력을 검색하고 페이지 단위로 확인합니다.</p>
     </div>
     <a class="button" href="/admin"><i class="bi bi-speedometer2"></i><span>관리자 홈</span></a>
 </section>
@@ -73,7 +74,7 @@ $actionLabels = [
     </div>
 
     <div class="table-wrap">
-        <table class="data-table">
+        <table class="data-table" data-paginate data-page-size="20">
             <thead>
             <tr><th>일시</th><th>작업자</th><th>작업</th><th>대상</th><th>내용</th><th>IP</th></tr>
             </thead>
@@ -95,7 +96,7 @@ $actionLabels = [
                     }
                 }
                 ?>
-                <tr>
+                <tr data-page-item>
                     <td><?= htmlspecialchars((string) $log['created_at'], ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars((string) ($log['actor_name'] ?? '시스템'), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><strong><?= htmlspecialchars($actionLabels[(string) $log['action']] ?? (string) $log['action'], ENT_QUOTES, 'UTF-8') ?></strong></td>

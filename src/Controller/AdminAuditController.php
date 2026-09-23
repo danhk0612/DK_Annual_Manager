@@ -24,7 +24,7 @@ final class AdminAuditController
 
         return Response::html($this->view->render('admin-audit', [
             'title' => '변경 이력',
-            'logs' => $this->audit->search($query, $action, 200),
+            'logs' => $this->audit->search($query, $action),
             'actions' => $this->audit->actionNames(),
             'query' => $query,
             'selectedAction' => $action,
