@@ -468,6 +468,13 @@ PHP);
         self::assertSame(2, (int) $this->pdo->query(
             "SELECT COUNT(*) FROM audit_logs WHERE action = 'test.leave'"
         )->fetchColumn());
+
+        $auditInsert->execute(['actor' => $adminId, 'target' => 888888]);
+        $orphanOnly = $requests->purgeClosedHistory();
+        self::assertSame(0, $orphanOnly['requests']);
+        self::assertSame(0, $orphanOnly['days']);
+        self::assertSame(0, $orphanOnly['ledger']);
+        self::assertSame(1, $orphanOnly['audit']);
     }
 
     public function testApprovalAndCancellationUpdateAnnualLeaveLedgerAtomically(): void
