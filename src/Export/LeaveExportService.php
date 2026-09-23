@@ -41,6 +41,11 @@ final class LeaveExportService
 
         if ($includeEmployeeColumns) {
             $sheets[] = $this->employeeStatisticsSheet($dayRows);
+        }
+
+        $sheets[] = $this->annualLeaveBalanceSheet($userId, $year, $includeEmployeeColumns);
+
+        if ($includeEmployeeColumns) {
             $sheets[] = $this->reviewSheet($dayRows, $requestRows);
         }
 
@@ -182,6 +187,9 @@ final class LeaveExportService
         $rows[] = ['휴가종류 통계', '휴가 종류별 승인 사용량과 신청건수', null, null, null, null, null, null];
         if ($isAdmin) {
             $rows[] = ['직원별 통계', '직원별 사용량과 상태별 신청건수', null, null, null, null, null, null];
+        }
+        $rows[] = ['연차 현황', '선택 연도의 발생·이월·조정·사용·잔여 확인', null, null, null, null, null, null];
+        if ($isAdmin) {
             $rows[] = ['검토 필요', '승인 대기·소급 입력·동일 일자 중복 승인 확인', null, null, null, null, null, null];
         }
         $rows[] = ['신청 기록', '신청 단위 상세 기록', null, null, null, null, null, null];
@@ -195,7 +203,7 @@ final class LeaveExportService
             10 => 'section',
             11 => 'header',
         ];
-        $sectionIndex = count($rows) - ($isAdmin ? 9 : 7);
+        $sectionIndex = count($rows) - ($isAdmin ? 10 : 8);
         $rowStyles[$sectionIndex] = 'section';
 
         $cellStyles = [
@@ -414,6 +422,76 @@ final class LeaveExportService
         }
 
         return $this->statisticsSheet('직원별 통계', '직원별 휴가 통계', $headers, $data, [16, 16, 14, 12, 12, 12, 13, 12, 12, 10, 10]);
+    }
+
+    /** @return array<string,mixed> */
+    private function annualLeaveBalanceSheet(?int $userId, int $year, bool $isAdmin): array
+    {
+        if (!$isAdmin && $userId !== null) {
+            $summary = $this->reports->userAnnualSummary($userId, $year);
+            $headers = ['연도', '발생', '이월', '조정', '복원', '사용', '순사용', '잔여', '총가용'];
+            $data = [[
+                $year,
+                (float) ($summary['granted'] ?? 0),
+                (float) ($summary['carryover'] ?? 0),
+                (float) ($summary['adjustment'] ?? 0),
+                (float) ($summary['reversal'] ?? 0),
+                (float) ($summary['used'] ?? 0),
+                (float) ($summary['net_used'] ?? 0),
+                (float) ($summary['balance'] ?? 0),
+                (float) ($summary['total'] ?? 0),
+            ]];
+
+            return $this->statisticsSheet(
+                '연차 현황',
+                $year . '년 연차 현황',
+                $headers,
+                $data,
+                [10, 11, 11, 11, 11, 11, 11, 11, 11],
+                '연차 원장 기준입니다. 비차감 휴가(공가·병가 등)는 연차 사용량에 포함되지 않습니다.',
+            );
+        }
+
+        $rows = $this->reports->annualUserSummary($year);
+        if ($userId !== null) {
+            $rows = array_values(array_filter(
+                $rows,
+                static fn (array $row): bool => (int) ($row['id'] ?? 0) === $userId,
+            ));
+        }
+
+        $headers = ['직원', '부서', '직책', '상태', '입사일', '발생', '이월', '조정', '복원', '사용', '순사용', '잔여', '총가용'];
+        $data = [];
+        foreach ($rows as $row) {
+            $used = (float) ($row['used'] ?? 0);
+            $reversal = (float) ($row['reversal'] ?? 0);
+            $balance = (float) ($row['balance'] ?? 0);
+            $netUsed = max(0.0, $used - $reversal);
+            $data[] = [
+                (string) ($row['name'] ?? ''),
+                (string) ($row['department'] ?? ''),
+                (string) ($row['position'] ?? ''),
+                (string) ($row['status'] ?? ''),
+                (string) ($row['hire_date'] ?? ''),
+                (float) ($row['granted'] ?? 0),
+                (float) ($row['carryover'] ?? 0),
+                (float) ($row['adjustment'] ?? 0),
+                $reversal,
+                $used,
+                $netUsed,
+                $balance,
+                $balance + $netUsed,
+            ];
+        }
+
+        return $this->statisticsSheet(
+            '연차 현황',
+            $year . '년 직원별 연차 현황',
+            $headers,
+            $data,
+            [16, 15, 14, 11, 12, 11, 11, 11, 11, 11, 11, 11, 11],
+            '연차 원장 기준입니다. 상태 열은 계정 상태이며, 휴가 신청 상태와는 별개입니다.',
+        );
     }
 
     /**
