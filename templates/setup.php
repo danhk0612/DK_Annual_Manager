@@ -103,10 +103,10 @@ $appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js')
             </div>
             <p>Bot Token과 Login용 Client ID/Secret의 발급 자체는 Telegram에서 진행해야 합니다. 이 화면은 필요한 주소를 현재 접속 호스트에서 자동 계산하고, 입력값을 즉시 검증합니다.</p>
             <div class="setup-mini-steps">
-                <span><b>1</b> BotFather → <code>/newbot</code>으로 Bot 생성 · Bot Token 복사</span>
-                <span><b>2</b> Bot 선택 → <strong>Login Widget</strong> 열기</span>
-                <span><b>3</b> 아래 Allowed Origin / Redirect URI 등록</span>
-                <span><b>4</b> 같은 화면의 Client ID / Client Secret 복사</span>
+                <span><b>1</b> BotFather에서 <code>/newbot</code>으로 Bot 생성 → <strong>Bot Token</strong> 복사</span>
+                <span><b>2</b> BotFather App 실행 → <strong>Login Widget</strong> 열기</span>
+                <span><b>3</b> <strong>Client ID</strong>와 <strong>Client Secret</strong> 복사</span>
+                <span><b>4</b> Login Widget의 <strong>Redirect URI</strong>에 아래 자동 감지 값을 등록</span>
             </div>
             <div class="setup-links">
                 <a class="button primary" href="https://t.me/BotFather" target="_blank" rel="noopener"><i class="bi bi-telegram"></i><span>BotFather 열기</span></a>
@@ -130,21 +130,21 @@ $appJsVersion = (string) (@filemtime(dirname(__DIR__) . '/public/assets/app.js')
                 <form class="form-grid setup-form" method="post" action="/setup/telegram">
                     <input type="hidden" name="_csrf" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                     <label class="span-2">
+                        Bot Token
+                        <input type="password" name="bot_token" autocomplete="new-password" placeholder="<?= $hasBotToken ? '저장됨 · 변경할 때만 입력' : 'BotFather /newbot에서 발급된 Token' ?>">
+                    </label>
+                    <label>
                         Client ID
-                        <input name="client_id" required value="<?= htmlspecialchars($configuredClientId, ENT_QUOTES, 'UTF-8') ?>" placeholder="BotFather에서 발급">
+                        <input name="client_id" required value="<?= htmlspecialchars($configuredClientId, ENT_QUOTES, 'UTF-8') ?>" placeholder="Login Widget에서 복사">
                     </label>
                     <label>
                         Client Secret
-                        <input type="password" name="client_secret" autocomplete="new-password" placeholder="<?= $hasClientSecret ? '저장됨 · 변경할 때만 입력' : '필수 입력' ?>">
-                    </label>
-                    <label>
-                        Bot Token
-                        <input type="password" name="bot_token" autocomplete="new-password" placeholder="<?= $hasBotToken ? '저장됨 · 변경할 때만 입력' : '필수 입력' ?>">
+                        <input type="password" name="client_secret" autocomplete="new-password" placeholder="<?= $hasClientSecret ? '저장됨 · 변경할 때만 입력' : 'Login Widget에서 복사' ?>">
                     </label>
                     <label class="span-2">
                         Redirect URI
                         <input name="redirect_uri" required value="<?= htmlspecialchars($redirectUri, ENT_QUOTES, 'UTF-8') ?>">
-                        <span class="form-hint">현재 접속 주소에서 자동 계산했습니다. 리버스 프록시 주소와 다를 때만 수정하세요.</span>
+                        <span class="form-hint">현재 접속 주소에서 자동 계산했습니다. 이 값을 BotFather App의 Login Widget → Redirect URI에 등록하세요. 리버스 프록시 주소와 다를 때만 수정하세요.</span>
                     </label>
                     <div class="form-actions">
                         <button class="button primary" type="submit"><i class="bi bi-plug"></i> 저장하고 봇 연결 확인</button>
