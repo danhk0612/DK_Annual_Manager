@@ -83,7 +83,8 @@
 - `leave_requests.status IN ('cancelled', 'rejected')`
 - 해당 신청의 `leave_request_days`
 - 해당 신청을 참조하는 `annual_leave_ledger`
-- `target_type='leave_request'`이고 해당 신청 ID를 가리키는 Audit Log
+- `target_type='leave_request'`이고 삭제 대상 신청 ID를 가리키는 Audit Log
+- 승인 전 취소 등으로 신청 본체가 이미 삭제되어 대상이 없는 고아 `leave_request` Audit Log
 
 보존 대상:
 
