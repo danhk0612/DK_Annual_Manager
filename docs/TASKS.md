@@ -674,7 +674,7 @@
 
 ## T36. v1.5.0 업무용 다중 시트 Excel 보고서
 
-상태: 구현 완료 / CI·자동 Release 대기
+상태: 구현 완료 / PR CI 통과 / main·자동 Release 대기
 
 - [x] 단일 기록 시트를 업무용 다중 시트 Excel 보고서로 확장
 - [x] 실제 휴가일 단위 export source 추가
@@ -702,6 +702,6 @@
 - [x] 내 정보·관리자 휴가 집계 안내문을 보고서 기준으로 갱신
 - [x] README/요구사항/아키텍처/집계 문서 갱신
 - [x] VERSION 1.5.0 및 릴리스 노트
-- [ ] feature PR CI 통과
+- [x] feature PR CI 통과
 - [ ] main 병합 및 main CI 통과
 - [ ] v1.5.0 GitHub Release 자동 생성 확인
