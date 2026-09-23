@@ -35,7 +35,7 @@ $actionLabels = [
     <div>
         <p class="eyebrow">Audit Log</p>
         <h1><i class="bi bi-clock-history"></i><span>변경 이력</span></h1>
-        <p>주요 데이터 변경 작업을 검색하고 전체 변경 이력을 검색하고 페이지 단위로 확인합니다.</p>
+        <p>주요 데이터 변경 작업을 검색하고 전체 변경 이력을 페이지 단위로 확인합니다.</p>
     </div>
     <a class="button" href="/admin"><i class="bi bi-speedometer2"></i><span>관리자 홈</span></a>
 </section>
@@ -73,8 +73,16 @@ $actionLabels = [
         <?php if ($query !== '' || $selectedAction !== ''): ?><span class="muted">검색 조건이 적용되었습니다.</span><?php endif; ?>
     </div>
 
-    <div class="table-wrap">
-        <table class="data-table" data-paginate data-page-size="20">
+    <div class="table-wrap audit-table-wrap">
+        <table class="data-table audit-table" data-paginate data-page-size="20">
+            <colgroup>
+                <col class="audit-col-date">
+                <col class="audit-col-actor">
+                <col class="audit-col-action">
+                <col class="audit-col-target">
+                <col class="audit-col-details">
+                <col class="audit-col-ip">
+            </colgroup>
             <thead>
             <tr><th>일시</th><th>작업자</th><th>작업</th><th>대상</th><th>내용</th><th>IP</th></tr>
             </thead>
@@ -101,7 +109,17 @@ $actionLabels = [
                     <td><?= htmlspecialchars((string) ($log['actor_name'] ?? '시스템'), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><strong><?= htmlspecialchars($actionLabels[(string) $log['action']] ?? (string) $log['action'], ENT_QUOTES, 'UTF-8') ?></strong></td>
                     <td><?= htmlspecialchars(trim((string) ($log['target_type'] ?? '') . ' #' . (string) ($log['target_id'] ?? ''), ' #'), ENT_QUOTES, 'UTF-8') ?></td>
-                    <td class="audit-details"><?= htmlspecialchars(implode(', ', $detailParts), ENT_QUOTES, 'UTF-8') ?></td>
+                    <td class="audit-details">
+                        <?php if ($detailParts === []): ?>
+                            <span class="muted">-</span>
+                        <?php else: ?>
+                            <div class="audit-detail-list">
+                                <?php foreach ($detailParts as $detailPart): ?>
+                                    <span><?= htmlspecialchars($detailPart, ENT_QUOTES, 'UTF-8') ?></span>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </td>
                     <td><?= htmlspecialchars((string) ($log['ip_address'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 </tr>
             <?php endforeach; ?>
